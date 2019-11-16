@@ -1,43 +1,50 @@
 # -*- coding: utf-8 -*-
-import typing
 
 import pytest
-
-process_list: typing.List["Process"] = []
 
 
 class FakePopen:
     """The base class that fakes the real subprocess"""
 
-    def __init__(self, command: typing.Union[typing.Tuple[str], str]):
-        self.command: typing.Union[typing.List[str], typing.Tuple[str], str] = command
+    def __init__(self, command):
+        self.command = command
+
+
+class ProcessDispatcher:
+    """Main class for handling processes."""
+
+    process_list = []
+
+    @classmethod
+    def register(cls, process):
+        cls.process_list.append(process)
+
+    @classmethod
+    def deregister(cls, process):
+        cls.process_list.remove(process)
 
 
 class Process:
     """Class responsible for tracking the processes"""
 
     def __init__(self):
-        self.processes: typing.Dict[
-            typing.Union[str, typing.Tuple[str]], FakePopen
-        ] = dict()
+        self.processes = dict()
 
-    def register_subprocess(
-        self, command: typing.Union[typing.List[str], typing.Tuple[str], str]
-    ):
+    def register_subprocess(self, command):
         if isinstance(command, list):
             command = tuple(command)
 
         self.processes[command] = FakePopen(command)
 
-    def __enter__(self) -> "Process":
-        process_list.append(self)
+    def __enter__(self):
+        ProcessDispatcher.register(self)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        process_list.remove(self)
+        ProcessDispatcher.deregister(self)
 
 
 @pytest.fixture
-def process() -> Process:
-    with Process():
-        yield
+def process():
+    with Process() as process:
+        yield process
