@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import subprocess
 
 import pytest
 
@@ -9,19 +10,42 @@ class FakePopen:
     def __init__(self, command):
         self.command = command
 
+    def handle(self):
+        pass
+
 
 class ProcessDispatcher:
     """Main class for handling processes."""
 
     process_list = []
+    built_in_popen = None
 
     @classmethod
     def register(cls, process):
+        if not cls.process_list:
+            cls.built_in_popen = subprocess.Popen
+            subprocess.Popen = cls.dispatch
         cls.process_list.append(process)
 
     @classmethod
     def deregister(cls, process):
         cls.process_list.remove(process)
+        if not cls.process_list:
+            subprocess.Popen = cls.built_in_popen
+            cls.built_in_popen = None
+
+    @classmethod
+    def dispatch(cls, command, *_, **__) -> None:
+        process = next(
+            (
+                proc.processes.get(command)
+                for proc in cls.process_list
+                if command in proc.processes
+            ),
+            None,
+        )
+        result = process.handle()
+        return result
 
 
 class Process:

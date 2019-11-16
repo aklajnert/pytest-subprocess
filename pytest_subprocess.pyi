@@ -6,6 +6,7 @@ import pytest
 class FakePopen:
     command: typing.Union[typing.List[str], typing.Tuple[str], str]
     def __init__(self, command: typing.Union[typing.Tuple[str], str]): ...
+    def handle(self) -> None: ...
 
 class ProcessDispatcher:
     process_list: typing.List["Process"]
@@ -13,6 +14,13 @@ class ProcessDispatcher:
     def register(cls, process: "Process"): ...
     @classmethod
     def deregister(cls, process: "Process"): ...
+    @classmethod
+    def dispatch(
+        cls,
+        command: typing.Union[typing.Tuple[str], str],
+        *_: typing.Any,
+        **__: typing.Any
+    ) -> None: ...
 
 class Process:
 
