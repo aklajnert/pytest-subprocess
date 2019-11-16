@@ -10,13 +10,9 @@ pytest-subprocess
     :target: https://pypi.org/project/pytest-subprocess
     :alt: Python versions
 
-.. image:: https://travis-ci.org/aklajnert/pytest-subprocess.svg?branch=master
-    :target: https://travis-ci.org/aklajnert/pytest-subprocess
-    :alt: See Build Status on Travis CI
-
-.. image:: https://ci.appveyor.com/api/projects/status/github/aklajnert/pytest-subprocess?branch=master
-    :target: https://ci.appveyor.com/project/aklajnert/pytest-subprocess/branch/master
-    :alt: See Build Status on AppVeyor
+.. image:: https://dev.azure.com/aklajnert/pytest-subprocess/_apis/build/status/aklajnert.pytest-subprocess?branchName=master
+    :target: https://dev.azure.com/aklajnert/pytest-subprocess/_build/latest?definitionId=6&branchName=master
+    :alt: See Build Status on Azure Pipelines
 
 A plugin to fake subprocess for pytest
 
