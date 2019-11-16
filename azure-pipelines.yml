@@ -28,6 +28,9 @@ strategy:
     Linting:
         python.version: '3.7'
         tox.env: 'flake8'
+      mypy:
+        python.version: '3.7'
+        tox.env: 'mypy'
 
 steps:
 - task: UsePythonVersion@0
