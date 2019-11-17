@@ -23,6 +23,7 @@ class ProcessDispatcher:
 
     process_list = []
     built_in_popen = None
+    _allow_unregistered = False
 
     @classmethod
     def register(cls, process):
@@ -39,7 +40,7 @@ class ProcessDispatcher:
             cls.built_in_popen = None
 
     @classmethod
-    def dispatch(cls, command, *_, **__) -> None:
+    def dispatch(cls, command, *args, **kwargs) -> None:
         process = next(
             (
                 proc.processes.get(command)
@@ -50,13 +51,20 @@ class ProcessDispatcher:
         )
 
         if process is None:
-            raise ProcessNotRegisteredError(
-                f"The process '%s' was not registered."
-                % (command if isinstance(command, str) else " ".join(command))
-            )
+            if not cls._allow_unregistered:
+                raise ProcessNotRegisteredError(
+                    f"The process '%s' was not registered."
+                    % (command if isinstance(command, str) else " ".join(command))
+                )
+            else:
+                return cls.built_in_popen(command, *args, **kwargs)
 
         result = process.handle()
         return result
+
+    @classmethod
+    def allow_unregistered(cls, allow):
+        cls._allow_unregistered = allow
 
 
 class Process:
@@ -77,6 +85,9 @@ class Process:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         ProcessDispatcher.deregister(self)
+
+    def allow_unregistered(cls, allow):
+        ProcessDispatcher.allow_unregistered(allow)
 
 
 @pytest.fixture
