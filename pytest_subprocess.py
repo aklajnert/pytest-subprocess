@@ -14,6 +14,10 @@ class FakePopen:
         pass
 
 
+class ProcessNotRegisteredError(Exception):
+    """Raised when the attempted command wasn't registered before."""
+
+
 class ProcessDispatcher:
     """Main class for handling processes."""
 
@@ -44,6 +48,13 @@ class ProcessDispatcher:
             ),
             None,
         )
+
+        if process is None:
+            raise ProcessNotRegisteredError(
+                f"The process '%s' was not registered."
+                % (command if isinstance(command, str) else " ".join(command))
+            )
+
         result = process.handle()
         return result
 
