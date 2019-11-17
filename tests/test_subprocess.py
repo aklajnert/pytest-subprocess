@@ -7,6 +7,12 @@ import pytest_subprocess
 
 
 def test_not_registered(process, monkeypatch):
+    """
+    Scenario with attempt of running a command that is not registered.
+
+    First two tries will raise an exception, but the last one will set
+    `process.allow_unregistered(True)` which will allow to execute the process.
+    """
     assert process
 
     with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:

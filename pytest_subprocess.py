@@ -53,8 +53,9 @@ class ProcessDispatcher:
         if process is None:
             if not cls._allow_unregistered:
                 raise ProcessNotRegisteredError(
-                    f"The process '%s' was not registered."
-                    % (command if isinstance(command, str) else " ".join(command))
+                    "The process '{}' was not registered.".format(
+                        command if isinstance(command, str) else " ".join(command)
+                    )
                 )
             else:
                 return cls.built_in_popen(command, *args, **kwargs)
