@@ -1,17 +1,50 @@
 # -*- coding: utf-8 -*-
+import io
 import subprocess
+import typing
 
 import pytest
+
+
+def _ensure_hashable(input):
+    if isinstance(input, list):
+        return tuple(input)
+    return input
 
 
 class FakePopen:
     """The base class that fakes the real subprocess"""
 
-    def __init__(self, command):
-        self.command = command
+    stdout = None
+    stderr = None
 
-    def handle(self):
-        pass
+    def __init__(self, command, stdout=None, stderr=None):
+        self.__command = command
+        self.__stdout = stdout
+        self.__stderr = stderr
+
+    def communicate(self, input=None, timeout=None):
+        return (self.stdout.getvalue(), self.stderr.getvalue())
+
+    def configure(self, **kwargs):
+        if kwargs.get("stdout") == subprocess.PIPE:
+            self.stdout = self._prepare_buffer(self.__stdout)
+        if kwargs.get("stderr") == subprocess.PIPE:
+            self.stderr = self._prepare_buffer(self.__stderr)
+
+    @staticmethod
+    def _prepare_buffer(input):
+        io_base = io.BytesIO()
+        if isinstance(input, (list, tuple)):
+            io_base.writelines(
+                [line.encode() if isinstance(line, str) else line for line in input]
+            )
+
+        if isinstance(input, str):
+            input = bytes(input)
+            io_base.writelines(input.splitlines())
+
+        return io_base
 
 
 class ProcessNotRegisteredError(Exception):
@@ -43,7 +76,8 @@ class ProcessDispatcher:
             cls.built_in_popen = None
 
     @classmethod
-    def dispatch(cls, command, *args, **kwargs) -> None:
+    def dispatch(cls, command, *args, **kwargs):
+        command = _ensure_hashable(command)
         process = next(
             (
                 proc.processes.get(command)
@@ -63,7 +97,8 @@ class ProcessDispatcher:
             else:
                 return cls.built_in_popen(command, *args, **kwargs)
 
-        result = process.handle()
+        result = FakePopen(**process)
+        result.configure(*args, **kwargs)
         return result
 
     @classmethod
@@ -77,11 +112,13 @@ class Process:
     def __init__(self):
         self.processes = dict()
 
-    def register_subprocess(self, command):
-        if isinstance(command, list):
-            command = tuple(command)
-
-        self.processes[command] = FakePopen(command)
+    def register_subprocess(self, command, stdout=None, stderr=None):
+        command = _ensure_hashable(command)
+        self.processes[command] = {
+            "command": command,
+            "stdout": stdout,
+            "stderr": stderr,
+        }
 
     def __enter__(self):
         ProcessDispatcher.register(self)
@@ -94,7 +131,7 @@ class Process:
         ProcessDispatcher.allow_unregistered(allow)
 
     @classmethod
-    def context(cls) -> 'Process':
+    def context(cls) -> "Process":
         return cls()
 
 
