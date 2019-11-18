@@ -15,7 +15,10 @@ class FakePopen:
 
 
 class ProcessNotRegisteredError(Exception):
-    """Raised when the attempted command wasn't registered before."""
+    """
+    Raised when the attempted command wasn't registered before.
+    Use `fake_process.allow_unregistered(True)` if you want to use real subprocess.
+    """
 
 
 class ProcessDispatcher:
@@ -44,7 +47,7 @@ class ProcessDispatcher:
         process = next(
             (
                 proc.processes.get(command)
-                for proc in cls.process_list
+                for proc in reversed(cls.process_list)
                 if command in proc.processes
             ),
             None,
@@ -89,6 +92,10 @@ class Process:
 
     def allow_unregistered(cls, allow):
         ProcessDispatcher.allow_unregistered(allow)
+
+    @classmethod
+    def context(cls) -> 'Process':
+        return cls()
 
 
 @pytest.fixture
