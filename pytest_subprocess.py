@@ -92,6 +92,6 @@ class Process:
 
 
 @pytest.fixture
-def process():
+def fake_process():
     with Process() as process:
         yield process

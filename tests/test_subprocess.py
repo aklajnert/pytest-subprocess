@@ -6,14 +6,14 @@ import pytest
 import pytest_subprocess
 
 
-def test_not_registered(process, monkeypatch):
+def test_not_registered(fake_process, monkeypatch):
     """
     Scenario with attempt of running a command that is not registered.
 
     First two tries will raise an exception, but the last one will set
     `process.allow_unregistered(True)` which will allow to execute the process.
     """
-    assert process
+    assert fake_process
 
     with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
         subprocess.Popen("test")
@@ -25,12 +25,12 @@ def test_not_registered(process, monkeypatch):
 
     assert str(exc.value) == "The process 'test with args' was not registered."
 
-    process.allow_unregistered(True)
+    fake_process.allow_unregistered(True)
     monkeypatch.setattr(
         pytest_subprocess.ProcessDispatcher,
         "built_in_popen",
         lambda command, *args, **kwargs: (command, args, kwargs),
     )
-    process = subprocess.Popen("test", shell=True)
+    fake_process = subprocess.Popen("test", shell=True)
 
-    assert process == ("test", (), {"shell": True})
+    assert fake_process == ("test", (), {"shell": True})
