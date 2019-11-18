@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import typing
 
-import pytest
+import pytest  # type: ignore
 
 class FakePopen:
     command: typing.Union[typing.List[str], typing.Tuple[str], str]
