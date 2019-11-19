@@ -76,7 +76,7 @@ class ProcessDispatcher:
             cls.built_in_popen = None
 
     @classmethod
-    def dispatch(cls, command, *args, **kwargs):
+    def dispatch(cls, command, **kwargs):
         command = _ensure_hashable(command)
         process = next(
             (
@@ -95,10 +95,10 @@ class ProcessDispatcher:
                     )
                 )
             else:
-                return cls.built_in_popen(command, *args, **kwargs)
+                return cls.built_in_popen(command, **kwargs)
 
         result = FakePopen(**process)
-        result.configure(*args, **kwargs)
+        result.configure(**kwargs)
         return result
 
     @classmethod
@@ -124,14 +124,14 @@ class Process:
         ProcessDispatcher.register(self)
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, *args, **kwargs):
         ProcessDispatcher.deregister(self)
 
     def allow_unregistered(cls, allow):
         ProcessDispatcher.allow_unregistered(allow)
 
     @classmethod
-    def context(cls) -> "Process":
+    def context(cls):
         return cls()
 
 

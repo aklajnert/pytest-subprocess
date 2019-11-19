@@ -31,6 +31,9 @@ strategy:
     mypy:
       python.version: '3.7'
       tox.env: 'mypy'
+    check-stubs:
+      python.version: '3.7'
+      tox.env: 'retype'
 
 steps:
 - task: UsePythonVersion@0
