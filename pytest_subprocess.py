@@ -36,7 +36,9 @@ class FakePopen:
         io_base = io.BytesIO()
         if isinstance(input, (list, tuple)):
             io_base.write(
-                b"\n".join(line.encode() if isinstance(line, str) else line for line in input)
+                b"\n".join(
+                    line.encode() if isinstance(line, str) else line for line in input
+                )
             )
 
         if isinstance(input, str):
