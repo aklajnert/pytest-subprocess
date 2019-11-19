@@ -14,6 +14,7 @@ class FakePopen:
     __command: typing.Union[typing.List[str], typing.Tuple[str], str]
     stdout: typing.Optional[io.BytesIO]
     stderr: typing.Optional[io.BytesIO]
+    returncode: int
     __stdout: OPTIONAL_TEXT
     __stderr: OPTIONAL_TEXT
     def __init__(
@@ -21,6 +22,7 @@ class FakePopen:
         command: typing.Union[typing.Tuple[str], str],
         stdout: OPTIONAL_TEXT = None,
         stderr: OPTIONAL_TEXT = None,
+        returncode: int = 0,
     ) -> None: ...
     def communicate(
         self, input: OPTIONAL_TEXT = ..., timeout: typing.Optional[float] = ...,
@@ -59,6 +61,7 @@ class Process:
         command: typing.Union[typing.List[str], typing.Tuple[str], str],
         stdout: OPTIONAL_TEXT = None,
         stderr: OPTIONAL_TEXT = None,
+        returncode: int = 0,
     ) -> None: ...
     def __enter__(self) -> "Process": ...
     def __exit__(self, *args: typing.List, **kwargs: typing.Dict) -> None: ...

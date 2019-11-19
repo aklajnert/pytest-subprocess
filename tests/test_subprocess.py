@@ -82,6 +82,9 @@ def test_basic_process(fake_process, fake):
     )
     out, err = process.communicate()
 
+    assert process.poll() == 0
+    assert process.returncode == 0
+
     # splitlines is required to ignore differences between LF and CRLF
     assert out.splitlines() == [b"Stdout line 1", b"Stdout line 2"]
     assert err.splitlines() == [b"Stderr line 1"]

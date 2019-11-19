@@ -17,16 +17,20 @@ class FakePopen:
     stdout = None
     stderr = None
 
-    def __init__(self, command, stdout=None, stderr=None):
+    def __init__(self, command, stdout=None, stderr=None, returncode=0):
         self.__command = command
         self.__stdout = stdout
         self.__stderr = stderr
+        self.returncode = returncode
 
     def communicate(self, input=None, timeout=None):
         return (
             self.stdout.getvalue() if self.stdout else None,
             self.stderr.getvalue() if self.stderr else None,
         )
+
+    def poll(self):
+        return self.returncode
 
     def configure(self, **kwargs):
         if kwargs.get("stdout") == subprocess.PIPE:
@@ -119,12 +123,13 @@ class Process:
     def __init__(self):
         self.processes = dict()
 
-    def register_subprocess(self, command, stdout=None, stderr=None):
+    def register_subprocess(self, command, stdout=None, stderr=None, returncode=0):
         command = _ensure_hashable(command)
         self.processes[command] = {
             "command": command,
             "stdout": stdout,
             "stderr": stderr,
+            "returncode": returncode,
         }
 
     def __enter__(self):
