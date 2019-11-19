@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import io
 import subprocess
+import threading
+import time
 
 import pytest
 
@@ -16,12 +18,15 @@ class FakePopen:
 
     stdout = None
     stderr = None
+    returncode = None
 
-    def __init__(self, command, stdout=None, stderr=None, returncode=0):
+    def __init__(self, command, stdout=None, stderr=None, returncode=0, wait=None):
         self.__command = command
         self.__stdout = stdout
         self.__stderr = stderr
-        self.returncode = returncode
+        self.__returncode = returncode
+        self.__wait = wait
+        self.__thread = None
 
     def communicate(self, input=None, timeout=None):
         return (
@@ -30,6 +35,14 @@ class FakePopen:
         )
 
     def poll(self):
+        return self.returncode
+
+    def wait(self, timeout=None):
+        # todo: make it smarter and aware of time left
+        if timeout and timeout < self.__wait:
+            raise subprocess.TimeoutExpired(self.__command, timeout)
+        if self.__thread is not None:
+            self.__thread.join()
         return self.returncode
 
     def configure(self, **kwargs):
@@ -56,6 +69,17 @@ class FakePopen:
             io_base.write(input.encode())
 
         return io_base
+
+    def _wait(self, wait_period):
+        time.sleep(wait_period)
+        self.returncode = self.__returncode
+
+    def run_thread(self):
+        if not self.__wait:
+            self.returncode = self.__returncode
+        else:
+            self.__thread = threading.Thread(target=self._wait, args=(self.__wait,))
+            self.__thread.start()
 
 
 class ProcessNotRegisteredError(Exception):
@@ -110,6 +134,7 @@ class ProcessDispatcher:
 
         result = FakePopen(**process)
         result.configure(**kwargs)
+        result.run_thread()
         return result
 
     @classmethod
@@ -123,13 +148,16 @@ class Process:
     def __init__(self):
         self.processes = dict()
 
-    def register_subprocess(self, command, stdout=None, stderr=None, returncode=0):
+    def register_subprocess(
+        self, command, stdout=None, stderr=None, returncode=0, wait=None
+    ):
         command = _ensure_hashable(command)
         self.processes[command] = {
             "command": command,
             "stdout": stdout,
             "stderr": stderr,
             "returncode": returncode,
+            "wait": wait,
         }
 
     def __enter__(self):

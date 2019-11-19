@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+import platform
 import subprocess
 
 import pytest
@@ -109,9 +110,10 @@ def test_basic_process_merge_streams(fake_process, fake):
     )
     out, err = process.communicate()
 
-    if fake:
+    if fake or platform.system().lower() == "linux":
         # if the streams are merged form two different sources, there's no way to
         # preserve the original order, stdout content will be first - followed by stderr
+        # the same behavior happens or linux in the real subprocess (Windows seems fine)
         assert out.splitlines() == [
             b"Stdout line 1",
             b"Stdout line 2",
@@ -124,3 +126,32 @@ def test_basic_process_merge_streams(fake_process, fake):
             b"Stdout line 2",
         ]
     assert err is None
+
+
+@pytest.mark.parametrize("fake", [True, False])
+def test_wait(fake_process, fake):
+    fake_process.allow_unregistered(not fake)
+    if fake:
+        fake_process.register_subprocess(
+            ["python", "example_script.py", "wait"],
+            stdout="Stdout line 1\nStdout line 2\n",
+            stderr="Stderr line 1\n",
+            wait=0.5,
+        )
+    process = subprocess.Popen(
+        ("python", "example_script.py", "wait"),
+        cwd=os.path.dirname(__file__),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+    )
+
+    assert process.returncode is None
+
+    with pytest.raises(subprocess.TimeoutExpired) as exc:
+        process.wait(timeout=0.1)
+    assert (
+        str(exc.value) == "Command '('python', 'example_script.py', 'wait')' "
+        "timed out after 0.1 seconds"
+    )
+
+    assert process.wait() == 0
