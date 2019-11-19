@@ -23,17 +23,24 @@ class FakePopen:
         self.__stderr = stderr
 
     def communicate(self, input=None, timeout=None):
-        return (self.stdout.getvalue(), self.stderr.getvalue())
+        return (
+            self.stdout.getvalue() if self.stdout else None,
+            self.stderr.getvalue() if self.stderr else None,
+        )
 
     def configure(self, **kwargs):
         if kwargs.get("stdout") == subprocess.PIPE:
             self.stdout = self._prepare_buffer(self.__stdout)
-        if kwargs.get("stderr") == subprocess.PIPE:
+        stderr = kwargs.get("stderr")
+        if stderr == subprocess.STDOUT:
+            self.stdout = self._prepare_buffer(self.__stderr, self.stdout)
+        elif stderr == subprocess.PIPE:
             self.stderr = self._prepare_buffer(self.__stderr)
 
     @staticmethod
-    def _prepare_buffer(input):
-        io_base = io.BytesIO()
+    def _prepare_buffer(input, io_base=None):
+        if io_base is None:
+            io_base = io.BytesIO()
         if isinstance(input, (list, tuple)):
             io_base.write(
                 b"\n".join(
@@ -42,7 +49,7 @@ class FakePopen:
             )
 
         if isinstance(input, str):
-            io_base.write(bytes(input))
+            io_base.write(input.encode())
 
         return io_base
 

@@ -12,6 +12,8 @@ def _ensure_hashable(
 
 class FakePopen:
     __command: typing.Union[typing.List[str], typing.Tuple[str], str]
+    stdout: typing.Optional[io.BytesIO]
+    stderr: typing.Optional[io.BytesIO]
     __stdout: OPTIONAL_TEXT
     __stderr: OPTIONAL_TEXT
     def __init__(
@@ -25,7 +27,10 @@ class FakePopen:
     ) -> typing.Tuple[typing.Any, typing.Any]: ...
     def configure(self, **kwargs: typing.Optional[typing.Dict]) -> None: ...
     @staticmethod
-    def _prepare_buffer(input: typing.Union[str, bytes, None]) -> io.BufferedReader: ...
+    def _prepare_buffer(
+        input: typing.Union[str, bytes, None],
+        io_base: typing.Optional[io.BytesIO] = None,
+    ) -> io.BytesIO: ...
 
 class ProcessNotRegisteredError(Exception): ...
 

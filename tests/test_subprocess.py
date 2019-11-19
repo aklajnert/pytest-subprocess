@@ -70,8 +70,8 @@ def test_basic_process(fake_process, fake):
     if fake:
         fake_process.register_subprocess(
             ["python", "example_script.py"],
-            stdout=["Stdout line 1", "Stdout line 2"],
-            stderr=["Stderr line 1"],
+            stdout="Stdout line 1\nStdout line 2\n",
+            stderr="Stderr line 1\n",
         )
 
     process = subprocess.Popen(
@@ -85,3 +85,39 @@ def test_basic_process(fake_process, fake):
     # splitlines is required to ignore differences between LF and CRLF
     assert out.splitlines() == [b"Stdout line 1", b"Stdout line 2"]
     assert err.splitlines() == [b"Stderr line 1"]
+
+
+@pytest.mark.parametrize("fake", [True, False])
+def test_basic_process_merge_streams(fake_process, fake):
+    """Stderr is merged into stdout."""
+    fake_process.allow_unregistered(not fake)
+    if fake:
+        fake_process.register_subprocess(
+            ["python", "example_script.py"],
+            stdout="Stdout line 1\nStdout line 2\n",
+            stderr="Stderr line 1\n",
+        )
+
+    process = subprocess.Popen(
+        ["python", "example_script.py"],
+        cwd=os.path.dirname(__file__),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+    )
+    out, err = process.communicate()
+
+    if fake:
+        # if the streams are merged form two different sources, there's no way to
+        # preserve the original order, stdout content will be first - followed by stderr
+        assert out.splitlines() == [
+            b"Stdout line 1",
+            b"Stdout line 2",
+            b"Stderr line 1",
+        ]
+    else:
+        assert out.splitlines() == [
+            b"Stdout line 1",
+            b"Stderr line 1",
+            b"Stdout line 2",
+        ]
+    assert err is None
