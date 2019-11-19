@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import io
 import subprocess
-import typing
 
 import pytest
 
@@ -36,13 +35,12 @@ class FakePopen:
     def _prepare_buffer(input):
         io_base = io.BytesIO()
         if isinstance(input, (list, tuple)):
-            io_base.writelines(
-                [line.encode() if isinstance(line, str) else line for line in input]
+            io_base.write(
+                b"\n".join(line.encode() if isinstance(line, str) else line for line in input)
             )
 
         if isinstance(input, str):
-            input = bytes(input)
-            io_base.writelines(input.splitlines())
+            io_base.write(bytes(input))
 
         return io_base
 
