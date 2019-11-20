@@ -101,10 +101,13 @@ class FakePopen:
             self.returncode = self.__returncode
 
     def run_thread(self):
-        if not self.__wait:
+        if self.__wait is None and self.__callback is None:
             self.returncode = self.__returncode
         else:
-            self.__thread = threading.Thread(target=self._wait, args=(self.__wait,))
+            if self.__callback:
+                self.__thread = threading.Thread(target=self.__callback, args=(self,))
+            else:
+                self.__thread = threading.Thread(target=self._wait, args=(self.__wait,))
             self.__thread.start()
 
 
@@ -168,6 +171,10 @@ class ProcessDispatcher:
         cls._allow_unregistered = allow
 
 
+class IncorrectProcessDefinition(Exception):
+    """Raised when the register_subprocess() has been called with wrong arguments"""
+
+
 class Process:
     """Class responsible for tracking the processes"""
 
@@ -177,6 +184,11 @@ class Process:
     def register_subprocess(
         self, command, stdout=None, stderr=None, returncode=0, wait=None, callback=None
     ):
+        if wait is not None and callback is not None:
+            raise IncorrectProcessDefinition(
+                "The 'callback' and 'wait' arguments cannot be used "
+                "together. Add sleep() to your callback instead."
+            )
         command = _ensure_hashable(command)
         self.processes[command] = {
             "command": command,

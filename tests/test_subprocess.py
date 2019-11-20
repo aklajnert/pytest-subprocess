@@ -262,3 +262,30 @@ def test_run(fake_process, fake):
     process = subprocess.run(("python", "example_script.py"))
 
     assert process
+
+
+def test_wrong_arguments(fake_process):
+    with pytest.raises(pytest_subprocess.IncorrectProcessDefinition) as exc:
+        fake_process.register_subprocess("command", wait=1, callback=lambda _: True)
+
+    assert str(exc.value) == (
+        "The 'callback' and 'wait' arguments cannot be used "
+        "together. Add sleep() to your callback instead."
+    )
+
+
+def test_callback(fake_process, capsys):
+    """
+    This test will show a usage of the callback argument.
+    The callback argument will have access to the FakePopen so it will
+    change the returncode.
+    """
+
+    def callback(process):
+        print("from callback")
+        process.returncode = 1
+
+    fake_process.register_subprocess("test", callback=callback)
+
+    assert subprocess.call("test") == 1
+    assert "from callback" in capsys.readouterr().out
