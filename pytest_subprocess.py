@@ -23,13 +23,23 @@ class FakePopen:
     stderr = None
     returncode = None
 
-    def __init__(self, command, stdout=None, stderr=None, returncode=0, wait=None):
+    def __init__(
+        self,
+        command,
+        stdout=None,
+        stderr=None,
+        returncode=0,
+        wait=None,
+        callback=None,
+        **_
+    ):
         self.args = command
         self.__stdout = stdout
         self.__stderr = stderr
         self.__returncode = returncode
         self.__wait = wait
         self.__thread = None
+        self.__callback = callback
 
     def __enter__(self):
         return self
@@ -165,7 +175,7 @@ class Process:
         self.processes = dict()
 
     def register_subprocess(
-        self, command, stdout=None, stderr=None, returncode=0, wait=None
+        self, command, stdout=None, stderr=None, returncode=0, wait=None, callback=None
     ):
         command = _ensure_hashable(command)
         self.processes[command] = {
@@ -174,6 +184,7 @@ class Process:
             "stderr": stderr,
             "returncode": returncode,
             "wait": wait,
+            "callback": callback,
         }
 
     def __enter__(self):

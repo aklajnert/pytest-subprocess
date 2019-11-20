@@ -6,15 +6,13 @@ import typing
 import pytest  # type: ignore
 
 OPTIONAL_TEXT = typing.Union[str, bytes, None]
-OPTIONAL_TEXT_OR_ITERABLE = (
-    typing.Union[
+OPTIONAL_TEXT_OR_ITERABLE =  typing.Union[
         str,
         bytes,
         None,
         typing.List[typing.Union[str, bytes]],
         typing.Tuple[typing.Union[str, bytes], ...],
-    ],
-)
+    ]
 
 def _ensure_hashable(
     input: typing.Union[typing.List[str], typing.Tuple[str, ...], str]
@@ -29,6 +27,7 @@ class FakePopen:
     __stderr: OPTIONAL_TEXT_OR_ITERABLE
     __returncode: typing.Optional[int]
     __wait: typing.Optional[float]
+    __callback: typing.Optional[typing.Optional[typing.Callable]]
     __thread: typing.Optional[threading.Thread]
     def __init__(
         self,
@@ -37,6 +36,8 @@ class FakePopen:
         stderr: OPTIONAL_TEXT_OR_ITERABLE = None,
         returncode: int = 0,
         wait: typing.Optional[float] = None,
+        callback: typing.Optional[typing.Callable] = None,
+            **_: typing.Dict[str, typing.Any]
     ) -> None: ...
     def __enter__(self) -> "FakePopen": ...
     def __exit__(self, *args: typing.List, **kwargs: typing.Dict) -> None: ...
@@ -58,7 +59,7 @@ class ProcessNotRegisteredError(Exception): ...
 
 class ProcessDispatcher:
     process_list: typing.List["Process"]
-    built_in_popen: typing.Optional[typing.Callable]
+    built_in_popen: typing.Optional[typing.Optional[typing.Callable]]
     _allow_unregistered: bool
     @classmethod
     def register(cls, process: "Process") -> None: ...
@@ -83,6 +84,7 @@ class Process:
         stderr: OPTIONAL_TEXT_OR_ITERABLE = None,
         returncode: int = 0,
         wait: typing.Optional[float] = None,
+        callback: typing.Optional[typing.Callable] = None,
     ) -> None: ...
     def __enter__(self) -> "Process": ...
     def __exit__(self, *args: typing.List, **kwargs: typing.Dict) -> None: ...

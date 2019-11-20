@@ -233,7 +233,7 @@ def test_check_call(fake_process, fake):
     with pytest.raises(subprocess.CalledProcessError) as exc:
         assert subprocess.check_call(("python", "example_script.py", "non-zero")) == 1
 
-    if sys.version_info > (3, 5):
+    if sys.version_info >= (3, 6):
         assert (
             str(exc.value) == "Command '('python', 'example_script.py', 'non-zero')' "
             "returned non-zero exit status 1."
