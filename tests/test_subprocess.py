@@ -70,13 +70,13 @@ def test_basic_process(fake_process, fake):
     fake_process.allow_unregistered(not fake)
     if fake:
         fake_process.register_subprocess(
-            ["python", "example_script.py"],
+            ["python", "example_script.py", "stderr"],
             stdout="Stdout line 1\nStdout line 2\n",
             stderr="Stderr line 1\n",
         )
 
     process = subprocess.Popen(
-        ["python", "example_script.py"],
+        ["python", "example_script.py", "stderr"],
         cwd=os.path.dirname(__file__),
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -97,13 +97,13 @@ def test_basic_process_merge_streams(fake_process, fake):
     fake_process.allow_unregistered(not fake)
     if fake:
         fake_process.register_subprocess(
-            ["python", "example_script.py"],
+            ["python", "example_script.py", "stderr"],
             stdout="Stdout line 1\nStdout line 2\n",
             stderr="Stderr line 1\n",
         )
 
     process = subprocess.Popen(
-        ["python", "example_script.py"],
+        ["python", "example_script.py", "stderr"],
         cwd=os.path.dirname(__file__),
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
@@ -140,13 +140,13 @@ def test_wait(fake_process, fake):
     fake_process.allow_unregistered(not fake)
     if fake:
         fake_process.register_subprocess(
-            ["python", "example_script.py", "wait"],
+            ["python", "example_script.py", "wait", "stderr"],
             stdout="Stdout line 1\nStdout line 2\n",
             stderr="Stderr line 1\n",
             wait=0.5,
         )
     process = subprocess.Popen(
-        ("python", "example_script.py", "wait"),
+        ("python", "example_script.py", "wait", "stderr"),
         cwd=os.path.dirname(__file__),
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
@@ -157,8 +157,21 @@ def test_wait(fake_process, fake):
     with pytest.raises(subprocess.TimeoutExpired) as exc:
         process.wait(timeout=0.1)
     assert (
-        str(exc.value) == "Command '('python', 'example_script.py', 'wait')' "
+        str(exc.value) == "Command '('python', 'example_script.py', 'wait', 'stderr')' "
         "timed out after 0.1 seconds"
     )
 
     assert process.wait() == 0
+
+
+@pytest.mark.parametrize("fake", [True, False])
+def test_check_output(fake_process, fake):
+    """Prove that check_output also works"""
+    fake_process.allow_unregistered(not fake)
+    if fake:
+        fake_process.register_subprocess(
+            ["python", "example_script.py"], stdout="Stdout line 1\nStdout line 2\n",
+        )
+    process = subprocess.check_output(("python", "example_script.py"))
+
+    assert process.splitlines() == [b"Stdout line 1", b"Stdout line 2"]

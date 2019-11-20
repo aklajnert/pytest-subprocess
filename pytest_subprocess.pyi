@@ -12,7 +12,7 @@ def _ensure_hashable(
 ) -> typing.Union[typing.Tuple[str], str]: ...
 
 class FakePopen:
-    __command: typing.Union[typing.List[str], typing.Tuple[str], str]
+    args: typing.Union[typing.List[str], typing.Tuple[str], str]
     stdout: typing.Optional[io.BytesIO]
     stderr: typing.Optional[io.BytesIO]
     returncode: typing.Optional[int]
@@ -29,6 +29,8 @@ class FakePopen:
         returncode: int = 0,
         wait: typing.Optional[float] = None,
     ) -> None: ...
+    def __enter__(self) -> "FakePopen": ...
+    def __exit__(self, *args: typing.List, **kwargs: typing.Dict) -> None: ...
     def communicate(
         self, input: OPTIONAL_TEXT = ..., timeout: typing.Optional[float] = ...,
     ) -> typing.Tuple[typing.Any, typing.Any]: ...

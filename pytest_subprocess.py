@@ -21,12 +21,18 @@ class FakePopen:
     returncode = None
 
     def __init__(self, command, stdout=None, stderr=None, returncode=0, wait=None):
-        self.__command = command
+        self.args = command
         self.__stdout = stdout
         self.__stderr = stderr
         self.__returncode = returncode
         self.__wait = wait
         self.__thread = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args, **kwargs):
+        pass
 
     def communicate(self, input=None, timeout=None):
         return (
@@ -40,7 +46,7 @@ class FakePopen:
     def wait(self, timeout=None):
         # todo: make it smarter and aware of time left
         if timeout and timeout < self.__wait:
-            raise subprocess.TimeoutExpired(self.__command, timeout)
+            raise subprocess.TimeoutExpired(self.args, timeout)
         if self.__thread is not None:
             self.__thread.join()
         return self.returncode

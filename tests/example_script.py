@@ -3,7 +3,8 @@ import sys
 import time
 
 print("Stdout line 1")
-print("Stderr line 1", file=sys.stderr)
+if "stderr" in sys.argv:
+    print("Stderr line 1", file=sys.stderr)
 print("Stdout line 2")
 
 if "wait" in sys.argv:
