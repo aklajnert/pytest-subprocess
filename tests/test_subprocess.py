@@ -2,6 +2,7 @@
 import os
 import platform
 import subprocess
+import sys
 
 import pytest
 
@@ -40,14 +41,21 @@ def test_multiple_levels(fake_process):
             "second_command", stdout="second command lower-level"
         )
 
-        assert subprocess.check_output("first_command") == b"first command lower-level"
         assert (
-            subprocess.check_output("second_command") == b"second command lower-level"
+            subprocess.check_output("first_command")
+            == ("first command lower-level" + os.linesep).encode()
+        )
+        assert (
+            subprocess.check_output("second_command")
+            == ("second command lower-level" + os.linesep).encode()
         )
 
     # first command definition shall be back at top-level definition, and the second
     # command is no longer defined so it shall raise an exception
-    assert subprocess.check_output("first_command") == b"first command top-level"
+    assert (
+        subprocess.check_output("first_command")
+        == ("first command top-level" + os.linesep).encode()
+    )
     with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
         subprocess.check_call("second_command")
     assert str(exc.value) == "The process 'second_command' was not registered."
@@ -101,13 +109,13 @@ def test_basic_process(fake_process, fake):
     fake_process.allow_unregistered(not fake)
     if fake:
         fake_process.register_subprocess(
-            ["python", "example_script.py", "stderr"],
-            stdout="Stdout line 1\nStdout line 2\n",
-            stderr="Stderr line 1\n",
+            ["python", "example_script.py"],
+            stdout=["Stdout line 1", "Stdout line 2"],
+            stderr=None,
         )
 
     process = subprocess.Popen(
-        ["python", "example_script.py", "stderr"],
+        ["python", "example_script.py"],
         cwd=os.path.dirname(__file__),
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -119,7 +127,7 @@ def test_basic_process(fake_process, fake):
 
     # splitlines is required to ignore differences between LF and CRLF
     assert out.splitlines() == [b"Stdout line 1", b"Stdout line 2"]
-    assert err.splitlines() == [b"Stderr line 1"]
+    assert err == b""
 
 
 @pytest.mark.parametrize("fake", [True, False])
@@ -129,8 +137,8 @@ def test_basic_process_merge_streams(fake_process, fake):
     if fake:
         fake_process.register_subprocess(
             ["python", "example_script.py", "stderr"],
-            stdout="Stdout line 1\nStdout line 2\n",
-            stderr="Stderr line 1\n",
+            stdout="Stdout line 1\nStdout line 2",
+            stderr="Stderr line 1",
         )
 
     process = subprocess.Popen(
@@ -172,8 +180,8 @@ def test_wait(fake_process, fake):
     if fake:
         fake_process.register_subprocess(
             ["python", "example_script.py", "wait", "stderr"],
-            stdout="Stdout line 1\nStdout line 2\n",
-            stderr="Stderr line 1\n",
+            stdout="Stdout line 1\nStdout line 2",
+            stderr="Stderr line 1",
             wait=0.5,
         )
     process = subprocess.Popen(
@@ -201,7 +209,7 @@ def test_check_output(fake_process, fake):
     fake_process.allow_unregistered(not fake)
     if fake:
         fake_process.register_subprocess(
-            ["python", "example_script.py"], stdout="Stdout line 1\nStdout line 2\n",
+            ["python", "example_script.py"], stdout="Stdout line 1\nStdout line 2",
         )
     process = subprocess.check_output(("python", "example_script.py"))
 
@@ -225,10 +233,11 @@ def test_check_call(fake_process, fake):
     with pytest.raises(subprocess.CalledProcessError) as exc:
         assert subprocess.check_call(("python", "example_script.py", "non-zero")) == 1
 
-    assert (
-        str(exc.value) == "Command '('python', 'example_script.py', 'non-zero')' "
-        "returned non-zero exit status 1."
-    )
+    if sys.version_info > (3, 5):
+        assert (
+            str(exc.value) == "Command '('python', 'example_script.py', 'non-zero')' "
+            "returned non-zero exit status 1."
+        )
 
 
 @pytest.mark.parametrize("fake", [True, False])

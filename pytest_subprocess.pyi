@@ -6,26 +6,35 @@ import typing
 import pytest  # type: ignore
 
 OPTIONAL_TEXT = typing.Union[str, bytes, None]
+OPTIONAL_TEXT_OR_ITERABLE = (
+    typing.Union[
+        str,
+        bytes,
+        None,
+        typing.List[typing.Union[str, bytes]],
+        typing.Tuple[typing.Union[str, bytes], ...],
+    ],
+)
 
 def _ensure_hashable(
-    input: typing.Union[typing.List[str], typing.Tuple[str], str]
-) -> typing.Union[typing.Tuple[str], str]: ...
+    input: typing.Union[typing.List[str], typing.Tuple[str, ...], str]
+) -> typing.Union[typing.Tuple[str, ...], str]: ...
 
 class FakePopen:
-    args: typing.Union[typing.List[str], typing.Tuple[str], str]
+    args: typing.Union[typing.List[str], typing.Tuple[str, ...], str]
     stdout: typing.Optional[io.BytesIO]
     stderr: typing.Optional[io.BytesIO]
     returncode: typing.Optional[int]
-    __stdout: OPTIONAL_TEXT
-    __stderr: OPTIONAL_TEXT
+    __stdout: OPTIONAL_TEXT_OR_ITERABLE
+    __stderr: OPTIONAL_TEXT_OR_ITERABLE
     __returncode: typing.Optional[int]
     __wait: typing.Optional[float]
     __thread: typing.Optional[threading.Thread]
     def __init__(
         self,
-        command: typing.Union[typing.Tuple[str], str],
-        stdout: OPTIONAL_TEXT = None,
-        stderr: OPTIONAL_TEXT = None,
+        command: typing.Union[typing.Tuple[str, ...], str],
+        stdout: OPTIONAL_TEXT_OR_ITERABLE = None,
+        stderr: OPTIONAL_TEXT_OR_ITERABLE = None,
         returncode: int = 0,
         wait: typing.Optional[float] = None,
     ) -> None: ...
@@ -58,20 +67,20 @@ class ProcessDispatcher:
     @classmethod
     def dispatch(
         cls,
-        command: typing.Union[typing.Tuple[str], str],
+        command: typing.Union[typing.Tuple[str, ...], str],
         **kwargs: typing.Optional[typing.Dict]
     ) -> FakePopen: ...
     @classmethod
     def allow_unregistered(cls, allow: bool) -> None: ...
 
 class Process:
-    processes: typing.Dict[typing.Union[str, typing.Tuple[str]], typing.Dict]
+    processes: typing.Dict[typing.Union[str, typing.Tuple[str, ...]], typing.Dict]
     def __init__(self) -> None: ...
     def register_subprocess(
         self,
-        command: typing.Union[typing.List[str], typing.Tuple[str], str],
-        stdout: OPTIONAL_TEXT = None,
-        stderr: OPTIONAL_TEXT = None,
+        command: typing.Union[typing.List[str], typing.Tuple[str, ...], str],
+        stdout: OPTIONAL_TEXT_OR_ITERABLE = None,
+        stderr: OPTIONAL_TEXT_OR_ITERABLE = None,
         returncode: int = 0,
         wait: typing.Optional[float] = None,
     ) -> None: ...

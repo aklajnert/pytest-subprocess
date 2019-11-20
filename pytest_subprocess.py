@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 import io
+import os
 import subprocess
 import threading
 import time
 
 import pytest
+
+LINESEP = os.linesep.encode()
 
 
 def _ensure_hashable(input):
@@ -64,21 +67,28 @@ class FakePopen:
     def _prepare_buffer(input, io_base=None):
         if io_base is None:
             io_base = io.BytesIO()
+
+        if input is None:
+            return io_base
+
         if isinstance(input, (list, tuple)):
-            io_base.write(
-                b"\n".join(
-                    line.encode() if isinstance(line, str) else line for line in input
-                )
+            input = LINESEP.join(
+                line.encode() if isinstance(line, str) else line for line in input
             )
 
         if isinstance(input, str):
-            io_base.write(input.encode())
+            input = input.encode()
 
+        if not input.endswith(LINESEP):
+            input += LINESEP
+
+        io_base.write(input)
         return io_base
 
     def _wait(self, wait_period):
         time.sleep(wait_period)
-        self.returncode = self.__returncode
+        if self.returncode is None:
+            self.returncode = self.__returncode
 
     def run_thread(self):
         if not self.__wait:
