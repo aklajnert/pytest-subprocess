@@ -9,3 +9,6 @@ print("Stdout line 2")
 
 if "wait" in sys.argv:
     time.sleep(0.5)
+
+if "non-zero" in sys.argv:
+    sys.exit(1)

@@ -23,6 +23,36 @@ def setup():
     os.chdir(os.path.dirname(__file__))
 
 
+def test_multiple_levels(fake_process):
+    """Register fake process on different levels and check the behavior"""
+
+    # process definition on the top level
+    fake_process.register_subprocess(
+        ("first_command"), stdout="first command top-level"
+    )
+
+    with fake_process.context() as fake_process2:
+        # lower level, override the same command and define new one
+        fake_process2.register_subprocess(
+            "first_command", stdout="first command lower-level"
+        )
+        fake_process2.register_subprocess(
+            "second_command", stdout="second command lower-level"
+        )
+
+        assert subprocess.check_output("first_command") == b"first command lower-level"
+        assert (
+            subprocess.check_output("second_command") == b"second command lower-level"
+        )
+
+    # first command definition shall be back at top-level definition, and the second
+    # command is no longer defined so it shall raise an exception
+    assert subprocess.check_output("first_command") == b"first command top-level"
+    with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
+        subprocess.check_call("second_command")
+    assert str(exc.value) == "The process 'second_command' was not registered."
+
+
 def test_not_registered(fake_process, monkeypatch):
     """
     Scenario with attempt of running a command that is not registered.
@@ -167,7 +197,7 @@ def test_wait(fake_process, fake):
 
 @pytest.mark.parametrize("fake", [True, False])
 def test_check_output(fake_process, fake):
-    """Prove that check_output also works"""
+    """Prove that check_output() works"""
     fake_process.allow_unregistered(not fake)
     if fake:
         fake_process.register_subprocess(
@@ -180,10 +210,46 @@ def test_check_output(fake_process, fake):
 
 @pytest.mark.parametrize("fake", [True, False])
 def test_check_call(fake_process, fake):
-    """Prove that check_call works"""
+    """Prove that check_call() works"""
     fake_process.allow_unregistered(not fake)
     if fake:
         fake_process.register_subprocess(
             ["python", "example_script.py"], stdout="Stdout line 1\nStdout line 2\n",
         )
+        fake_process.register_subprocess(
+            ["python", "example_script.py", "non-zero"], returncode=1
+        )
     assert subprocess.check_call(("python", "example_script.py")) == 0
+
+    # check also non-zero exit code
+    with pytest.raises(subprocess.CalledProcessError) as exc:
+        assert subprocess.check_call(("python", "example_script.py", "non-zero")) == 1
+
+    assert (
+        str(exc.value) == "Command '('python', 'example_script.py', 'non-zero')' "
+        "returned non-zero exit status 1."
+    )
+
+
+@pytest.mark.parametrize("fake", [True, False])
+def test_call(fake_process, fake):
+    """Prove that check_call() works"""
+    fake_process.allow_unregistered(not fake)
+    if fake:
+        fake_process.register_subprocess(
+            ["python", "example_script.py"], stdout="Stdout line 1\nStdout line 2\n",
+        )
+    assert subprocess.call(("python", "example_script.py")) == 0
+
+
+@pytest.mark.parametrize("fake", [True, False])
+def test_run(fake_process, fake):
+    """Prove that run() works"""
+    fake_process.allow_unregistered(not fake)
+    if fake:
+        fake_process.register_subprocess(
+            ["python", "example_script.py"], stdout="Stdout line 1\nStdout line 2\n",
+        )
+    process = subprocess.run(("python", "example_script.py"))
+
+    assert process
