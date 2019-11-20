@@ -20,6 +20,7 @@ def setup_fake_popen(monkeypatch):
 @pytest.fixture(autouse=True)
 def setup():
     pytest_subprocess.ProcessDispatcher.allow_unregistered(False)
+    os.chdir(os.path.dirname(__file__))
 
 
 def test_not_registered(fake_process, monkeypatch):
@@ -175,3 +176,14 @@ def test_check_output(fake_process, fake):
     process = subprocess.check_output(("python", "example_script.py"))
 
     assert process.splitlines() == [b"Stdout line 1", b"Stdout line 2"]
+
+
+@pytest.mark.parametrize("fake", [True, False])
+def test_check_call(fake_process, fake):
+    """Prove that check_call works"""
+    fake_process.allow_unregistered(not fake)
+    if fake:
+        fake_process.register_subprocess(
+            ["python", "example_script.py"], stdout="Stdout line 1\nStdout line 2\n",
+        )
+    assert subprocess.check_call(("python", "example_script.py")) == 0
