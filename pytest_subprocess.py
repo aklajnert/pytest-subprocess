@@ -128,6 +128,7 @@ class ProcessDispatcher:
     built_in_popen = None
     _allow_unregistered = False
     _cache = dict()
+    _keep_last_process = False
 
     @classmethod
     def register(cls, process):
@@ -173,7 +174,10 @@ class ProcessDispatcher:
 
         process = processes.popleft()
         if not processes and process_instance:
-            del process_instance.processes[command]
+            if cls._keep_last_process:
+                processes.append(process)
+            else:
+                del process_instance.processes[command]
 
         result = FakePopen(**process)
         result.configure(**kwargs)
@@ -183,6 +187,10 @@ class ProcessDispatcher:
     @classmethod
     def allow_unregistered(cls, allow):
         cls._allow_unregistered = allow
+
+    @classmethod
+    def keep_last_process(cls, leave):
+        cls._keep_last_process = leave
 
 
 class IncorrectProcessDefinition(Exception):
@@ -234,6 +242,10 @@ class Process:
 
     def allow_unregistered(cls, allow):
         ProcessDispatcher.allow_unregistered(allow)
+
+    @classmethod
+    def keep_last_process(cls, leave):
+        ProcessDispatcher.keep_last_process(leave)
 
     @classmethod
     def context(cls):

@@ -21,6 +21,7 @@ def setup_fake_popen(monkeypatch):
 @pytest.fixture(autouse=True)
 def setup():
     pytest_subprocess.ProcessDispatcher.allow_unregistered(False)
+    pytest_subprocess.ProcessDispatcher.keep_last_process(False)
     os.chdir(os.path.dirname(__file__))
 
 
@@ -419,3 +420,18 @@ def test_multiple_level_early_consuming(fake_process):
         subprocess.check_call("test")
 
     assert str(exc.value) == "The process 'test' was not registered."
+
+
+def test_keep_last_process(fake_process):
+    """
+    The ProcessNotRegisteredError will never be raised for the process that
+    has been registered at least once.
+    """
+    fake_process.keep_last_process(True)
+    fake_process.register_subprocess("test", stdout="First run")
+    fake_process.register_subprocess("test", stdout="Second run")
+
+    assert subprocess.check_output("test") == b"First run" + os.linesep.encode()
+    assert subprocess.check_output("test") == b"Second run" + os.linesep.encode()
+    assert subprocess.check_output("test") == b"Second run" + os.linesep.encode()
+    assert subprocess.check_output("test") == b"Second run" + os.linesep.encode()
