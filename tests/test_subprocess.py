@@ -358,3 +358,64 @@ def test_different_output_with_context(fake_process):
         subprocess.check_call("test")
 
     assert str(exc.value) == "The process 'test' was not registered."
+
+
+def test_different_output_with_context_multilevel(fake_process):
+    """
+    This is a similar test to the previous one, but here the nesting will be deeper
+    """
+    fake_process.register_subprocess("test", stdout="top-level")
+
+    with fake_process.context() as first_level:
+        first_level.register_subprocess("test", stdout="first-level")
+
+        with fake_process.context() as second_level:
+            second_level.register_subprocess("test", stdout="second-level")
+
+            assert (
+                subprocess.check_output("test") == b"second-level" + os.linesep.encode()
+            )
+            assert (
+                subprocess.check_output("test") == b"first-level" + os.linesep.encode()
+            )
+            assert subprocess.check_output("test") == b"top-level" + os.linesep.encode()
+
+            with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
+                subprocess.check_call("test")
+
+        assert subprocess.check_output("test") == b"first-level" + os.linesep.encode()
+        assert subprocess.check_output("test") == b"top-level" + os.linesep.encode()
+
+        with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
+            subprocess.check_call("test")
+
+        assert str(exc.value) == "The process 'test' was not registered."
+
+    assert subprocess.check_output("test") == b"top-level" + os.linesep.encode()
+
+    with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
+        subprocess.check_call("test")
+
+
+def test_multiple_level_early_consuming(fake_process):
+    """
+    The top-level will be declared with two ocurrences, but the first one will
+    be consumed before entering the context manager.
+    """
+    fake_process.register_subprocess("test", stdout="top-level", occurrences=2)
+    assert subprocess.check_output("test") == b"top-level" + os.linesep.encode()
+
+    with fake_process.context():
+        assert subprocess.check_output("test") == b"top-level" + os.linesep.encode()
+
+        with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
+            subprocess.check_call("test")
+
+        assert str(exc.value) == "The process 'test' was not registered."
+
+    assert subprocess.check_output("test") == b"top-level" + os.linesep.encode()
+
+    with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
+        subprocess.check_call("test")
+
+    assert str(exc.value) == "The process 'test' was not registered."
