@@ -145,9 +145,14 @@ class ProcessDispatcher:
     @classmethod
     def dispatch(cls, command, **kwargs):
         command = _ensure_hashable(command)
-        processes = ChainMap(
-            *(proc.processes for proc in reversed(cls.process_list))
-        ).get(command)
+
+        processes = None
+        process_instance = None
+        for proc in reversed(cls.process_list):
+            processes = proc.processes.get(command)
+            process_instance = proc
+            if processes:
+                break
 
         if not processes:
             if not cls._allow_unregistered:
@@ -160,6 +165,7 @@ class ProcessDispatcher:
                 return cls.built_in_popen(command, **kwargs)
 
         process = processes.popleft()
+        del process_instance.processes[command]
 
         result = FakePopen(**process)
         result.configure(**kwargs)

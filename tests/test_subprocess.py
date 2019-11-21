@@ -32,12 +32,10 @@ def test_multiple_levels(fake_process):
         ("first_command"), stdout="first command top-level"
     )
 
-    with fake_process.context() as fake_process2:
+    with fake_process.context() as nested:
         # lower level, override the same command and define new one
-        fake_process2.register_subprocess(
-            "first_command", stdout="first command lower-level"
-        )
-        fake_process2.register_subprocess(
+        nested.register_subprocess("first_command", stdout="first command lower-level")
+        nested.register_subprocess(
             "second_command", stdout="second command lower-level"
         )
 
@@ -91,8 +89,8 @@ def test_context(fake_process, monkeypatch):
     """Test context manager behavior."""
     setup_fake_popen(monkeypatch)
 
-    with fake_process.context() as context:
-        context.register_subprocess("test")
+    with fake_process.context() as nested:
+        nested.register_subprocess("test")
         subprocess.Popen("test")
 
     with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
@@ -318,3 +316,19 @@ def test_different_output(fake_process):
     # 4-th time shall raise an exception
     with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
         subprocess.check_call("test")
+
+
+def test_different_output_with_context(fake_process):
+    """
+    Leaving one context shall bring back the upper contexts processes
+    even if they were already consumed. This functionality is important
+    to allow a broader-level fixtures that register own processes and keep
+    them predictable.
+    """
+    fake_process.register_subprocess("test", stdout="top-level")
+
+    with fake_process.context() as nested:
+        nested.register_subprocess("test", stdout="nested")
+
+        assert subprocess.check_output("test") == b"nested" + os.linesep.encode()
+        assert subprocess.check_output("test") == b"top-level" + os.linesep.encode()
