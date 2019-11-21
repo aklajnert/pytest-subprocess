@@ -317,6 +317,8 @@ def test_different_output(fake_process):
     with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
         subprocess.check_call("test")
 
+    assert str(exc.value) == "The process 'test' was not registered."
+
 
 def test_different_output_with_context(fake_process):
     """

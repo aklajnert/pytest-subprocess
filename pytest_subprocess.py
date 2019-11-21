@@ -4,7 +4,6 @@ import os
 import subprocess
 import threading
 import time
-from collections import ChainMap
 from collections import defaultdict
 from collections import deque
 
@@ -165,7 +164,8 @@ class ProcessDispatcher:
                 return cls.built_in_popen(command, **kwargs)
 
         process = processes.popleft()
-        del process_instance.processes[command]
+        if not processes and process_instance:
+            del process_instance.processes[command]
 
         result = FakePopen(**process)
         result.configure(**kwargs)

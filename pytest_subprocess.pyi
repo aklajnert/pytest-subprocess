@@ -77,7 +77,7 @@ class ProcessDispatcher:
 class IncorrectProcessDefinition(Exception): ...
 
 class Process:
-    processes: typing.DefaultDict[typing.Deque[typing.Dict]]
+    processes: typing.DefaultDict[str, typing.Deque[typing.Dict]]
     def __init__(self) -> None: ...
     def register_subprocess(
         self,
