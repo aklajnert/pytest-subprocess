@@ -6,6 +6,7 @@ import threading
 import time
 from collections import defaultdict
 from collections import deque
+from copy import deepcopy
 
 import pytest
 
@@ -126,17 +127,24 @@ class ProcessDispatcher:
     process_list = []
     built_in_popen = None
     _allow_unregistered = False
+    _cache = dict()
 
     @classmethod
     def register(cls, process):
         if not cls.process_list:
             cls.built_in_popen = subprocess.Popen
             subprocess.Popen = cls.dispatch
+        cls._cache[process] = {
+            proc: deepcopy(proc.processes) for proc in cls.process_list
+        }
         cls.process_list.append(process)
 
     @classmethod
     def deregister(cls, process):
         cls.process_list.remove(process)
+        cache = cls._cache.pop(process)
+        for proc, processes in cache.items():
+            proc.processes = processes
         if not cls.process_list:
             subprocess.Popen = cls.built_in_popen
             cls.built_in_popen = None

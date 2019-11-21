@@ -61,6 +61,7 @@ class ProcessDispatcher:
     process_list: typing.List["Process"]
     built_in_popen: typing.Optional[typing.Optional[typing.Callable]]
     _allow_unregistered: bool
+    _cache: typing.Dict[Process, typing.Dict[Process, typing.Any]]
     @classmethod
     def register(cls, process: "Process") -> None: ...
     @classmethod

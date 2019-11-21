@@ -334,3 +334,27 @@ def test_different_output_with_context(fake_process):
 
         assert subprocess.check_output("test") == b"nested" + os.linesep.encode()
         assert subprocess.check_output("test") == b"top-level" + os.linesep.encode()
+
+        with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
+            subprocess.check_call("test")
+
+        assert str(exc.value) == "The process 'test' was not registered."
+
+    with fake_process.context() as nested2:
+        # another nest level, the top level shall reappear
+        nested2.register_subprocess("test", stdout="nested2")
+
+        assert subprocess.check_output("test") == b"nested2" + os.linesep.encode()
+        assert subprocess.check_output("test") == b"top-level" + os.linesep.encode()
+
+        with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
+            subprocess.check_call("test")
+
+        assert str(exc.value) == "The process 'test' was not registered."
+
+    assert subprocess.check_output("test") == b"top-level" + os.linesep.encode()
+
+    with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
+        subprocess.check_call("test")
+
+    assert str(exc.value) == "The process 'test' was not registered."
