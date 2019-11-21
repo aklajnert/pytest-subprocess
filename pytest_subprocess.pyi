@@ -6,13 +6,13 @@ import typing
 import pytest  # type: ignore
 
 OPTIONAL_TEXT = typing.Union[str, bytes, None]
-OPTIONAL_TEXT_OR_ITERABLE =  typing.Union[
-        str,
-        bytes,
-        None,
-        typing.List[typing.Union[str, bytes]],
-        typing.Tuple[typing.Union[str, bytes], ...],
-    ]
+OPTIONAL_TEXT_OR_ITERABLE = typing.Union[
+    str,
+    bytes,
+    None,
+    typing.List[typing.Union[str, bytes]],
+    typing.Tuple[typing.Union[str, bytes], ...],
+]
 
 def _ensure_hashable(
     input: typing.Union[typing.List[str], typing.Tuple[str, ...], str]
@@ -37,7 +37,7 @@ class FakePopen:
         returncode: int = 0,
         wait: typing.Optional[float] = None,
         callback: typing.Optional[typing.Callable] = None,
-            **_: typing.Dict[str, typing.Any]
+        **_: typing.Dict[str, typing.Any]
     ) -> None: ...
     def __enter__(self) -> "FakePopen": ...
     def __exit__(self, *args: typing.List, **kwargs: typing.Dict) -> None: ...
@@ -77,7 +77,7 @@ class ProcessDispatcher:
 class IncorrectProcessDefinition(Exception): ...
 
 class Process:
-    processes: typing.Dict[typing.Union[str, typing.Tuple[str, ...]], typing.Dict]
+    processes: typing.DefaultDict[typing.Deque[typing.Dict]]
     def __init__(self) -> None: ...
     def register_subprocess(
         self,
@@ -87,6 +87,7 @@ class Process:
         returncode: int = 0,
         wait: typing.Optional[float] = None,
         callback: typing.Optional[typing.Callable] = None,
+        occurrences: int = 1,
     ) -> None: ...
     def __enter__(self) -> "Process": ...
     def __exit__(self, *args: typing.List, **kwargs: typing.Dict) -> None: ...

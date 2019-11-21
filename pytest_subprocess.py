@@ -4,6 +4,9 @@ import os
 import subprocess
 import threading
 import time
+from collections import ChainMap
+from collections import defaultdict
+from collections import deque
 
 import pytest
 
@@ -142,16 +145,11 @@ class ProcessDispatcher:
     @classmethod
     def dispatch(cls, command, **kwargs):
         command = _ensure_hashable(command)
-        process = next(
-            (
-                proc.processes.get(command)
-                for proc in reversed(cls.process_list)
-                if command in proc.processes
-            ),
-            None,
-        )
+        processes = ChainMap(
+            *(proc.processes for proc in reversed(cls.process_list))
+        ).get(command)
 
-        if process is None:
+        if not processes:
             if not cls._allow_unregistered:
                 raise ProcessNotRegisteredError(
                     "The process '{}' was not registered.".format(
@@ -160,6 +158,8 @@ class ProcessDispatcher:
                 )
             else:
                 return cls.built_in_popen(command, **kwargs)
+
+        process = processes.popleft()
 
         result = FakePopen(**process)
         result.configure(**kwargs)
@@ -179,10 +179,17 @@ class Process:
     """Class responsible for tracking the processes"""
 
     def __init__(self):
-        self.processes = dict()
+        self.processes = defaultdict(deque)
 
     def register_subprocess(
-        self, command, stdout=None, stderr=None, returncode=0, wait=None, callback=None
+        self,
+        command,
+        stdout=None,
+        stderr=None,
+        returncode=0,
+        wait=None,
+        callback=None,
+        occurrences=1,
     ):
         if wait is not None and callback is not None:
             raise IncorrectProcessDefinition(
@@ -190,14 +197,19 @@ class Process:
                 "together. Add sleep() to your callback instead."
             )
         command = _ensure_hashable(command)
-        self.processes[command] = {
-            "command": command,
-            "stdout": stdout,
-            "stderr": stderr,
-            "returncode": returncode,
-            "wait": wait,
-            "callback": callback,
-        }
+        self.processes[command].extend(
+            [
+                {
+                    "command": command,
+                    "stdout": stdout,
+                    "stderr": stderr,
+                    "returncode": returncode,
+                    "wait": wait,
+                    "callback": callback,
+                }
+            ]
+            * occurrences
+        )
 
     def __enter__(self):
         ProcessDispatcher.register(self)

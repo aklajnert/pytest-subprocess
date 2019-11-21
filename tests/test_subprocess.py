@@ -95,9 +95,6 @@ def test_context(fake_process, monkeypatch):
         context.register_subprocess("test")
         subprocess.Popen("test")
 
-        # execute twice to show that the effect doesn't wear off after single use
-        subprocess.Popen("test")
-
     with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
         subprocess.Popen("test")
 
@@ -289,3 +286,17 @@ def test_callback(fake_process, capsys):
 
     assert subprocess.call("test") == 1
     assert "from callback" in capsys.readouterr().out
+
+
+def test_mutiple_occurrences(fake_process):
+    # register 3 occurrences of the same command at once
+    fake_process.register_subprocess("test", occurrences=3)
+
+    assert subprocess.check_call("test") == 0
+    assert subprocess.check_call("test") == 0
+    assert subprocess.check_call("test") == 0
+    # 4-th time shall raise an exception
+    with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
+        subprocess.check_call("test")
+
+    assert str(exc.value) == "The process 'test' was not registered."
