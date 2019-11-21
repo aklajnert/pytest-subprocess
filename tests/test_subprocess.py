@@ -300,3 +300,21 @@ def test_mutiple_occurrences(fake_process):
         subprocess.check_call("test")
 
     assert str(exc.value) == "The process 'test' was not registered."
+
+
+def test_different_output(fake_process):
+    # register process with output changing each execution
+    fake_process.register_subprocess("test", stdout="first execution")
+    fake_process.register_subprocess("test", stdout="second execution")
+    # the third execution will return non-zero exit code
+    fake_process.register_subprocess("test", stdout="third execution", returncode=1)
+
+    assert subprocess.check_output("test") == b"first execution" + os.linesep.encode()
+    assert subprocess.check_output("test") == b"second execution" + os.linesep.encode()
+    third_process = subprocess.run("test", stdout=subprocess.PIPE)
+    assert third_process.stdout == b"third execution" + os.linesep.encode()
+    assert third_process.returncode == 1
+
+    # 4-th time shall raise an exception
+    with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
+        subprocess.check_call("test")
