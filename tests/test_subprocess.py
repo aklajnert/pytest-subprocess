@@ -252,7 +252,7 @@ def test_run(fake_process, fake):
         fake_process.register_subprocess(
             ["python", "example_script.py"], stdout=["Stdout line 1", "Stdout line 2"],
         )
-    process = subprocess.run(("python", "example_script.py"), capture_output=True)
+    process = subprocess.run(("python", "example_script.py"), stdout=subprocess.PIPE)
 
     assert process.returncode == 0
     assert process.stdout == os.linesep.encode().join(
