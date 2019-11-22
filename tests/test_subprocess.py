@@ -201,7 +201,6 @@ def test_wait(fake_process, fake):
 
 @pytest.mark.parametrize("fake", [True, False])
 def test_check_output(fake_process, fake):
-    """Prove that check_output() works"""
     fake_process.allow_unregistered(not fake)
     if fake:
         fake_process.register_subprocess(
@@ -214,7 +213,6 @@ def test_check_output(fake_process, fake):
 
 @pytest.mark.parametrize("fake", [True, False])
 def test_check_call(fake_process, fake):
-    """Prove that check_call() works"""
     fake_process.allow_unregistered(not fake)
     if fake:
         fake_process.register_subprocess(
@@ -238,7 +236,6 @@ def test_check_call(fake_process, fake):
 
 @pytest.mark.parametrize("fake", [True, False])
 def test_call(fake_process, fake):
-    """Prove that check_call() works"""
     fake_process.allow_unregistered(not fake)
     if fake:
         fake_process.register_subprocess(
@@ -249,15 +246,18 @@ def test_call(fake_process, fake):
 
 @pytest.mark.parametrize("fake", [True, False])
 def test_run(fake_process, fake):
-    """Prove that run() works"""
     fake_process.allow_unregistered(not fake)
     if fake:
         fake_process.register_subprocess(
-            ["python", "example_script.py"], stdout="Stdout line 1\nStdout line 2\n",
+            ["python", "example_script.py"], stdout=["Stdout line 1", "Stdout line 2"],
         )
-    process = subprocess.run(("python", "example_script.py"))
+    process = subprocess.run(("python", "example_script.py"), capture_output=True)
 
-    assert process
+    assert process.returncode == 0
+    assert process.stdout == os.linesep.encode().join(
+        [b"Stdout line 1", b"Stdout line 2", b""]
+    )
+    assert process.stderr == b""
 
 
 def test_wrong_arguments(fake_process):
