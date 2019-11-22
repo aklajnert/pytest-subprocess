@@ -177,7 +177,7 @@ class ProcessDispatcher:
             cls.built_in_popen = subprocess.Popen
             subprocess.Popen = cls.dispatch
         cls._cache[process] = {
-            proc: deepcopy(proc.processes) for proc in cls.process_list
+            proc: deepcopy(proc.definitions) for proc in cls.process_list
         }
         cls.process_list.append(process)
 
@@ -186,7 +186,7 @@ class ProcessDispatcher:
         cls.process_list.remove(process)
         cache = cls._cache.pop(process)
         for proc, processes in cache.items():
-            proc.processes = processes
+            proc.definitions = processes
         if not cls.process_list:
             subprocess.Popen = cls.built_in_popen
             cls.built_in_popen = None
@@ -195,20 +195,13 @@ class ProcessDispatcher:
     def dispatch(cls, command, **kwargs):
         command = _ensure_hashable(command)
 
-        processes = None
-        process_instance = None
-        for proc in reversed(cls.process_list):
-            processes = proc.processes.get(command)
-            process_instance = proc
-            if processes:
-                break
+        processes, process_instance = cls._get_process(command)
 
         if not processes:
             if not cls._allow_unregistered:
                 raise ProcessNotRegisteredError(
-                    "The process '{}' was not registered.".format(
-                        command if isinstance(command, str) else " ".join(command)
-                    )
+                    "The process '%s' was not registered."
+                    % (command if isinstance(command, str) else " ".join(command),)
                 )
             else:
                 return cls.built_in_popen(command, **kwargs)
@@ -218,7 +211,7 @@ class ProcessDispatcher:
             if cls._keep_last_process:
                 processes.append(process)
             else:
-                del process_instance.processes[command]
+                del process_instance.definitions[command]
 
         cls._pid += 1
         result = FakePopen(**process)
@@ -226,6 +219,15 @@ class ProcessDispatcher:
         result.configure(**kwargs)
         result.run_thread()
         return result
+
+    @classmethod
+    def _get_process(cls, command):
+        for proc in reversed(cls.process_list):
+            processes = proc.definitions.get(command)
+            process_instance = proc
+            if processes:
+                return processes, process_instance
+        return None, None
 
     @classmethod
     def allow_unregistered(cls, allow):
@@ -240,11 +242,11 @@ class IncorrectProcessDefinition(Exception):
     """Raised when the register_subprocess() has been called with wrong arguments"""
 
 
-class Process:
+class FakeProcess:
     """Class responsible for tracking the processes"""
 
     def __init__(self):
-        self.processes = defaultdict(deque)
+        self.definitions = defaultdict(deque)
 
     def register_subprocess(
         self,
@@ -262,7 +264,7 @@ class Process:
                 "together. Add sleep() to your callback instead."
             )
         command = _ensure_hashable(command)
-        self.processes[command].extend(
+        self.definitions[command].extend(
             [
                 {
                     "command": command,
@@ -297,5 +299,5 @@ class Process:
 
 @pytest.fixture
 def fake_process():
-    with Process() as process:
+    with FakeProcess() as process:
         yield process
