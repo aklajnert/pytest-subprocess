@@ -283,14 +283,24 @@ def test_text(fake_process, fake):
         fake_process.register_subprocess(
             ["python", "example_script.py"], stdout=["Stdout line 1", "Stdout line 2"],
         )
-    process = subprocess.Popen(
-        ("python", "example_script.py"), stdout=subprocess.PIPE, text=True
-    )
-    process.wait()
+    if sys.version_info < (3, 7):
+        with pytest.raises(TypeError) as exc:
+            subprocess.Popen(
+                ("python", "example_script.py"), stdout=subprocess.PIPE, text=True
+            )
+        assert str(exc.value) == "__init__() got an unexpected keyword argument 'text'"
+    else:
+        process = subprocess.Popen(
+            ("python", "example_script.py"), stdout=subprocess.PIPE, text=True
+        )
+        process.wait()
 
-    assert process.stdout.read().splitlines() == ["Stdout line 1", "Stdout line 2"]
+        assert process.stdout.read().splitlines() == ["Stdout line 1", "Stdout line 2"]
 
 
+@pytest.mark.skipif(
+    sys.version_info < (3, 7), "No need to test since 'text' is available since 3.7"
+)
 @pytest.mark.parametrize("fake", [False, True])
 def test_ambiguous_input(fake_process, fake):
     fake_process.allow_unregistered(not fake)

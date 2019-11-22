@@ -2,6 +2,7 @@
 import io
 import os
 import subprocess
+import sys
 import threading
 import time
 from collections import defaultdict
@@ -70,6 +71,9 @@ class FakePopen:
     def configure(self, **kwargs):
         self.__universal_newlines = kwargs.get("universal_newlines", None)
         text = kwargs.get("text", None)
+
+        if text and sys.version_info < (3, 7):
+            raise TypeError("__init__() got an unexpected keyword argument 'text'")
 
         self.text_mode = bool(text or self.__universal_newlines)
 
