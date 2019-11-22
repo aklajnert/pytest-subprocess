@@ -307,9 +307,14 @@ def test_mutiple_occurrences(fake_process):
     # register 3 occurrences of the same command at once
     fake_process.register_subprocess("test", occurrences=3)
 
-    assert subprocess.check_call("test") == 0
-    assert subprocess.check_call("test") == 0
-    assert subprocess.check_call("test") == 0
+    process_1 = subprocess.Popen("test")
+    assert process_1.returncode == 0
+    process_2 = subprocess.Popen("test")
+    assert process_2.returncode == 0
+    assert process_2.pid == process_1.pid + 1
+    process_3 = subprocess.Popen("test")
+    assert process_3.returncode == 0
+    assert process_3.pid == process_2.pid + 1
     # 4-th time shall raise an exception
     with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
         subprocess.check_call("test")

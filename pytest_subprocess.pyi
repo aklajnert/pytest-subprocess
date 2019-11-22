@@ -25,6 +25,7 @@ class FakePopen:
     stderr: BUFFER
     returncode: typing.Optional[int]
     text_mode: bool
+    pid: int
     __stdout: OPTIONAL_TEXT_OR_ITERABLE
     __stderr: OPTIONAL_TEXT_OR_ITERABLE
     __returncode: typing.Optional[int]
@@ -67,6 +68,7 @@ class ProcessDispatcher:
     _allow_unregistered: bool
     _cache: typing.Dict[Process, typing.Dict[Process, typing.Any]]
     _keep_last_process: bool
+    _pid: bool
     @classmethod
     def register(cls, process: "Process") -> None: ...
     @classmethod

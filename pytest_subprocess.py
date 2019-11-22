@@ -24,6 +24,7 @@ class FakePopen:
     stderr = None
     returncode = None
     text_mode = False
+    pid = 0
 
     def __init__(
         self,
@@ -151,6 +152,7 @@ class ProcessDispatcher:
     _allow_unregistered = False
     _cache = dict()
     _keep_last_process = False
+    _pid = 0
 
     @classmethod
     def register(cls, process):
@@ -201,7 +203,9 @@ class ProcessDispatcher:
             else:
                 del process_instance.processes[command]
 
+        cls._pid += 1
         result = FakePopen(**process)
+        result.pid = cls._pid
         result.configure(**kwargs)
         result.run_thread()
         return result
