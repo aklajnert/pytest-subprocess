@@ -299,7 +299,8 @@ def test_text(fake_process, fake):
 
 
 @pytest.mark.skipif(
-    sys.version_info < (3, 7), "No need to test since 'text' is available since 3.7"
+    sys.version_info < (3, 7),
+    reason="No need to test since 'text' is available since 3.7",
 )
 @pytest.mark.parametrize("fake", [False, True])
 def test_ambiguous_input(fake_process, fake):
