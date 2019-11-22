@@ -100,7 +100,7 @@ def test_context(fake_process, monkeypatch):
     assert str(exc.value) == "The process 'test' was not registered."
 
 
-@pytest.mark.parametrize("fake", [True, False])
+@pytest.mark.parametrize("fake", [False, True])
 def test_basic_process(fake_process, fake):
     fake_process.allow_unregistered(not fake)
     if fake:
@@ -120,13 +120,14 @@ def test_basic_process(fake_process, fake):
 
     assert process.poll() == 0
     assert process.returncode == 0
+    assert process.pid > 0
 
     # splitlines is required to ignore differences between LF and CRLF
     assert out.splitlines() == [b"Stdout line 1", b"Stdout line 2"]
     assert err == b""
 
 
-@pytest.mark.parametrize("fake", [True, False])
+@pytest.mark.parametrize("fake", [False, True])
 def test_basic_process_merge_streams(fake_process, fake):
     """Stderr is merged into stdout."""
     fake_process.allow_unregistered(not fake)
@@ -170,7 +171,7 @@ def test_basic_process_merge_streams(fake_process, fake):
     assert err is None
 
 
-@pytest.mark.parametrize("fake", [True, False])
+@pytest.mark.parametrize("fake", [False, True])
 def test_wait(fake_process, fake):
     fake_process.allow_unregistered(not fake)
     if fake:
@@ -199,7 +200,7 @@ def test_wait(fake_process, fake):
     assert process.wait() == 0
 
 
-@pytest.mark.parametrize("fake", [True, False])
+@pytest.mark.parametrize("fake", [False, True])
 def test_check_output(fake_process, fake):
     fake_process.allow_unregistered(not fake)
     if fake:
@@ -211,7 +212,7 @@ def test_check_output(fake_process, fake):
     assert process.splitlines() == [b"Stdout line 1", b"Stdout line 2"]
 
 
-@pytest.mark.parametrize("fake", [True, False])
+@pytest.mark.parametrize("fake", [False, True])
 def test_check_call(fake_process, fake):
     fake_process.allow_unregistered(not fake)
     if fake:
@@ -234,7 +235,7 @@ def test_check_call(fake_process, fake):
         )
 
 
-@pytest.mark.parametrize("fake", [True, False])
+@pytest.mark.parametrize("fake", [False, True])
 def test_call(fake_process, fake):
     fake_process.allow_unregistered(not fake)
     if fake:
@@ -244,7 +245,7 @@ def test_call(fake_process, fake):
     assert subprocess.call(("python", "example_script.py")) == 0
 
 
-@pytest.mark.parametrize("fake", [True, False])
+@pytest.mark.parametrize("fake", [False, True])
 def test_run(fake_process, fake):
     fake_process.allow_unregistered(not fake)
     if fake:
@@ -258,6 +259,21 @@ def test_run(fake_process, fake):
         [b"Stdout line 1", b"Stdout line 2", b""]
     )
     assert process.stderr == b""
+
+
+@pytest.mark.parametrize("fake", [False, True])
+def test_universal_newlines(fake_process, fake):
+    fake_process.allow_unregistered(not fake)
+    if fake:
+        fake_process.register_subprocess(
+            ["python", "example_script.py"], stdout="Stdout line 1\r\nStdout line 2",
+        )
+    process = subprocess.Popen(
+        ("python", "example_script.py"), universal_newlines=True, stdout=subprocess.PIPE
+    )
+    process.wait()
+
+    assert process.stdout.read() == "Stdout line 1\nStdout line 2\n"
 
 
 def test_wrong_arguments(fake_process):

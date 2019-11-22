@@ -13,6 +13,7 @@ OPTIONAL_TEXT_OR_ITERABLE = typing.Union[
     typing.List[typing.Union[str, bytes]],
     typing.Tuple[typing.Union[str, bytes], ...],
 ]
+BUFFER = typing.Union[None, io.BytesIO, io.StringIO]
 
 def _ensure_hashable(
     input: typing.Union[typing.List[str], typing.Tuple[str, ...], str]
@@ -20,9 +21,10 @@ def _ensure_hashable(
 
 class FakePopen:
     args: typing.Union[typing.List[str], typing.Tuple[str, ...], str]
-    stdout: typing.Optional[io.BytesIO]
-    stderr: typing.Optional[io.BytesIO]
+    stdout: BUFFER
+    stderr: BUFFER
     returncode: typing.Optional[int]
+    text_mode: bool
     __stdout: OPTIONAL_TEXT_OR_ITERABLE
     __stderr: OPTIONAL_TEXT_OR_ITERABLE
     __returncode: typing.Optional[int]
@@ -47,13 +49,15 @@ class FakePopen:
     def poll(self) -> None: ...
     def wait(self, timeout: typing.Optional[float] = None) -> int: ...
     def configure(self, **kwargs: typing.Optional[typing.Dict]) -> None: ...
-    @staticmethod
     def _prepare_buffer(
+        self,
         input: typing.Union[str, bytes, None],
-        io_base: typing.Optional[io.BytesIO] = None,
+        io_base: BUFFER = None,
     ) -> io.BytesIO: ...
+    def _convert(self, input: typing.Union[str, bytes]) -> typing.Union[str, bytes]: ...
     def _wait(self, wait_period: float) -> None: ...
     def run_thread(self) -> None: ...
+    def _finish_process(self) -> None: ...
 
 class ProcessNotRegisteredError(Exception): ...
 

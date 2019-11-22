@@ -10,8 +10,6 @@ from copy import deepcopy
 
 import pytest
 
-LINESEP = os.linesep.encode()
-
 
 def _ensure_hashable(input):
     if isinstance(input, list):
@@ -25,6 +23,7 @@ class FakePopen:
     stdout = None
     stderr = None
     returncode = None
+    text_mode = False
 
     def __init__(
         self,
@@ -68,6 +67,10 @@ class FakePopen:
         return self.returncode
 
     def configure(self, **kwargs):
+        universal_newlines = kwargs.get("universal_newlines", False)
+
+        self.text_mode = universal_newlines
+
         if kwargs.get("stdout") == subprocess.PIPE:
             self.stdout = self._prepare_buffer(self.__stdout)
         stderr = kwargs.get("stderr")
@@ -76,42 +79,61 @@ class FakePopen:
         elif stderr == subprocess.PIPE:
             self.stderr = self._prepare_buffer(self.__stderr)
 
-    @staticmethod
-    def _prepare_buffer(input, io_base=None):
+    def _prepare_buffer(self, input, io_base=None):
+        linesep = self._convert(os.linesep)
         if io_base is None:
-            io_base = io.BytesIO()
+            io_base = io.StringIO() if self.text_mode else io.BytesIO()
 
         if input is None:
             return io_base
 
         if isinstance(input, (list, tuple)):
-            input = LINESEP.join(
-                line.encode() if isinstance(line, str) else line for line in input
-            )
+            input = linesep.join(map(self._convert, input))
 
-        if isinstance(input, str):
+        if isinstance(input, str) and not self.text_mode:
             input = input.encode()
 
-        if not input.endswith(LINESEP):
-            input += LINESEP
+        if isinstance(input, bytes) and self.text_mode:
+            input = input.decode()
 
+        if not input.endswith(linesep):
+            input += linesep
+
+        if self.text_mode:
+            input = input.replace("\r\n", "\n")
         io_base.write(input)
         return io_base
+
+    def _convert(self, input):
+        if isinstance(input, bytes) and self.text_mode:
+            return input.decode()
+        if isinstance(input, str) and not self.text_mode:
+            return input.encode()
+        return input
 
     def _wait(self, wait_period):
         time.sleep(wait_period)
         if self.returncode is None:
-            self.returncode = self.__returncode
+            self._finish_process()
 
     def run_thread(self):
         if self.__wait is None and self.__callback is None:
-            self.returncode = self.__returncode
+            self._finish_process()
         else:
             if self.__callback:
                 self.__thread = threading.Thread(target=self.__callback, args=(self,))
             else:
                 self.__thread = threading.Thread(target=self._wait, args=(self.__wait,))
             self.__thread.start()
+
+    def _finish_process(self):
+        self.returncode = self.__returncode
+
+        if self.stdout:
+            self.stdout.seek(0)
+
+        if self.stderr:
+            self.stderr.seek(0)
 
 
 class ProcessNotRegisteredError(Exception):
