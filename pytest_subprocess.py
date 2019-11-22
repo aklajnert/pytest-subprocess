@@ -68,9 +68,22 @@ class FakePopen:
         return self.returncode
 
     def configure(self, **kwargs):
-        universal_newlines = kwargs.get("universal_newlines", False)
+        self.__universal_newlines = kwargs.get("universal_newlines", None)
+        text = kwargs.get("text", None)
 
-        self.text_mode = universal_newlines
+        self.text_mode = bool(text or self.__universal_newlines)
+
+        # validation taken from the real subprocess
+        if (
+            text is not None
+            and self.__universal_newlines is not None
+            and bool(self.__universal_newlines) != bool(text)
+        ):
+            raise subprocess.SubprocessError(
+                "Cannot disambiguate when both text "
+                "and universal_newlines are supplied but "
+                "different. Pass one or the other."
+            )
 
         if kwargs.get("stdout") == subprocess.PIPE:
             self.stdout = self._prepare_buffer(self.__stdout)
@@ -100,7 +113,7 @@ class FakePopen:
         if not input.endswith(linesep):
             input += linesep
 
-        if self.text_mode:
+        if self.text_mode and self.__universal_newlines:
             input = input.replace("\r\n", "\n")
         io_base.write(input)
         return io_base

@@ -30,6 +30,7 @@ class FakePopen:
     __stderr: OPTIONAL_TEXT_OR_ITERABLE
     __returncode: typing.Optional[int]
     __wait: typing.Optional[float]
+    __universal_newlines: typing.Optional[bool]
     __callback: typing.Optional[typing.Optional[typing.Callable]]
     __thread: typing.Optional[threading.Thread]
     def __init__(

@@ -258,7 +258,7 @@ def test_run(fake_process, fake):
     assert process.stdout == os.linesep.encode().join(
         [b"Stdout line 1", b"Stdout line 2", b""]
     )
-    assert process.stderr == b""
+    assert process.stderr is None
 
 
 @pytest.mark.parametrize("fake", [False, True])
@@ -274,6 +274,46 @@ def test_universal_newlines(fake_process, fake):
     process.wait()
 
     assert process.stdout.read() == "Stdout line 1\nStdout line 2\n"
+
+
+@pytest.mark.parametrize("fake", [False, True])
+def test_text(fake_process, fake):
+    fake_process.allow_unregistered(not fake)
+    if fake:
+        fake_process.register_subprocess(
+            ["python", "example_script.py"], stdout=["Stdout line 1", "Stdout line 2"],
+        )
+    process = subprocess.Popen(
+        ("python", "example_script.py"), stdout=subprocess.PIPE, text=True
+    )
+    process.wait()
+
+    assert process.stdout.read().splitlines() == ["Stdout line 1", "Stdout line 2"]
+
+
+@pytest.mark.parametrize("fake", [False, True])
+def test_ambiguous_input(fake_process, fake):
+    fake_process.allow_unregistered(not fake)
+    if fake:
+        fake_process.register_subprocess("test", occurrences=2)
+
+    with pytest.raises(subprocess.SubprocessError) as exc:
+        subprocess.run("test", universal_newlines=False, text=True)
+
+    assert str(exc.value) == (
+        "Cannot disambiguate when both text "
+        "and universal_newlines are supplied but "
+        "different. Pass one or the other."
+    )
+
+    with pytest.raises(subprocess.SubprocessError) as exc:
+        subprocess.run("test", universal_newlines=True, text=False)
+
+    assert str(exc.value) == (
+        "Cannot disambiguate when both text "
+        "and universal_newlines are supplied but "
+        "different. Pass one or the other."
+    )
 
 
 def test_wrong_arguments(fake_process):
