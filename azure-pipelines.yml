@@ -43,7 +43,6 @@ steps:
 
   - script: |
       python -m pip install --upgrade pip tox
-      python -m pip install . pytest-azurepipelines codecov
     displayName: 'Install dependencies'
 
   - script: |
