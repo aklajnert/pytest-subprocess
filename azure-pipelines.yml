@@ -50,3 +50,14 @@ steps:
 - script: |
     tox -e $(tox.env)
   displayName: 'tox -e $(tox.env)'
+
+- task: PublishTestResults@2
+  condition: succeededOrFailed()
+  inputs:
+    testResultsFiles: '**/test-*.xml'
+    testRunTitle: 'Publish test results for Python $(python.version)'
+
+- task: PublishCoverage
+  script: |
+    pip install --user codecov
+    codecov
