@@ -33,6 +33,12 @@ Usage
 After plugin installation, the ``fake_subprocess`` fixture will become available. Use it to register
 subprocess results so you won't need to rely on the real processes.
 
+Basic usage
+===========
+
+The most important method is ``fake_process.register_subprocess()`` which allows to define the fake
+processes behavior.
+
 .. code-block:: python
 
     def test_git(fake_process):
@@ -48,17 +54,68 @@ subprocess results so you won't need to rely on the real processes.
         assert process.returncode == 0
         assert out == "* fake_branch\n  master\n"
 
-By default, when the ``fake_process`` fixture is being used, any attempt to run subprocess that has
-not been registered will raise the ``ProcessNotRegisteredError`` exception. To allow it, use ``fake_process.allow_unregistered(True)``, which will execute
-all unregistered processes with real ``subprocess``, or use ``fake_process.pass_command("command")``
-to allow just a single command.
 
+Unregistered commands
+=====================
+
+By default, when the ``fake_process`` fixture is being used, any attempt to run subprocess that has
+not been registered will raise the ``ProcessNotRegisteredError`` exception. To allow it, use
+``fake_process.allow_unregistered(True)``, which will execute all unregistered processes with
+real ``subprocess``, or use ``fake_process.pass_command("command")`` to allow just a single command.
+
+.. code-block:: python
+
+    def test_real_process(fake_process):
+        with pytest.raises(pytest_subprocess.ProcessNotRegisteredError):
+            # this will fail, as "ls" command is not registered
+            subprocess.call("ls")
+
+        fake_process.pass_command("ls")
+        # now it should be fine
+        assert subprocess.call("ls") == 0
+
+        # allow all commands to be called by real subprocess
+        fake_process.allow_unregistered(True)
+        assert subprocess.call(["ls", "-l"]) == 0
+
+
+Differing results
+=================
 
 Each ``register_subprocess()`` or ``pass_command()`` method call will register only one command
 execution. You can call those methods multiple times, to change the faked output on each subprocess
 run. When you call subprocess more times than registered command, the ``ProcessNotRegisteredError``
 will be raised. To prevent that, call ``fake_process.keep_last_process(True)``, which will keep the
 last registered process forever.
+
+.. code-block:: python
+
+    def test_different_output(fake_process):
+        # register process with output changing each execution
+        fake_process.register_subprocess("test", stdout="first execution")
+        # the second execution will return non-zero exit code
+        fake_process.register_subprocess("test", stdout="second execution", returncode=1)
+
+        assert subprocess.check_output("test") == b"first execution\n"
+        second_process = subprocess.run("test", stdout=subprocess.PIPE)
+        assert second_process.stdout == b"second execution\n"
+        assert second_process.returncode == 1
+
+        # 3rd time shall raise an exception
+        with pytest.raises(pytest_subprocess.ProcessNotRegisteredError):
+            subprocess.check_call("test")
+
+        # now, register two processes once again, but the last one will be kept forever
+        fake_process.register_subprocess("test", stdout="first execution")
+        fake_process.register_subprocess("test", stdout="second execution")
+        fake_process.keep_last_process(True)
+
+        # now the processes can be called forever
+        assert subprocess.check_output("test") == b"first execution\n"
+        assert subprocess.check_output("test") == b"second execution\n"
+        assert subprocess.check_output("test") == b"second execution\n"
+        assert subprocess.check_output("test") == b"second execution\n"
+
 
 Contributing
 ------------

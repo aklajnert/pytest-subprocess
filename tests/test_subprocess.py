@@ -392,6 +392,17 @@ def test_different_output(fake_process):
 
     assert str(exc.value) == "The process 'test' was not registered."
 
+    # now, register two processes once again, but the last one will be kept forever
+    fake_process.register_subprocess("test", stdout="first execution")
+    fake_process.register_subprocess("test", stdout="second execution")
+    fake_process.keep_last_process(True)
+
+    # now the processes can be called forever
+    assert subprocess.check_output("test") == b"first execution" + os.linesep.encode()
+    assert subprocess.check_output("test") == b"second execution" + os.linesep.encode()
+    assert subprocess.check_output("test") == b"second execution" + os.linesep.encode()
+    assert subprocess.check_output("test") == b"second execution" + os.linesep.encode()
+
 
 def test_different_output_with_context(fake_process):
     """
@@ -542,3 +553,18 @@ def test_use_real(fake_process):
         )
         == "Fake line 1\nFake line 2\n"
     )
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Skip on windows")
+def test_real_process(fake_process):
+    with pytest.raises(pytest_subprocess.ProcessNotRegisteredError):
+        # this will fail, as "ls" command is not registered
+        subprocess.call("ls")
+
+    fake_process.pass_command("ls")
+    # now it should be fine
+    assert subprocess.call("ls") == 0
+
+    # allow all commands to be called by real subprocess
+    fake_process.allow_unregistered(True)
+    assert subprocess.call(["ls", "-l"]) == 0
