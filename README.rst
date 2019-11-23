@@ -18,20 +18,6 @@ A plugin to fake subprocess for pytest
 
 ----
 
-This `pytest`_ plugin was generated with `Cookiecutter`_ along with `@hackebrot`_'s `cookiecutter-pytest-plugin`_ template.
-
-
-Features
---------
-
-* TODO
-
-
-Requirements
-------------
-
-* TODO
-
 
 Installation
 ------------
@@ -44,7 +30,35 @@ You can install "pytest-subprocess" via `pip`_ from `PyPI`_::
 Usage
 -----
 
-* TODO
+After plugin installation, the ``fake_subprocess`` fixture will become available. Use it to register
+subprocess results so you won't need to rely on the real processes.
+
+.. code-block:: python
+
+    def test_git(fake_process):
+        fake_process.register_subprocess(
+            ["git", "branch"], stdout=["* fake_branch", "  master"]
+        )
+
+        process = subprocess.Popen(
+            ["git", "branch"], stdout=subprocess.PIPE, universal_newlines=True
+        )
+        out, _ = process.communicate()
+
+        assert process.returncode == 0
+        assert out == "* fake_branch\n  master\n"
+
+By default, when the ``fake_process`` fixture is being used, any attempt to run subprocess that has
+not been registered will raise the ``ProcessNotRegisteredError`` exception. To allow it, use ``fake_process.allow_unregistered(True)``, which will execute
+all unregistered processes with real ``subprocess``, or use ``fake_process.pass_command("command")``
+to allow just a single command.
+
+
+Each ``register_subprocess()`` or ``pass_command()`` method call will register only one command
+execution. You can call those methods multiple times, to change the faked output on each subprocess
+run. When you call subprocess more times than registered command, the ``ProcessNotRegisteredError``
+will be raised. To prevent that, call ``fake_process.keep_last_process(True)``, which will keep the
+last registered process forever.
 
 Contributing
 ------------
@@ -61,6 +75,10 @@ Issues
 ------
 
 If you encounter any problems, please `file an issue`_ along with a detailed description.
+
+----
+
+This `pytest`_ plugin was generated with `Cookiecutter`_ along with `@hackebrot`_'s `cookiecutter-pytest-plugin`_ template.
 
 .. _`Cookiecutter`: https://github.com/audreyr/cookiecutter
 .. _`@hackebrot`: https://github.com/hackebrot
