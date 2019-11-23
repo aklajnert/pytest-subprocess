@@ -1,4 +1,5 @@
 [run]
+source=pytest_subprocess
 
 [report]
 # Regexes for lines to exclude from consideration

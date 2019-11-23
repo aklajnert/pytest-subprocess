@@ -19,8 +19,6 @@ pytest-subprocess
 
 A plugin to fake subprocess for pytest
 
-----
-
 .. contents:: :local:
 
 Installation
