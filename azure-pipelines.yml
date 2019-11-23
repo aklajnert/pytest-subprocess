@@ -4,15 +4,15 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/python
 
 trigger:
-- master
+  - master
 
 pool:
   vmImage: 'ubuntu-latest'
 strategy:
   matrix:
     pypy3:
-       python.version: 'pypy3'
-       tox.env: 'pypy3'
+      python.version: 'pypy3'
+      tox.env: 'pypy3'
     Python35:
       python.version: '3.5'
       tox.env: 'py35'
@@ -26,8 +26,8 @@ strategy:
       python.version: '3.8'
       tox.env: 'py38'
     Linting:
-        python.version: '3.7'
-        tox.env: 'flake8'
+      python.version: '3.7'
+      tox.env: 'flake8'
     mypy:
       python.version: '3.7'
       tox.env: 'mypy'
@@ -36,28 +36,28 @@ strategy:
       tox.env: 'retype'
 
 steps:
-- task: UsePythonVersion@0
-  inputs:
-    versionSpec: '$(python.version)'
-  displayName: 'Use Python $(python.version)'
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+    displayName: 'Use Python $(python.version)'
 
-- script: |
-    python -m pip install --upgrade pip tox
-    pip install .[dev]
-    pip install pytest-azurepipelines
-  displayName: 'Install dependencies'
+  - script: |
+      python -m pip install --upgrade pip tox
+      pip install .[dev]
+      pip install pytest-azurepipelines
+    displayName: 'Install dependencies'
 
-- script: |
-    tox -e $(tox.env)
-  displayName: 'tox -e $(tox.env)'
+  - script: |
+      tox -e $(tox.env)
+    displayName: 'tox -e $(tox.env)'
 
-- task: PublishTestResults@2
-  condition: succeededOrFailed()
-  inputs:
-    testResultsFiles: '**/test-*.xml'
-    testRunTitle: 'Publish test results for Python $(python.version)'
+  - task: PublishTestResults@2
+    condition: succeededOrFailed()
+    inputs:
+      testResultsFiles: '**/test-*.xml'
+      testRunTitle: 'Publish test results for Python $(python.version)'
 
-- task: PublishCoverage
-  script: |
-    pip install --user codecov
-    codecov
+  - task: PublishCoverage
+      - script: |
+        pip install --user codecov
+        codecov
