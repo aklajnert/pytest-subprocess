@@ -14,6 +14,9 @@ pytest-subprocess
     :target: https://dev.azure.com/aklajnert/pytest-subprocess/_build/latest?definitionId=6&branchName=master
     :alt: See Build Status on Azure Pipelines
 
+.. image:: https://codecov.io/gh/aklajnert/pytest-subprocess/branch/master/graph/badge.svg?token=JAU1cGoYL8
+  :target: https://codecov.io/gh/aklajnert/pytest-subprocess
+
 A plugin to fake subprocess for pytest
 
 ----
