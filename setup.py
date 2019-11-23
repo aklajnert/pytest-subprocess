@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
-import os
 import codecs
+import os
+
+from setuptools import find_packages
 from setuptools import setup
 
 
@@ -25,6 +26,7 @@ setup(
     py_modules=["pytest_subprocess"],
     python_requires=">=3.5",
     install_requires=["pytest>=4.0.0"],
+    packages=find_packages(exclude=["docs", "tests"]),
     classifiers=[
         "Development Status :: 4 - Beta",
         "Framework :: Pytest",
@@ -42,5 +44,5 @@ setup(
         "Operating System :: OS Independent",
         "License :: OSI Approved :: MIT License",
     ],
-    entry_points={"pytest11": ["subprocess = pytest_subprocess",],},
+    entry_points={"pytest11": ["subprocess = pytest_subprocess.fixtures",],},
 )

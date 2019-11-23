@@ -12,7 +12,7 @@ import pytest_subprocess
 def setup_fake_popen(monkeypatch):
     """Set the real Popen to a dummy function that just returns input arguments."""
     monkeypatch.setattr(
-        pytest_subprocess.ProcessDispatcher,
+        pytest_subprocess.core.ProcessDispatcher,
         "built_in_popen",
         lambda command, *args, **kwargs: (command, args, kwargs),
     )
@@ -20,8 +20,8 @@ def setup_fake_popen(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def setup():
-    pytest_subprocess.ProcessDispatcher.allow_unregistered(False)
-    pytest_subprocess.ProcessDispatcher.keep_last_process(False)
+    pytest_subprocess.core.ProcessDispatcher.allow_unregistered(False)
+    pytest_subprocess.core.ProcessDispatcher.keep_last_process(False)
     os.chdir(os.path.dirname(__file__))
 
 
@@ -281,7 +281,8 @@ def test_text(fake_process, fake):
     fake_process.allow_unregistered(not fake)
     if fake:
         fake_process.register_subprocess(
-            ["python", "example_script.py"], stdout=["Stdout line 1", "Stdout line 2"],
+            ["python", "example_script.py"],
+            stdout=[b"Stdout line 1", b"Stdout line 2"],
         )
     if sys.version_info < (3, 7):
         with pytest.raises(TypeError) as exc:

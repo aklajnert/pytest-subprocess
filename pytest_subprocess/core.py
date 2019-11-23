@@ -9,8 +9,6 @@ from collections import defaultdict
 from collections import deque
 from copy import deepcopy
 
-import pytest
-
 
 def _ensure_hashable(input):
     if isinstance(input, list):
@@ -339,9 +337,3 @@ class FakeProcess:
     def context(cls):
         """Return a new FakeProcess instance to use it as a context manager."""
         return cls()
-
-
-@pytest.fixture
-def fake_process():
-    with FakeProcess() as process:
-        yield process
