@@ -568,3 +568,20 @@ def test_real_process(fake_process):
     # allow all commands to be called by real subprocess
     fake_process.allow_unregistered(True)
     assert subprocess.call(["ls", "-l"]) == 0
+
+
+def test_context_manager(fake_process):
+    with pytest.raises(pytest_subprocess.ProcessNotRegisteredError):
+        # command not registered, so will raise an exception
+        subprocess.check_call("test")
+
+    with fake_process.context() as nested_process:
+        nested_process.register_subprocess("test", occurrences=3)
+        # now, we can call the command 3 times without error
+        assert subprocess.check_call("test") == 0
+        assert subprocess.check_call("test") == 0
+
+    # the command was called 2 times, so one occurrence left, but since the
+    # context manager has been left, it is not registered anymore
+    with pytest.raises(pytest_subprocess.ProcessNotRegisteredError):
+        subprocess.check_call("test")
