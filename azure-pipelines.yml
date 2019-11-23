@@ -6,9 +6,6 @@
 trigger:
 - master
 
-variables:
-  CODECOV_TOKEN: "4defc5a1-d45b-4536-a6ba-426802fa181e"
-
 pool:
   vmImage: 'ubuntu-latest'
 strategy:
@@ -47,6 +44,7 @@ steps:
 - script: |
     python -m pip install --upgrade pip tox
     pip install .[dev]
+    pip install pytest-azurepipelines
   displayName: 'Install dependencies'
 
 - script: |
