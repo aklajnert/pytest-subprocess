@@ -27,6 +27,7 @@ setup(
     python_requires=">=3.5",
     install_requires=["pytest>=4.0.0"],
     packages=find_packages(exclude=["docs", "tests"]),
+    package_data={"pytest_subprocess": ["py.typed", "core.pyi", "fixtures.pyi",]},
     classifiers=[
         "Development Status :: 4 - Beta",
         "Framework :: Pytest",
