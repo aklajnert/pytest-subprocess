@@ -43,13 +43,14 @@ steps:
 
   - script: |
       python -m pip install --upgrade pip tox
-      pip install .[dev]
-      pip install pytest-azurepipelines codecov
+      pip install pytest-azurepipelines
+      pip install codecov
+      pip install .
     displayName: 'Install dependencies'
 
   - script: |
       tox -e $(tox.env)
-      codecov
+      codecov -t $(CODECOV_TOKEN)
     displayName: 'tox -e $(tox.env)'
 
   - task: PublishTestResults@2
@@ -58,4 +59,4 @@ steps:
       testResultsFiles: '**/test-*.xml'
       testRunTitle: 'Publish test results for Python $(python.version)'
 
-      
+
