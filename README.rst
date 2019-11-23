@@ -18,6 +18,7 @@ A plugin to fake subprocess for pytest
 
 ----
 
+.. contents:: :local:
 
 Installation
 ------------
@@ -115,6 +116,32 @@ last registered process forever.
         assert subprocess.check_output("test") == b"second execution\n"
         assert subprocess.check_output("test") == b"second execution\n"
         assert subprocess.check_output("test") == b"second execution\n"
+
+
+As a context manager
+====================
+
+The ``fake_process`` fixture provides ``context()`` method that allows to use it as a context manager.
+It can be used to limit the scope when a certain command is allowed, e.g. to make sure that the code
+doesn't want to execute it somewhere else.
+
+.. code-block:: python
+
+    def test_context_manager(fake_process):
+        with pytest.raises(pytest_subprocess.ProcessNotRegisteredError):
+            # command not registered, so will raise an exception
+            subprocess.check_call("test")
+
+        with fake_process.context() as nested_process:
+            nested_process.register_subprocess("test", occurrences=3)
+            # now, we can call the command 3 times without error
+            assert subprocess.check_call("test") == 0
+            assert subprocess.check_call("test") == 0
+
+        # the command was called 2 times, so one occurrence left, but since the
+        # context manager has been left, it is not registered anymore
+        with pytest.raises(pytest_subprocess.ProcessNotRegisteredError):
+            subprocess.check_call("test")
 
 
 Contributing
