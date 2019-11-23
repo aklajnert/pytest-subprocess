@@ -507,3 +507,37 @@ def test_keep_last_process(fake_process):
     assert subprocess.check_output("test") == b"Second run" + os.linesep.encode()
     assert subprocess.check_output("test") == b"Second run" + os.linesep.encode()
     assert subprocess.check_output("test") == b"Second run" + os.linesep.encode()
+
+
+def test_git(fake_process):
+    fake_process.register_subprocess(
+        ["git", "branch"], stdout=["* fake_branch", "  master"]
+    )
+
+    process = subprocess.Popen(
+        ["git", "branch"], stdout=subprocess.PIPE, universal_newlines=True
+    )
+    out, _ = process.communicate()
+
+    assert process.returncode == 0
+    assert out == "* fake_branch\n  master\n"
+
+
+def test_use_real(fake_process):
+    fake_process.pass_command(["python", "example_script.py"])
+    fake_process.register_subprocess(
+        ["python", "example_script.py"], stdout="Fake line 1\nFake line 2"
+    )
+
+    assert (
+        subprocess.check_output(
+            ["python", "example_script.py"], universal_newlines=True
+        )
+        == "Stdout line 1\nStdout line 2\n"
+    )
+    assert (
+        subprocess.check_output(
+            ["python", "example_script.py"], universal_newlines=True
+        )
+        == "Fake line 1\nFake line 2\n"
+    )

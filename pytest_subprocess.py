@@ -214,6 +214,9 @@ class ProcessDispatcher:
                 del process_instance.definitions[command]
 
         cls._pid += 1
+        if process is True:
+            return cls.built_in_popen(command, **kwargs)
+
         result = FakePopen(**process)
         result.pid = cls._pid
         result.configure(**kwargs)
@@ -277,6 +280,16 @@ class FakeProcess:
             ]
             * occurrences
         )
+
+    def pass_command(self, command):
+        """
+        Allow to use a real subprocess together with faked ones.
+
+        Args:
+            command: allow to execute the supplied command
+        """
+        command = _ensure_hashable(command)
+        self.definitions[command].append(True)
 
     def __enter__(self):
         ProcessDispatcher.register(self)
