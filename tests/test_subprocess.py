@@ -266,7 +266,7 @@ def test_universal_newlines(fake_process, fake):
     fake_process.allow_unregistered(not fake)
     if fake:
         fake_process.register_subprocess(
-            ["python", "example_script.py"], stdout="Stdout line 1\r\nStdout line 2",
+            ["python", "example_script.py"], stdout=b"Stdout line 1\r\nStdout line 2",
         )
     process = subprocess.Popen(
         ("python", "example_script.py"), universal_newlines=True, stdout=subprocess.PIPE
