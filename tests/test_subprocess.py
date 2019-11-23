@@ -524,17 +524,18 @@ def test_git(fake_process):
 
 
 def test_use_real(fake_process):
-    fake_process.pass_command(["python", "example_script.py"])
+    fake_process.pass_command(["python", "example_script.py"], occurrences=3)
     fake_process.register_subprocess(
         ["python", "example_script.py"], stdout="Fake line 1\nFake line 2"
     )
 
-    assert (
-        subprocess.check_output(
-            ["python", "example_script.py"], universal_newlines=True
+    for _ in range(0, 3):
+        assert (
+            subprocess.check_output(
+                ["python", "example_script.py"], universal_newlines=True
+            )
+            == "Stdout line 1\nStdout line 2\n"
         )
-        == "Stdout line 1\nStdout line 2\n"
-    )
     assert (
         subprocess.check_output(
             ["python", "example_script.py"], universal_newlines=True

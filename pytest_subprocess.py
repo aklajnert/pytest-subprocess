@@ -261,6 +261,18 @@ class FakeProcess:
         callback=None,
         occurrences=1,
     ):
+        """
+        Main method for registering the subprocess instances.
+
+        Args:
+            command: register the command that will be faked
+            stdout: value of the standard output
+            stderr: value of the error output
+            returncode: return code of the faked process
+            wait: artificially wait for the process to finish
+            callback: function that will be executed instead of the process
+            occurrences: allow multiple usages of the same command
+        """
         if wait is not None and callback is not None:
             raise IncorrectProcessDefinition(
                 "The 'callback' and 'wait' arguments cannot be used "
@@ -281,15 +293,16 @@ class FakeProcess:
             * occurrences
         )
 
-    def pass_command(self, command):
+    def pass_command(self, command, occurrences=1):
         """
         Allow to use a real subprocess together with faked ones.
 
         Args:
             command: allow to execute the supplied command
+            occurrences: allow multiple usages of the same command
         """
         command = _ensure_hashable(command)
-        self.definitions[command].append(True)
+        self.definitions[command].extend([True] * occurrences)
 
     def __enter__(self):
         ProcessDispatcher.register(self)
