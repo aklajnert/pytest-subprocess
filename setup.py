@@ -14,7 +14,7 @@ def read(fname):
 
 setup(
     name="pytest-subprocess",
-    version="0.1.0",
+    version="0.1.1",
     author="Andrzej Klajnert",
     author_email="python@aklajnert.pl",
     maintainer="Andrzej Klajnert",
@@ -24,7 +24,7 @@ setup(
     description="A plugin to fake subprocess for pytest",
     long_description=read("README.rst"),
     py_modules=["pytest_subprocess"],
-    python_requires=">=3.5",
+    python_requires=">=3.4",
     install_requires=["pytest>=4.0.0"],
     packages=find_packages(exclude=["docs", "tests"]),
     package_data={"pytest_subprocess": ["py.typed", "core.pyi", "fixtures.pyi",]},

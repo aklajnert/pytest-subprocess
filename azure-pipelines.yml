@@ -13,6 +13,9 @@ strategy:
     pypy3:
       python.version: 'pypy3'
       tox.env: 'pypy3'
+    Python34:
+      python.version: '3.4'
+      tox.env: 'py34'
     Python35:
       python.version: '3.5'
       tox.env: 'py35'
