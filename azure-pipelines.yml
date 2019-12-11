@@ -50,7 +50,7 @@ steps:
       set -x
       sudo add-apt-repository ppa:deadsnakes
       sudo apt-get update
-      sudo apt-get install -y --no-install-recommends python$(python.version)-dev python3-distutils
+      sudo apt-get install -y --no-install-recommends python$(python.version)-dev python$(python.version)-venv
       wget https://bootstrap.pypa.io/get-pip.py -O /tmp/get-pip.py
       sudo python$(python.version) /tmp/get-pip.py
       sudo chmod -R 777 /usr/local
