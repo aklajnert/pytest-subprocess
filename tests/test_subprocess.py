@@ -246,6 +246,9 @@ def test_call(fake_process, fake):
 
 
 @pytest.mark.parametrize("fake", [False, True])
+@pytest.mark.skipif(
+    sys.version_info <= (3, 5), reason="subprocess.run() was introduced in python3.4",
+)
 def test_run(fake_process, fake):
     fake_process.allow_unregistered(not fake)
     if fake:
@@ -383,8 +386,8 @@ def test_different_output(fake_process):
 
     assert subprocess.check_output("test") == b"first execution" + os.linesep.encode()
     assert subprocess.check_output("test") == b"second execution" + os.linesep.encode()
-    third_process = subprocess.run("test", stdout=subprocess.PIPE)
-    assert third_process.stdout == b"third execution" + os.linesep.encode()
+    third_process = subprocess.Popen("test", stdout=subprocess.PIPE)
+    assert third_process.stdout.read() == b"third execution" + os.linesep.encode()
     assert third_process.returncode == 1
 
     # 4-th time shall raise an exception
