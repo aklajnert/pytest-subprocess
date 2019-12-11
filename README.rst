@@ -40,7 +40,7 @@ subprocess results so you won't need to rely on the real processes. The plugin h
 Basic usage
 ===========
 
-The most important method is ``fake_process.register_subprocess()`` which allows to define the fake
+The most important method is ``fake_process.register_subprocess()`` which allows defining the fake
 processes behavior.
 
 .. code-block:: python
@@ -62,7 +62,7 @@ processes behavior.
 Passing input
 =============
 
-By default, if you use ``input`` argument to the ``Popen.communicate()`` method, it won't crash, but
+By default, if you use ``input`` argument to the ``Popen.communicate()`` method, it won't crash, but also
 won't do anything useful. By passing a function as ``stdin_callable`` argument for the
 ``fake_process.register_subprocess()`` method you can specify the behavior based on the input. The function
 shall accept one argument, which will be the input data. If the function will return a dictionary with
@@ -150,7 +150,7 @@ last registered process forever.
 As a context manager
 ====================
 
-The ``fake_process`` fixture provides ``context()`` method that allows to use it as a context manager.
+The ``fake_process`` fixture provides ``context()`` method that allows us to use it as a context manager.
 It can be used to limit the scope when a certain command is allowed, e.g. to make sure that the code
 doesn't want to execute it somewhere else.
 
