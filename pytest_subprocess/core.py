@@ -33,6 +33,7 @@ class FakePopen:
         returncode=0,
         wait=None,
         callback=None,
+        stdin_callable=None,
         **_
     ):
         self.args = command
@@ -42,6 +43,7 @@ class FakePopen:
         self.__wait = wait
         self.__thread = None
         self.__callback = callback
+        self.__stdin_callable = stdin_callable
 
     def __enter__(self):
         return self
@@ -50,10 +52,25 @@ class FakePopen:
         pass
 
     def communicate(self, input=None, timeout=None):
+        if input and self.__stdin_callable:
+            callable_output = self.__stdin_callable(input)
+            if isinstance(callable_output, dict):
+                self.stdout = self._extend_stream_from_dict(
+                    callable_output, "stdout", self.stdout
+                )
+                self.stderr = self._extend_stream_from_dict(
+                    callable_output, "stderr", self.stderr
+                )
+
         return (
             self.stdout.getvalue() if self.stdout else None,
             self.stderr.getvalue() if self.stderr else None,
         )
+
+    def _extend_stream_from_dict(self, dictionary, key, stream):
+        data = dictionary.get(key)
+        if data:
+            return self._prepare_buffer(input=data, io_base=stream)
 
     def poll(self):
         return self.returncode
@@ -98,8 +115,6 @@ class FakePopen:
 
     def _prepare_buffer(self, input, io_base=None):
         linesep = self._convert(os.linesep)
-        if io_base is None:
-            io_base = io.StringIO() if self.text_mode else io.BytesIO()
 
         if input is None:
             return io_base
@@ -118,6 +133,11 @@ class FakePopen:
 
         if self.text_mode and self.__universal_newlines:
             input = input.replace("\r\n", "\n")
+
+        if io_base is not None:
+            input = io_base.getvalue() + input
+
+        io_base = io.StringIO() if self.text_mode else io.BytesIO()
         io_base.write(input)
         return io_base
 
@@ -261,6 +281,7 @@ class FakeProcess:
         wait=None,
         callback=None,
         occurrences=1,
+        stdin_callable=None,
     ):
         """
         Main method for registering the subprocess instances.
@@ -289,6 +310,7 @@ class FakeProcess:
                     "returncode": returncode,
                     "wait": wait,
                     "callback": callback,
+                    "stdin_callable": stdin_callable,
                 }
             ]
             * occurrences
