@@ -247,7 +247,7 @@ def test_call(fake_process, fake):
 
 @pytest.mark.parametrize("fake", [False, True])
 @pytest.mark.skipif(
-    sys.version_info >= (3, 5), reason="subprocess.run() was introduced in python3.4",
+    sys.version_info <= (3, 5), reason="subprocess.run() was introduced in python3.4",
 )
 def test_run(fake_process, fake):
     fake_process.allow_unregistered(not fake)
