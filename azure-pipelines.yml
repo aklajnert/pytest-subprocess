@@ -65,8 +65,11 @@ steps:
 
   - script: |
       tox -e $(tox.env)
-      codecov -t $(CODECOV_TOKEN)
     displayName: 'tox -e $(tox.env)'
+
+  - script: |
+      codecov -t $(CODECOV_TOKEN)
+    displayName: 'publish coverage'
 
   - task: PublishTestResults@2
     condition: succeededOrFailed()
