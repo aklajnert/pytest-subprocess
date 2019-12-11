@@ -116,9 +116,6 @@ class FakePopen:
     def _prepare_buffer(self, input, io_base=None):
         linesep = self._convert(os.linesep)
 
-        if input is None:
-            return io_base
-
         if isinstance(input, (list, tuple)):
             input = linesep.join(map(self._convert, input))
 
@@ -128,16 +125,20 @@ class FakePopen:
         if isinstance(input, bytes) and self.text_mode:
             input = input.decode()
 
-        if not input.endswith(linesep):
-            input += linesep
-
-        if self.text_mode and self.__universal_newlines:
-            input = input.replace("\r\n", "\n")
+        if input:
+            if not input.endswith(linesep):
+                input += linesep
+            if self.text_mode and self.__universal_newlines:
+                input = input.replace("\r\n", "\n")
 
         if io_base is not None:
             input = io_base.getvalue() + input
 
         io_base = io.StringIO() if self.text_mode else io.BytesIO()
+
+        if input is None:
+            return io_base
+
         io_base.write(input)
         return io_base
 
