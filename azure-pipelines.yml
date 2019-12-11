@@ -61,7 +61,7 @@ steps:
     displayName: Install Python $(python.version) from the deadsnakes PPA for tests.
 
   - script: |
-      python -m pip install --upgrade pip tox codecov
+      python3 -m pip install --upgrade pip tox codecov
     displayName: 'Install dependencies'
 
   - script: |
