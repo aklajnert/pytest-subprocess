@@ -32,6 +32,7 @@ class FakePopen:
     __wait: typing.Optional[float]
     __universal_newlines: typing.Optional[bool]
     __callback: typing.Optional[typing.Optional[typing.Callable]]
+    __stdin_callable: typing.Optional[typing.Optional[typing.Callable]]
     __thread: typing.Optional[threading.Thread]
 
     def __init__(
@@ -42,6 +43,7 @@ class FakePopen:
             returncode: int = 0,
             wait: typing.Optional[float] = None,
             callback: typing.Optional[typing.Callable] = None,
+            stdin_callable: typing.Optional[typing.Callable] = None,
             **_: typing.Dict[str, typing.Any]
     ) -> None: ...
 
@@ -52,6 +54,9 @@ class FakePopen:
     def communicate(
             self, input: OPTIONAL_TEXT = ..., timeout: typing.Optional[float] = ...,
     ) -> typing.Tuple[typing.Any, typing.Any]: ...
+
+    def _extend_stream_from_dict(self, dictionary: typing.Dict[str, typing.Any], key: str,
+                                 stream: BUFFER) -> BUFFER: ...
 
     def poll(self) -> None: ...
 
@@ -125,6 +130,7 @@ class FakeProcess:
             wait: typing.Optional[float] = None,
             callback: typing.Optional[typing.Callable] = None,
             occurrences: int = 1,
+            stdin_callable: typing.Optional[typing.Callable] = None,
     ) -> None: ...
 
     def pass_command(self, command: typing.Union[typing.List[str], typing.Tuple[str, ...], str],

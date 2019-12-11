@@ -40,7 +40,7 @@ subprocess results so you won't need to rely on the real processes. The plugin h
 Basic usage
 ===========
 
-The most important method is ``fake_process.register_subprocess()`` which allows to define the fake
+The most important method is ``fake_process.register_subprocess()`` which allows defining the fake
 processes behavior.
 
 .. code-block:: python
@@ -57,6 +57,32 @@ processes behavior.
 
         assert process.returncode == 0
         assert out == "* fake_branch\n  master\n"
+
+
+Passing input
+=============
+
+By default, if you use ``input`` argument to the ``Popen.communicate()`` method, it won't crash, but also
+won't do anything useful. By passing a function as ``stdin_callable`` argument for the
+``fake_process.register_subprocess()`` method you can specify the behavior based on the input. The function
+shall accept one argument, which will be the input data. If the function will return a dictionary with
+``stdout`` or ``stderr`` keys, its value will be appended to according stream.
+
+.. code-block:: python
+
+    def stdin_function(input):
+        return {"stdout": "This input was added: {data}".format(data=input.decode())}
+
+
+    fake_process.register_subprocess(
+        ["command"], stdout=[b"Just stdout"], stdin_callable=stdin_function,
+    )
+
+    process = subprocess.Popen(["command"], stdin=subprocess.PIPE, stdout=subprocess.PIPE,)
+    out, _ = process.communicate(input=b"sample input")
+
+    assert out.splitlines() == [b"Just stdout", b"This input was added: sample input"]
+
 
 
 Unregistered commands
@@ -124,7 +150,7 @@ last registered process forever.
 As a context manager
 ====================
 
-The ``fake_process`` fixture provides ``context()`` method that allows to use it as a context manager.
+The ``fake_process`` fixture provides ``context()`` method that allows us to use it as a context manager.
 It can be used to limit the scope when a certain command is allowed, e.g. to make sure that the code
 doesn't want to execute it somewhere else.
 

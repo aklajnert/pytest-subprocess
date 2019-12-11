@@ -302,6 +302,39 @@ def test_text(fake_process, fake):
         assert process.stdout.read().splitlines() == ["Stdout line 1", "Stdout line 2"]
 
 
+@pytest.mark.parametrize("fake", [False, True])
+def test_input(fake_process, fake):
+    fake_process.allow_unregistered(not fake)
+    if fake:
+
+        def stdin_callable(input):
+            return {
+                "stdout": "Provide an input: Provided: {data}".format(
+                    data=input.decode()
+                )
+            }
+
+        fake_process.register_subprocess(
+            ["python", "example_script.py", "input"],
+            stdout=[b"Stdout line 1", b"Stdout line 2"],
+            stdin_callable=stdin_callable,
+        )
+
+    process = subprocess.Popen(
+        ("python", "example_script.py", "input"),
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+    )
+    out, err = process.communicate(input=b"test")
+
+    assert out.splitlines() == [
+        b"Stdout line 1",
+        b"Stdout line 2",
+        b"Provide an input: Provided: test",
+    ]
+    assert err is None
+
+
 @pytest.mark.skipif(
     sys.version_info < (3, 7),
     reason="No need to test since 'text' is available since 3.7",
