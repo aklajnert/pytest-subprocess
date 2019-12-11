@@ -56,12 +56,11 @@ steps:
       wget https://bootstrap.pypa.io/get-pip.py -O /tmp/get-pip.py
       sudo python$(python.version) /tmp/get-pip.py
       sudo chmod -R 777 /usr/local
-      pip install wheel
     condition: in(variables['python.version'], '3.4')
     displayName: Install Python $(python.version) from the deadsnakes PPA for tests.
 
   - script: |
-      python3 -m pip install --upgrade pip tox codecov
+      pip install --upgrade pip tox codecov
     displayName: 'Install dependencies'
 
   - script: |
