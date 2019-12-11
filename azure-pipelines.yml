@@ -50,10 +50,13 @@ steps:
       set -x
       sudo add-apt-repository ppa:deadsnakes
       sudo apt-get update
-      sudo apt-get install -y --no-install-recommends python$(python.version)-dev python$(python.version)-venv
+      sudo apt-get install -y --no-install-recommends python$(python.version)-dev
+      sudo apt-get install -y --no-install-recommends python$(python.version)-venv
+      sudo apt-get install -y --no-install-recommends python$(python.version)-distutils
       wget https://bootstrap.pypa.io/get-pip.py -O /tmp/get-pip.py
       sudo python$(python.version) /tmp/get-pip.py
       sudo chmod -R 777 /usr/local
+      pip install wheel
     condition: in(variables['python.version'], '3.4')
     displayName: Install Python $(python.version) from the deadsnakes PPA for tests.
 
