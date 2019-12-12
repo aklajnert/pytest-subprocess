@@ -75,7 +75,7 @@ steps:
     displayName: 'publish coverage'
 
   - task: PublishTestResults@2
-    condition: succeededOrFailed()
+    condition: and(succeededOrFailed(), not(in(variables['python.version'], '3.9')))
     inputs:
       testResultsFiles: '**/test-*.xml'
       testRunTitle: 'Publish test results for Python $(python.version)'
