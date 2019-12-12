@@ -73,9 +73,10 @@ steps:
   - script: |
       codecov -t $(CODECOV_TOKEN)
     displayName: 'publish coverage'
+    condition: not(in(variables['python.version'], '3.9'))
 
   - task: PublishTestResults@2
-    condition: and(succeededOrFailed(), not(in(variables['python.version'], '3.9')))
+    condition: succeededOrFailed()
     inputs:
       testResultsFiles: '**/test-*.xml'
       testRunTitle: 'Publish test results for Python $(python.version)'
