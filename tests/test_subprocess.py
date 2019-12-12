@@ -246,6 +246,9 @@ def test_call(fake_process, fake):
 
 
 @pytest.mark.parametrize("fake", [False, True])
+@pytest.mark.skipif(
+    sys.version_info <= (3, 5), reason="subprocess.run() was introduced in python3.4",
+)
 def test_run(fake_process, fake):
     fake_process.allow_unregistered(not fake)
     if fake:
@@ -297,6 +300,39 @@ def test_text(fake_process, fake):
         process.wait()
 
         assert process.stdout.read().splitlines() == ["Stdout line 1", "Stdout line 2"]
+
+
+@pytest.mark.parametrize("fake", [False, True])
+def test_input(fake_process, fake):
+    fake_process.allow_unregistered(not fake)
+    if fake:
+
+        def stdin_callable(input):
+            return {
+                "stdout": "Provide an input: Provided: {data}".format(
+                    data=input.decode()
+                )
+            }
+
+        fake_process.register_subprocess(
+            ["python", "example_script.py", "input"],
+            stdout=[b"Stdout line 1", b"Stdout line 2"],
+            stdin_callable=stdin_callable,
+        )
+
+    process = subprocess.Popen(
+        ("python", "example_script.py", "input"),
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+    )
+    out, err = process.communicate(input=b"test")
+
+    assert out.splitlines() == [
+        b"Stdout line 1",
+        b"Stdout line 2",
+        b"Provide an input: Provided: test",
+    ]
+    assert err is None
 
 
 @pytest.mark.skipif(
@@ -383,8 +419,8 @@ def test_different_output(fake_process):
 
     assert subprocess.check_output("test") == b"first execution" + os.linesep.encode()
     assert subprocess.check_output("test") == b"second execution" + os.linesep.encode()
-    third_process = subprocess.run("test", stdout=subprocess.PIPE)
-    assert third_process.stdout == b"third execution" + os.linesep.encode()
+    third_process = subprocess.Popen("test", stdout=subprocess.PIPE)
+    assert third_process.stdout.read() == b"third execution" + os.linesep.encode()
     assert third_process.returncode == 1
 
     # 4-th time shall raise an exception

@@ -28,6 +28,9 @@ strategy:
     Python38:
       python.version: '3.8'
       tox.env: 'py38'
+    Python39:
+      python.version: '3.9'
+      tox.env: 'py39'
     Linting:
       python.version: '3.7'
       tox.env: 'flake8'
@@ -42,16 +45,35 @@ steps:
   - task: UsePythonVersion@0
     inputs:
       versionSpec: '$(python.version)'
-    displayName: 'Use Python $(python.version)'
+      architecture: 'x64'
+    condition: and(not(in(variables['python.version'], '3.4')), not(in(variables['python.version'], '3.9')))
+    displayName: Use cached Python $(python.version) for tests.
 
   - script: |
-      python -m pip install --upgrade pip tox codecov
+      set -x
+      sudo add-apt-repository ppa:deadsnakes
+      sudo apt-get update
+      sudo apt-get install -y --no-install-recommends python$(python.version)-dev
+      sudo apt-get install -y --no-install-recommends python$(python.version)-venv
+      sudo apt-get install -y --no-install-recommends python$(python.version)-distutils
+      wget https://bootstrap.pypa.io/get-pip.py -O /tmp/get-pip.py
+      sudo python$(python.version) /tmp/get-pip.py
+      sudo chmod -R 777 /usr/local
+    condition: or(in(variables['python.version'], '3.4'), in(variables['python.version'], '3.9'))
+    displayName: Install Python $(python.version) from the deadsnakes PPA for tests.
+
+  - script: |
+      pip install --upgrade pip tox codecov
     displayName: 'Install dependencies'
 
   - script: |
       tox -e $(tox.env)
-      codecov -t $(CODECOV_TOKEN)
     displayName: 'tox -e $(tox.env)'
+
+  - script: |
+      codecov -t $(CODECOV_TOKEN)
+    displayName: 'publish coverage'
+    condition: not(in(variables['python.version'], '3.9'))
 
   - task: PublishTestResults@2
     condition: succeededOrFailed()

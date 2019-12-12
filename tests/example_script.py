@@ -12,3 +12,7 @@ if "wait" in sys.argv:
 
 if "non-zero" in sys.argv:
     sys.exit(1)
+
+if "input" in sys.argv:
+    user_input = input("Provide an input: ")
+    print("Provided:", user_input)
