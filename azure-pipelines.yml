@@ -46,7 +46,7 @@ steps:
     inputs:
       versionSpec: '$(python.version)'
       architecture: 'x64'
-    condition: and(not(in(variables['python.version'], '3.4', '3.9')), not(in(variables['python.version'], '3.4', '3.9')))
+    condition: and(not(in(variables['python.version'], '3.4')), not(in(variables['python.version'], '3.9')))
     displayName: Use cached Python $(python.version) for tests.
 
   - script: |
