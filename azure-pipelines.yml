@@ -28,6 +28,9 @@ strategy:
     Python38:
       python.version: '3.8'
       tox.env: 'py38'
+    Python39:
+      python.version: '3.9'
+      tox.env: 'py39'
     Linting:
       python.version: '3.7'
       tox.env: 'flake8'
@@ -43,7 +46,7 @@ steps:
     inputs:
       versionSpec: '$(python.version)'
       architecture: 'x64'
-    condition: not(in(variables['python.version'], '3.4'))
+    condition: and(not(in(variables['python.version'], '3.4')), not(in(variables['python.version'], '3.9')))
     displayName: Use cached Python $(python.version) for tests.
 
   - script: |
@@ -56,7 +59,7 @@ steps:
       wget https://bootstrap.pypa.io/get-pip.py -O /tmp/get-pip.py
       sudo python$(python.version) /tmp/get-pip.py
       sudo chmod -R 777 /usr/local
-    condition: in(variables['python.version'], '3.4')
+    condition: or(in(variables['python.version'], '3.4'), in(variables['python.version'], '3.9'))
     displayName: Install Python $(python.version) from the deadsnakes PPA for tests.
 
   - script: |
@@ -70,6 +73,7 @@ steps:
   - script: |
       codecov -t $(CODECOV_TOKEN)
     displayName: 'publish coverage'
+    condition: not(in(variables['python.version'], '3.9'))
 
   - task: PublishTestResults@2
     condition: succeededOrFailed()
