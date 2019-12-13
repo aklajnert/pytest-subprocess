@@ -29,7 +29,9 @@ processes behavior.
         )
 
         process = subprocess.Popen(
-            ["git", "branch"], stdout=subprocess.PIPE, universal_newlines=True
+            ["git", "branch"],
+            stdout=subprocess.PIPE,
+            universal_newlines=True,
         )
         out, _ = process.communicate()
 
@@ -47,25 +49,29 @@ shall accept one argument, which will be the input data. If the function will re
 
 .. code-block:: python
 
-    def stdin_function(input):
-        return {
-            "stdout": "This input was added: {data}".format(data=input.decode())
-        }
+    def test_pass_input(fake_process):
+        def stdin_function(input):
+            return {
+                "stdout": "This input was added: {data}".format(
+                    data=input.decode()
+                )
+            }
 
+        fake_process.register_subprocess(
+            ["command"],
+            stdout=[b"Just stdout"],
+            stdin_callable=stdin_function,
+        )
 
-    fake_process.register_subprocess(
-        ["command"], stdout=[b"Just stdout"], stdin_callable=stdin_function,
-    )
+        process = subprocess.Popen(
+            ["command"], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+        )
+        out, _ = process.communicate(input=b"sample input")
 
-    process = subprocess.Popen(
-        ["command"], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-    )
-    out, _ = process.communicate(input=b"sample input")
-
-    assert out.splitlines() == [
-        b"Just stdout",
-        b"This input was added: sample input",
-    ]
+        assert out.splitlines() == [
+            b"Just stdout",
+            b"This input was added: sample input",
+        ]
 
 Unregistered commands
 ---------------------
@@ -119,7 +125,8 @@ last registered process forever.
         with pytest.raises(pytest_subprocess.ProcessNotRegisteredError):
             subprocess.check_call("test")
 
-        # now, register two processes once again, but the last one will be kept forever
+        # now, register two processes once again,
+        # but the last one will be kept forever
         fake_process.register_subprocess("test", stdout="first execution")
         fake_process.register_subprocess("test", stdout="second execution")
         fake_process.keep_last_process(True)
@@ -151,7 +158,7 @@ doesn't want to execute it somewhere else.
             assert subprocess.check_call("test") == 0
             assert subprocess.check_call("test") == 0
 
-        # the command was called 2 times, so one occurrence left, but since the
+        # command was called 2 times, so one occurrence left, but since the
         # context manager has been left, it is not registered anymore
         with pytest.raises(pytest_subprocess.ProcessNotRegisteredError):
             subprocess.check_call("test")
