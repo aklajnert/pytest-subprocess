@@ -13,3 +13,4 @@ repos:
     hooks:
       - id: blacken-docs
         additional_dependencies: [black==19.10b0]
+        args: [--line-length=79, docs]

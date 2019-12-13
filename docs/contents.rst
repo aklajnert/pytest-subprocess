@@ -25,7 +25,7 @@ processes behavior.
 
     def test_git(fake_process):
         fake_process.register_subprocess(
-            ["git", "branch"], stdout=["* fake_branch", "  master"]
+            ["git", "branch"], stdout=["* fake_branch", '  master']
         )
 
         process = subprocess.Popen(
