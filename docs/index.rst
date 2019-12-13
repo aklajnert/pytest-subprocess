@@ -3,21 +3,17 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to pytest-subprocess's documentation!
-=============================================
+pytest-subprocess
+=================
+
+This is a pytest plugin to fake the real subprocess behavior to make your tests more independent.
+
+Contents
+========
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
 
-A plugin to fake subprocess for ``pytest``
-
-Installation
-============
-
-You can install "pytest-subprocess" via `pip`_ from `PyPI`_::
-
-    $ pip install pytest-subprocess
+   contents
 
 
 
