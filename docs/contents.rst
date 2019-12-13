@@ -25,7 +25,7 @@ processes behavior.
 
     def test_git(fake_process):
         fake_process.register_subprocess(
-            ["git", "branch"], stdout=["* fake_branch", '  master']
+            ["git", "branch"], stdout=["* fake_branch", "  master"]
         )
 
         process = subprocess.Popen(
@@ -48,17 +48,24 @@ shall accept one argument, which will be the input data. If the function will re
 .. code-block:: python
 
     def stdin_function(input):
-        return {"stdout": "This input was added: {data}".format(data=input.decode())}
+        return {
+            "stdout": "This input was added: {data}".format(data=input.decode())
+        }
 
 
     fake_process.register_subprocess(
         ["command"], stdout=[b"Just stdout"], stdin_callable=stdin_function,
     )
 
-    process = subprocess.Popen(["command"], stdin=subprocess.PIPE, stdout=subprocess.PIPE,)
+    process = subprocess.Popen(
+        ["command"], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+    )
     out, _ = process.communicate(input=b"sample input")
 
-    assert out.splitlines() == [b"Just stdout", b"This input was added: sample input"]
+    assert out.splitlines() == [
+        b"Just stdout",
+        b"This input was added: sample input",
+    ]
 
 Unregistered commands
 ---------------------
@@ -99,7 +106,9 @@ last registered process forever.
         # register process with output changing each execution
         fake_process.register_subprocess("test", stdout="first execution")
         # the second execution will return non-zero exit code
-        fake_process.register_subprocess("test", stdout="second execution", returncode=1)
+        fake_process.register_subprocess(
+            "test", stdout="second execution", returncode=1
+        )
 
         assert subprocess.check_output("test") == b"first execution\n"
         second_process = subprocess.run("test", stdout=subprocess.PIPE)
