@@ -86,7 +86,7 @@ steps:
     condition: not(in(variables['python.version'], '3.9'))
 
   - task: PublishTestResults@2
-    condition: and(succeededOrFailed(), equals('publish', 'true'))
+    condition: and(succeededOrFailed(), eq(variables['publish'], 'true'))
     inputs:
       testResultsFiles: '**/test-*.xml'
       testRunTitle: 'Publish test results for Python $(python.version)'
