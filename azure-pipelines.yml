@@ -13,33 +13,43 @@ strategy:
     pypy3:
       python.version: 'pypy3'
       tox.env: 'pypy3'
+      publish: 'true'
     Python34:
       python.version: '3.4'
       tox.env: 'py34'
+      publish: 'true'
     Python35:
       python.version: '3.5'
       tox.env: 'py35'
+      publish: 'true'
     Python36:
       python.version: '3.6'
       tox.env: 'py36'
+      publish: 'true'
     Python37:
       python.version: '3.7'
       tox.env: 'py37'
+      publish: 'true'
     Python38:
       python.version: '3.8'
       tox.env: 'py38'
+      publish: 'true'
     Python39:
       python.version: '3.9'
       tox.env: 'py39'
+      publish: 'true'
     Linting:
       python.version: '3.7'
       tox.env: 'flake8'
+      publish: 'false'
     mypy:
       python.version: '3.7'
       tox.env: 'mypy'
+      publish: 'false'
     check-stubs:
       python.version: '3.7'
       tox.env: 'retype'
+      publish: 'false'
 
 steps:
   - task: UsePythonVersion@0
@@ -76,7 +86,7 @@ steps:
     condition: not(in(variables['python.version'], '3.9'))
 
   - task: PublishTestResults@2
-    condition: succeededOrFailed()
+    condition: and(succeededOrFailed(), equals('publish', 'true'))
     inputs:
       testResultsFiles: '**/test-*.xml'
       testRunTitle: 'Publish test results for Python $(python.version)'
