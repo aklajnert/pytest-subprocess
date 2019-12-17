@@ -364,6 +364,33 @@ def test_ambiguous_input(fake_process, fake):
     )
 
 
+@pytest.mark.parametrize("fake", [False, True])
+def test_multiple_wait(fake_process, fake):
+    """
+    Wait multiple times for 0.2 seconds with process lasting for 0.5.
+    Third wait shall not raise an exception.
+    """
+    fake_process.allow_unregistered(not fake)
+    if fake:
+        fake_process.register_subprocess(
+            ["python", "example_script.py", "wait"], wait=0.5,
+        )
+
+    process = subprocess.Popen(("python", "example_script.py", "wait"),)
+    with pytest.raises(subprocess.TimeoutExpired):
+        process.wait(timeout=0.2)
+
+    with pytest.raises(subprocess.TimeoutExpired):
+        process.wait(timeout=0.2)
+
+    process.wait(0.2)
+
+    assert process.returncode == 0
+
+    # one more wait shall do no harm
+    process.wait(0.2)
+
+
 def test_wrong_arguments(fake_process):
     with pytest.raises(pytest_subprocess.IncorrectProcessDefinition) as exc:
         fake_process.register_subprocess("command", wait=1, callback=lambda _: True)
