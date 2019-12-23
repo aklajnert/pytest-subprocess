@@ -1,9 +1,9 @@
 Usage
 ============
 
-The pluggin adds the ``fake_subprocess`` fixture. It can be used it to register
+The plugin adds the ``fake_subprocess`` fixture. It can be used it to register
 subprocess results so you won't need to rely on the real processes. The plugin hooks on the
-``subprocess.Popen()``, which is the base for other subprocess functions. That makes the ``subproces.run()``,
+``subprocess.Popen()``, which is the base for other subprocess functions. That makes the ``subprocess.run()``,
 ``subprocess.call()``, ``subprocess.check_call()`` and ``subprocess.check_output()`` methods also functional.
 
 Installation
