@@ -70,18 +70,20 @@ shall accept one argument, which will be the input data. If the function will re
 
 .. code-block:: python
 
-    def stdin_function(input):
-        return {"stdout": "This input was added: {data}".format(data=input.decode())}
+    def test_stdin(fake_process):
+        def stdin_function(input):
+            return {"stdout": "This input was added: {data}".format(data=input.decode())}
 
+        fake_process.register_subprocess(
+            ["command"], stdout=[b"Just stdout"], stdin_callable=stdin_function,
+        )
 
-    fake_process.register_subprocess(
-        ["command"], stdout=[b"Just stdout"], stdin_callable=stdin_function,
-    )
+        process = subprocess.Popen(
+            ["command"], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+        )
+        out, _ = process.communicate(input=b"sample input")
 
-    process = subprocess.Popen(["command"], stdin=subprocess.PIPE, stdout=subprocess.PIPE,)
-    out, _ = process.communicate(input=b"sample input")
-
-    assert out.splitlines() == [b"Just stdout", b"This input was added: sample input"]
+        assert out.splitlines() == [b"Just stdout", b"This input was added: sample input"]
 
 
 

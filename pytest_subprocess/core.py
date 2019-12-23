@@ -76,8 +76,8 @@ class FakePopen:
         return self.returncode
 
     def wait(self, timeout=None):
-        # todo: make it smarter and aware of time left
         if timeout and timeout < self.__wait:
+            self.__wait -= timeout
             raise subprocess.TimeoutExpired(self.args, timeout)
         if self.__thread is not None:
             self.__thread.join()
