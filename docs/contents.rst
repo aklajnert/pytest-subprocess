@@ -122,7 +122,7 @@ last registered process forever.
 
         # 3rd time shall raise an exception
         with pytest.raises(pytest_subprocess.ProcessNotRegisteredError):
-            subprocess.check_call("test")
+            subprocess.run("test")
 
         # now, register two processes once again,
         # but the last one will be kept forever
