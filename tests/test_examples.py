@@ -11,7 +11,7 @@ def is_code_block(node):
 
 
 def get_code_blocks(file_path):
-    with open(file_path) as file_handle:
+    with file_path.open() as file_handle:
         content = file_handle.read()
 
     code_blocks = publish_doctree(content).traverse(condition=is_code_block)
