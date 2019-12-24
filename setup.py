@@ -26,6 +26,15 @@ setup(
     py_modules=["pytest_subprocess"],
     python_requires=">=3.4",
     install_requires=["pytest>=4.0.0"],
+    extras_require={
+        "test": ["pytest>=4.0", "coverage", "pytest-azurepipelines"],
+        "docs": [
+            "sphinx",
+            "sphinx-rtd-theme",
+            "sphinxcontrib-napoleon",
+            "sphinx-autodoc-typehints",
+        ],
+    },
     packages=find_packages(exclude=["docs", "tests"]),
     package_data={"pytest_subprocess": ["py.typed", "core.pyi", "fixtures.pyi",]},
     classifiers=[

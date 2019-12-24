@@ -268,7 +268,7 @@ class IncorrectProcessDefinition(Exception):
 
 
 class FakeProcess:
-    """Class responsible for tracking the processes"""
+    """Main class responsible for process operations"""
 
     def __init__(self):
         self.definitions = defaultdict(deque)

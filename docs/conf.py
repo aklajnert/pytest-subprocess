@@ -28,11 +28,12 @@ release = "0.1.0"
 # ones.
 
 extensions = [
-    "sphinx.ext.viewcode",
-    "sphinx.ext.autodoc",
     "sphinxcontrib.napoleon",
+    "sphinx.ext.autodoc",
     "sphinx_autodoc_typehints",
 ]
+typehints_fully_qualified = False
+always_document_param_types = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]

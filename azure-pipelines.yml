@@ -50,6 +50,10 @@ strategy:
       python.version: '3.7'
       tox.env: 'retype'
       publish: 'false'
+    generate-docs:
+      python.version: '3.7'
+      tox.env: 'docs'
+      publish: 'false'
 
 steps:
   - task: UsePythonVersion@0

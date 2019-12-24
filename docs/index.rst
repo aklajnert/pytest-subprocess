@@ -8,12 +8,30 @@ pytest-subprocess
 
 This is a pytest plugin to fake the real subprocess behavior to make your tests more independent.
 
+Example
+-------
+
+You can use the provided ``fake_process`` fixture to register commands and specify
+their behavior before they will be executed. This will prevent a real subprocess
+execution.
+
+.. code-block:: python
+
+    def test_process(fake_process):
+        fake_process.register_subprocess(["fake-command"])
+        process = subprocess.run(["fake-command"])
+
+        assert process.returncode == 0
+
+See contents_ for more examples.
+
 Contents
 ========
 
 .. toctree::
 
    contents
+   api
 
 
 
