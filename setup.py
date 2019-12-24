@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import codecs
 import os
+import sys
 
 from setuptools import find_packages
 from setuptools import setup
@@ -11,6 +12,9 @@ def read(fname):
     file_path = os.path.join(os.path.dirname(__file__), fname)
     return codecs.open(file_path, encoding="utf-8").read()
 
+requirements = ["pytest>=4.0.0"]
+if sys.version_info <= (3,5):
+    requirements.append("typing")
 
 setup(
     name="pytest-subprocess",
@@ -25,7 +29,7 @@ setup(
     long_description=read("README.rst"),
     py_modules=["pytest_subprocess"],
     python_requires=">=3.4",
-    install_requires=["pytest>=4.0.0"],
+    install_requires=requirements,
     extras_require={
         "test": [
             "pytest>=4.0",
