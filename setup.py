@@ -27,7 +27,13 @@ setup(
     python_requires=">=3.4",
     install_requires=["pytest>=4.0.0"],
     extras_require={
-        "test": ["pytest>=4.0", "coverage", "docutils>=0.12", "pytest-azurepipelines"],
+        "test": [
+            "pytest>=4.0",
+            "coverage",
+            "docutils>=0.12",
+            "Pygments>=2.0",
+            "pytest-azurepipelines",
+        ],
         "docs": [
             "sphinx",
             "sphinx-rtd-theme",

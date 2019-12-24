@@ -24,7 +24,7 @@ def test_documentation(testdir, rst_file):
         ["import pytest", "import pytest_subprocess", "import subprocess"]
     )
     code_blocks = "\n".join(get_code_blocks(ROOT_DIR / "docs" / rst_file))
-    testdir.makepyfile(f"{add_before}\n{code_blocks}")
+    testdir.makepyfile(add_before + "\n" + code_blocks)
 
     result = testdir.inline_run()
     assert result.ret == 0
