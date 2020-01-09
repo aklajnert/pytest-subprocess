@@ -46,10 +46,6 @@ strategy:
       python.version: '3.7'
       tox.env: 'mypy'
       publish: 'false'
-    check-stubs:
-      python.version: '3.7'
-      tox.env: 'retype'
-      publish: 'false'
     generate-docs:
       python.version: '3.7'
       tox.env: 'docs'
