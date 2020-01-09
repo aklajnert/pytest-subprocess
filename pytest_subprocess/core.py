@@ -5,9 +5,18 @@ import subprocess
 import sys
 import threading
 import time
+import typing
 from collections import defaultdict
 from collections import deque
 from copy import deepcopy
+
+OPTIONAL_TEXT_OR_ITERABLE = typing.Union[
+    str,
+    bytes,
+    None,
+    typing.List[typing.Union[str, bytes]],
+    typing.Tuple[typing.Union[str, bytes], ...],
+]
 
 
 def _ensure_hashable(input):
@@ -268,22 +277,22 @@ class IncorrectProcessDefinition(Exception):
 
 
 class FakeProcess:
-    """Class responsible for tracking the processes"""
+    """Main class responsible for process operations"""
 
     def __init__(self):
         self.definitions = defaultdict(deque)
 
     def register_subprocess(
         self,
-        command,
-        stdout=None,
-        stderr=None,
-        returncode=0,
-        wait=None,
-        callback=None,
-        occurrences=1,
-        stdin_callable=None,
-    ):
+        command: typing.Union[typing.List[str], typing.Tuple[str, ...], str],
+        stdout: OPTIONAL_TEXT_OR_ITERABLE = None,
+        stderr: OPTIONAL_TEXT_OR_ITERABLE = None,
+        returncode: int = 0,
+        wait: typing.Optional[float] = None,
+        callback: typing.Optional[typing.Callable] = None,
+        occurrences: int = 1,
+        stdin_callable: typing.Optional[typing.Callable] = None,
+    ) -> None:
         """
         Main method for registering the subprocess instances.
 
@@ -317,7 +326,11 @@ class FakeProcess:
             * occurrences
         )
 
-    def pass_command(self, command, occurrences=1):
+    def pass_command(
+        self,
+        command: typing.Union[typing.List[str], typing.Tuple[str, ...], str],
+        occurrences: int = 1,
+    ) -> None:
         """
         Allow to use a real subprocess together with faked ones.
 
@@ -328,14 +341,14 @@ class FakeProcess:
         command = _ensure_hashable(command)
         self.definitions[command].extend([True] * occurrences)
 
-    def __enter__(self):
+    def __enter__(self) -> "FakeProcess":
         ProcessDispatcher.register(self)
         return self
 
-    def __exit__(self, *args, **kwargs):
+    def __exit__(self, *args: typing.List, **kwargs: typing.Dict) -> None:
         ProcessDispatcher.deregister(self)
 
-    def allow_unregistered(cls, allow):
+    def allow_unregistered(cls, allow: bool) -> None:
         """
         Allow / block unregistered processes execution. When allowed, the real
         subprocesses will be called. Blocking will raise the exception.
@@ -346,7 +359,7 @@ class FakeProcess:
         ProcessDispatcher.allow_unregistered(allow)
 
     @classmethod
-    def keep_last_process(cls, keep):
+    def keep_last_process(cls, keep: bool) -> None:
         """
         Keep last process definition from being removed. That can allow / block
         multiple execution of the same command.
@@ -357,6 +370,6 @@ class FakeProcess:
         ProcessDispatcher.keep_last_process(keep)
 
     @classmethod
-    def context(cls):
+    def context(cls) -> "FakeProcess":
         """Return a new FakeProcess instance to use it as a context manager."""
         return cls()
