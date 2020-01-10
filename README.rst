@@ -17,6 +17,10 @@ pytest-subprocess
 .. image:: https://codecov.io/gh/aklajnert/pytest-subprocess/branch/master/graph/badge.svg?token=JAU1cGoYL8
   :target: https://codecov.io/gh/aklajnert/pytest-subprocess
 
+.. image:: https://readthedocs.org/projects/pytest-subprocess/badge/?version=latest
+   :target: https://pytest-subprocess.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation Status
+
 A plugin to fake subprocess for pytest
 
 .. contents:: :local:
@@ -72,10 +76,16 @@ shall accept one argument, which will be the input data. If the function will re
 
     def test_stdin(fake_process):
         def stdin_function(input):
-            return {"stdout": "This input was added: {data}".format(data=input.decode())}
+            return {
+                "stdout": "This input was added: {data}".format(
+                    data=input.decode()
+                )
+            }
 
         fake_process.register_subprocess(
-            ["command"], stdout=[b"Just stdout"], stdin_callable=stdin_function,
+            ["command"],
+            stdout=[b"Just stdout"],
+            stdin_callable=stdin_function,
         )
 
         process = subprocess.Popen(
@@ -83,7 +93,10 @@ shall accept one argument, which will be the input data. If the function will re
         )
         out, _ = process.communicate(input=b"sample input")
 
-        assert out.splitlines() == [b"Just stdout", b"This input was added: sample input"]
+        assert out.splitlines() == [
+            b"Just stdout",
+            b"This input was added: sample input",
+        ]
 
 
 
@@ -126,7 +139,9 @@ last registered process forever.
         # register process with output changing each execution
         fake_process.register_subprocess("test", stdout="first execution")
         # the second execution will return non-zero exit code
-        fake_process.register_subprocess("test", stdout="second execution", returncode=1)
+        fake_process.register_subprocess(
+            "test", stdout="second execution", returncode=1
+        )
 
         assert subprocess.check_output("test") == b"first execution\n"
         second_process = subprocess.run("test", stdout=subprocess.PIPE)
@@ -174,6 +189,11 @@ doesn't want to execute it somewhere else.
         with pytest.raises(pytest_subprocess.ProcessNotRegisteredError):
             subprocess.check_call("test")
 
+
+Documentation
+-------------
+
+For full documentation, including API reference, please see https://pytest-subprocess.readthedocs.io/en/latest/.
 
 Contributing
 ------------

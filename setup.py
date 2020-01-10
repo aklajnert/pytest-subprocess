@@ -12,8 +12,9 @@ def read(fname):
     file_path = os.path.join(os.path.dirname(__file__), fname)
     return codecs.open(file_path, encoding="utf-8").read()
 
+
 requirements = ["pytest>=4.0.0"]
-if sys.version_info <= (3,5):
+if sys.version_info <= (3, 5):
     requirements.append("typing")
 
 setup(
@@ -24,7 +25,11 @@ setup(
     maintainer="Andrzej Klajnert",
     maintainer_email="python@aklajnert.pl",
     license="MIT",
-    url="https://github.com/aklajnert/pytest-subprocess",
+    project_urls={
+        "Documentation": "https://pytest-subprocess.readthedocs.io",
+        "Source": "https://github.com/aklajnert/pytest-subprocess",
+        "Tracker": "https://github.com/aklajnert/pytest-subprocess/issues",
+    },
     description="A plugin to fake subprocess for pytest",
     long_description=read("README.rst"),
     py_modules=["pytest_subprocess"],

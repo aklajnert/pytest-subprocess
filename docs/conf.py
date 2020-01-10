@@ -11,14 +11,16 @@
 # import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
+import pkg_resources
+
 # -- Project information -----------------------------------------------------
 
 project = "pytest-subprocess"
-copyright = "2019, Andrzej Klajnert"
+copyright = "2019-2020, Andrzej Klajnert"
 author = "Andrzej Klajnert"
 
 # The full version, including alpha/beta/rc tags
-release = "0.1.0"
+release = pkg_resources.get_distribution("pip").version
 
 
 # -- General configuration ---------------------------------------------------
