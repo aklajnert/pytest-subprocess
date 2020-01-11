@@ -1,5 +1,5 @@
 Usage
-============
+=====
 
 The plugin adds the ``fake_subprocess`` fixture. It can be used it to register
 subprocess results so you won't need to rely on the real processes. The plugin hooks on the

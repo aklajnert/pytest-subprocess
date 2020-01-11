@@ -23,14 +23,12 @@ execution.
 
         assert process.returncode == 0
 
-See contents_ for more examples.
-
-Contents
-========
 
 .. toctree::
+   :maxdepth: 2
+   :caption: Contents:
 
-   contents
+   usage
    api
 
 

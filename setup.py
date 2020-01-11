@@ -43,12 +43,7 @@ setup(
             "Pygments>=2.0",
             "pytest-azurepipelines",
         ],
-        "docs": [
-            "sphinx",
-            "sphinx-rtd-theme",
-            "sphinxcontrib-napoleon",
-            "sphinx-autodoc-typehints",
-        ],
+        "docs": ["sphinx", "sphinxcontrib-napoleon", "sphinx-autodoc-typehints",],
     },
     packages=find_packages(exclude=["docs", "tests"]),
     package_data={"pytest_subprocess": ["py.typed", "core.pyi", "fixtures.pyi",]},
