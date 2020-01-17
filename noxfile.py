@@ -21,7 +21,7 @@ def flake8(session):
 @nox.session
 def mypy(session):
     session.install("mypy")
-    session.run("mypy", "pytest_subprocess", "--config-file=tox.ini")
+    session.run("mypy", "pytest_subprocess", "--config-file=setup.cfg")
 
 
 @nox.session
