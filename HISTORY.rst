@@ -10,7 +10,7 @@ Features
 
 Bug fixes  
 ~~~~~~~~~
-* `#5 <https://github.com/aklajnert/pytest-subprocess/pulls//5>`_: Make ``wait()`` method to raise ``TimeoutError`` after the desired time will elapsed.
+* `#5 <https://github.com/aklajnert/pytest-subprocess/pulls//5>`_: Make ``wait()`` method to raise ``TimeoutError`` after the desired time will elapse.
 
 Documentation changes  
 ~~~~~~~~~~~~~~~~~~~~~

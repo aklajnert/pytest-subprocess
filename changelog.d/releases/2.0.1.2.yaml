@@ -3,7 +3,7 @@ entries:
   - git_email: github@aklajnert.pl
     git_user: Andrzej Klajnert
     message: Make ``wait()`` method to raise ``TimeoutError`` after the desired time
-      will elapsed.
+      will elapse.
     os_user: aklajnert
     pr_ids:
     - '5'
