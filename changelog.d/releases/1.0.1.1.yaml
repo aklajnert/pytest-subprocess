@@ -1,0 +1,13 @@
+entries:
+  other:
+  - git_email: github@aklajnert.pl
+    git_user: Andrzej Klajnert
+    message: Enable support for Python 3.4, add CI tests for that version.
+    os_user: aklajnert
+    pr_ids:
+    - '1'
+    - '2'
+previous_release: 0.1.0
+release_date: '2019-11-24'
+release_description: ''
+release_version: 0.1.1
