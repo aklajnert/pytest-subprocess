@@ -1,9 +1,12 @@
+import sys
+
 import nox
 
-nox.options.sessions = ["tests", "flake8", "mypy", "docs"]
+if sys.version_info > (3, 4):
+    nox.options.sessions = ["tests", "flake8", "mypy", "docs"]
 
 
-@nox.session(python=["3.4", "3.5", "3.6", "3.7", "3.8", "3.9", "pypy"])
+@nox.session(python=["3.4", "3.5", "3.6", "3.7", "3.8", "3.9", "pypy3"])
 def tests(session):
     session.install(".[test]")
     session.run("coverage", "run", "-m", "pytest", "-v")
