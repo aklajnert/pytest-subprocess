@@ -1,0 +1,25 @@
+context:
+  prs_url: https://github.com/aklajnert/pytest-subprocess/pulls/
+message_types:
+- name: feature
+  title: Features
+- name: bug
+  title: Bug fixes
+- name: doc
+  title: Documentation changes
+- name: deprecation
+  title: Deprecations
+- name: other
+  title: Other changes
+entry_fields:
+- name: pr_ids
+  verbose_name: Pull request ID
+  type: str
+  required: false
+  multiple: true
+- name: message
+  verbose_name: Changelog message
+  type: str
+  required: true
+output_file: ../HISTORY.rst
+partial_release_name: unreleased
