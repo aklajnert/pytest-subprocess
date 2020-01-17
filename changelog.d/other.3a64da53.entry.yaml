@@ -1,7 +1,0 @@
-git_email: github@aklajnert.pl
-git_user: Andrzej Klajnert
-message: ' Switch from ``tox`` to ``nox`` for running tests and tasks.'
-os_user: aklajnert
-pr_ids:
-- '10'
-type: other

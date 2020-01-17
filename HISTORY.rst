@@ -1,8 +1,8 @@
-Changelog  
-=========
+History
+=======
 
-unreleased (2020-01-17)  
------------------------
+0.1.2 (2020-01-17)  
+------------------
 
 Features  
 ~~~~~~~~
@@ -14,10 +14,11 @@ Bug fixes
 
 Documentation changes  
 ~~~~~~~~~~~~~~~~~~~~~
-* `#7 <https://github.com/aklajnert/pytest-subprocess/pulls//7>`_, `#8 <https://github.com/aklajnert/pytest-subprocess/pulls//8>`_: Create Sphinx documentation.
+* `#7 <https://github.com/aklajnert/pytest-subprocess/pulls//7>`_, `#8 <https://github.com/aklajnert/pytest-subprocess/pulls//8>`_, `#9 <https://github.com/aklajnert/pytest-subprocess/pulls//9>`_: Create Sphinx documentation.
 
 Other changes  
 ~~~~~~~~~~~~~
+* `#10 <https://github.com/aklajnert/pytest-subprocess/pulls//10>`_:  Switch from ``tox`` to ``nox`` for running tests and tasks.
 * `#4 <https://github.com/aklajnert/pytest-subprocess/pulls//4>`_: Add classifier for Python 3.9. Update CI config to test also on that interpreter version.
 
 0.1.1 (2019-11-24)  
