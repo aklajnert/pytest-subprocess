@@ -2,7 +2,7 @@ import sys
 
 import nox
 
-if sys.version_info > (3, 4):
+if sys.version_info >= (3, 5):
     nox.options.sessions = ["tests", "flake8", "mypy", "docs"]
 
 
