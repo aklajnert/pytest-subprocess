@@ -12,43 +12,43 @@ strategy:
   matrix:
     pypy3:
       python.version: 'pypy3'
-      tox.env: 'pypy3'
+      nox.session: 'tests-pypy3'
       publish: 'true'
     Python34:
       python.version: '3.4'
-      tox.env: 'py34'
+      nox.session: 'tests-3.4'
       publish: 'true'
     Python35:
       python.version: '3.5'
-      tox.env: 'py35'
+      nox.session: 'tests-3.5'
       publish: 'true'
     Python36:
       python.version: '3.6'
-      tox.env: 'py36'
+      nox.session: 'tests-3.6'
       publish: 'true'
     Python37:
       python.version: '3.7'
-      tox.env: 'py37'
+      nox.session: 'tests-3.7'
       publish: 'true'
     Python38:
       python.version: '3.8'
-      tox.env: 'py38'
+      nox.session: 'tests-3.8'
       publish: 'true'
     Python39:
       python.version: '3.9'
-      tox.env: 'py39'
+      nox.session: 'tests-3.9'
       publish: 'true'
     Linting:
       python.version: '3.7'
-      tox.env: 'flake8'
+      nox.session: 'flake8'
       publish: 'false'
     mypy:
       python.version: '3.7'
-      tox.env: 'mypy'
+      nox.session: 'mypy'
       publish: 'false'
     generate-docs:
       python.version: '3.7'
-      tox.env: 'docs'
+      nox.session: 'docs'
       publish: 'false'
 
 steps:
@@ -73,12 +73,12 @@ steps:
     displayName: Install Python $(python.version) from the deadsnakes PPA for tests.
 
   - script: |
-      pip install --upgrade pip tox codecov
+      pip install --upgrade pip nox codecov
     displayName: 'Install dependencies'
 
   - script: |
-      tox -e $(tox.env)
-    displayName: 'tox -e $(tox.env)'
+      nox --session $(nox.session)
+    displayName: 'nox: $(nox.session)'
 
   - script: |
       codecov -t $(CODECOV_TOKEN)
