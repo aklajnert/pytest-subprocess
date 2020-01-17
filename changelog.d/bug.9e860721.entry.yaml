@@ -1,0 +1,8 @@
+git_email: github@aklajnert.pl
+git_user: Andrzej Klajnert
+pr_ids:
+- '5'
+message: Make ``wait()`` method to raise ``TimeoutError`` after the desired time will
+  elapsed.
+os_user: aklajnert
+type: bug

@@ -1,0 +1,8 @@
+git_email: github@aklajnert.pl
+git_user: Andrzej Klajnert
+pr_ids:
+- '4'
+message: Add classifier for Python 3.9. Update CI config to test also on that interpreter
+  version.
+os_user: aklajnert
+type: other

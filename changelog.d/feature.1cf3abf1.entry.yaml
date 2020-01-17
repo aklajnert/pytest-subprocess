@@ -1,0 +1,7 @@
+git_email: github@aklajnert.pl
+git_user: Andrzej Klajnert
+pr_ids:
+- '3'
+message: Add basic support for process input.
+os_user: aklajnert
+type: feature

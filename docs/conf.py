@@ -11,7 +11,14 @@
 # import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
+from pathlib import Path
+
 import pkg_resources
+from changelogd import changelogd
+
+ROOT_PATH = Path(__file__).parents[1]
+
+changelogd.release(partial=True, output="history.rst", config=ROOT_PATH / "changelog.d")
 
 # -- Project information -----------------------------------------------------
 

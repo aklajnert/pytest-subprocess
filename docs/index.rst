@@ -30,6 +30,7 @@ execution.
 
    usage
    api
+   history
 
 
 
