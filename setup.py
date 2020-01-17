@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import codecs
 import os
 import sys
 
@@ -10,7 +9,8 @@ from setuptools import setup
 
 def read(fname):
     file_path = os.path.join(os.path.dirname(__file__), fname)
-    return codecs.open(file_path, encoding="utf-8").read()
+    with open(file_path, encoding="utf-8") as file_handle:
+        return file_handle.read()
 
 
 requirements = ["pytest>=4.0.0"]
