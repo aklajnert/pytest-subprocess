@@ -66,15 +66,14 @@ steps:
       sudo apt-get install -y --no-install-recommends python$(python.version)-dev
       sudo apt-get install -y --no-install-recommends python$(python.version)-venv
       sudo apt-get install -y --no-install-recommends python$(python.version)-distutils
-      wget https://bootstrap.pypa.io/get-pip.py -O /tmp/get-pip.py
+      wget https://bootstrap.pypa.io/3.4/get-pip.py -O /tmp/get-pip.py
       sudo python$(python.version) /tmp/get-pip.py
       sudo chmod -R 777 /usr/local
     condition: or(in(variables['python.version'], '3.4'), in(variables['python.version'], '3.9'))
     displayName: Install Python $(python.version) from the deadsnakes PPA for tests.
 
   - script: |
-      pip install --upgrade pip wheel
-      pip install nox codecov
+      pip install --upgrade pip nox codecov
     displayName: 'Install dependencies'
 
   - script: |
