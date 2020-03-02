@@ -406,16 +406,23 @@ def test_callback(fake_process, capsys):
     This test will show a usage of the callback argument.
     The callback argument will have access to the FakePopen so it will
     change the returncode.
+    One callback execution will also pass a keyword argument.
     """
 
-    def callback(process):
-        print("from callback")
+    def callback(process, argument=None):
+        print("from callback with argument={}".format(argument))
         process.returncode = 1
 
     fake_process.register_subprocess("test", callback=callback)
+    fake_process.register_subprocess(
+        "test", callback=callback, callback_kwargs={"argument": "value"}
+    )
 
     assert subprocess.call("test") == 1
-    assert "from callback" in capsys.readouterr().out
+    assert capsys.readouterr().out == "from callback with argument=None\n"
+
+    assert subprocess.call("test") == 1
+    assert capsys.readouterr().out == "from callback with argument=value\n"
 
 
 def test_mutiple_occurrences(fake_process):
