@@ -43,6 +43,7 @@ class FakePopen:
         returncode=0,
         wait=None,
         callback=None,
+        callback_kwargs=None,
         stdin_callable=None,
         **_
     ):
@@ -53,6 +54,7 @@ class FakePopen:
         self.__wait = wait
         self.__thread = None
         self.__callback = callback
+        self.__callback_kwargs = callback_kwargs
         self.__stdin_callable = stdin_callable
 
     def __enter__(self):
@@ -172,7 +174,11 @@ class FakePopen:
             self._finish_process()
         else:
             if self.__callback:
-                self.__thread = Thread(target=self.__callback, args=(self,))
+                self.__thread = Thread(
+                    target=self.__callback,
+                    args=(self,),
+                    kwargs=self.__callback_kwargs or {},
+                )
             else:
                 self.__thread = Thread(target=self._wait, args=(self.__wait,))
             self.__thread.start()
@@ -293,6 +299,7 @@ class FakeProcess:
         returncode: int = 0,
         wait: typing.Optional[float] = None,
         callback: typing.Optional[typing.Callable] = None,
+        callback_kwargs: typing.Optional[typing.Dict[str, typing.Any]] = None,
         occurrences: int = 1,
         stdin_callable: typing.Optional[typing.Callable] = None,
     ) -> None:
@@ -306,7 +313,9 @@ class FakeProcess:
             returncode: return code of the faked process
             wait: artificially wait for the process to finish
             callback: function that will be executed instead of the process
+            callback_kwargs: keyword arguments that will be passed into callback
             occurrences: allow multiple usages of the same command
+            stdin_callable: function that will interact with stdin
         """
         if wait is not None and callback is not None:
             raise IncorrectProcessDefinition(
@@ -323,6 +332,7 @@ class FakeProcess:
                     "returncode": returncode,
                     "wait": wait,
                     "callback": callback,
+                    "callback_kwargs": callback_kwargs,
                     "stdin_callable": stdin_callable,
                 }
             ]

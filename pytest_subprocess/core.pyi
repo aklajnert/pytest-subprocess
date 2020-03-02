@@ -33,6 +33,7 @@ class FakePopen:
     __wait: typing.Optional[float]
     __universal_newlines: typing.Optional[bool]
     __callback: typing.Optional[typing.Optional[typing.Callable]]
+    __callback_kwargs: typing.Optional[typing.Dict[str, typing.Any]] = None,
     __stdin_callable: typing.Optional[typing.Optional[typing.Callable]]
     __thread: typing.Optional[Thread]
 
@@ -44,6 +45,8 @@ class FakePopen:
             returncode: int = 0,
             wait: typing.Optional[float] = None,
             callback: typing.Optional[typing.Callable] = None,
+
+        callback_kwargs: typing.Optional[typing.Dict[str, typing.Any]] = None,
             stdin_callable: typing.Optional[typing.Callable] = None,
             **_: typing.Dict[str, typing.Any]
     ) -> None: ...
@@ -130,6 +133,7 @@ class FakeProcess:
             returncode: int = 0,
             wait: typing.Optional[float] = None,
             callback: typing.Optional[typing.Callable] = None,
+            callback_kwargs: typing.Optional[typing.Dict[str, typing.Any]] = None,
             occurrences: int = 1,
             stdin_callable: typing.Optional[typing.Callable] = None,
     ) -> None: ...
