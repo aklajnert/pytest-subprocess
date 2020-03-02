@@ -73,7 +73,7 @@ steps:
     displayName: Install Python $(python.version) from the deadsnakes PPA for tests.
 
   - script: |
-      pip install --upgrade pip nox codecov
+      pip install --upgrade pip wheel nox codecov
     displayName: 'Install dependencies'
 
   - script: |
