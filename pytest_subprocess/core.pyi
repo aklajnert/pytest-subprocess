@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 import io
-import threading
 import typing
+
+from .utils import Thread
 
 OPTIONAL_TEXT = typing.Union[str, bytes, None]
 OPTIONAL_TEXT_OR_ITERABLE = typing.Union[
@@ -33,7 +34,7 @@ class FakePopen:
     __universal_newlines: typing.Optional[bool]
     __callback: typing.Optional[typing.Optional[typing.Callable]]
     __stdin_callable: typing.Optional[typing.Optional[typing.Callable]]
-    __thread: typing.Optional[threading.Thread]
+    __thread: typing.Optional[Thread]
 
     def __init__(
             self,

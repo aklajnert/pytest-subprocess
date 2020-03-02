@@ -1,0 +1,8 @@
+git_email: github@aklajnert.pl
+git_user: Andrzej Klajnert
+message: Properly raise exceptions from callback functions.
+os_user: andrzejk
+pr_ids:
+- '12'
+timestamp: 1583143353
+type: bug

@@ -649,3 +649,14 @@ def test_context_manager(fake_process):
     # context manager has been left, it is not registered anymore
     with pytest.raises(pytest_subprocess.ProcessNotRegisteredError):
         subprocess.check_call("test")
+
+
+def test_raise_exception(fake_process):
+    def callback_function(process):
+        raise PermissionError("exception raised by subprocess")
+
+    fake_process.register_subprocess(["test"], callback=callback_function)
+
+    with pytest.raises(PermissionError, match="exception raised by subprocess"):
+        process = subprocess.Popen(["test"])
+        process.wait()

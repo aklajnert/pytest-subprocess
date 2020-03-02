@@ -3,12 +3,13 @@ import io
 import os
 import subprocess
 import sys
-import threading
 import time
 import typing
 from collections import defaultdict
 from collections import deque
 from copy import deepcopy
+
+from .utils import Thread
 
 OPTIONAL_TEXT_OR_ITERABLE = typing.Union[
     str,
@@ -90,6 +91,8 @@ class FakePopen:
             raise subprocess.TimeoutExpired(self.args, timeout)
         if self.__thread is not None:
             self.__thread.join()
+            if self.__thread.exception:
+                raise self.__thread.exception
         return self.returncode
 
     def configure(self, **kwargs):
@@ -169,9 +172,9 @@ class FakePopen:
             self._finish_process()
         else:
             if self.__callback:
-                self.__thread = threading.Thread(target=self.__callback, args=(self,))
+                self.__thread = Thread(target=self.__callback, args=(self,))
             else:
-                self.__thread = threading.Thread(target=self._wait, args=(self.__wait,))
+                self.__thread = Thread(target=self._wait, args=(self.__wait,))
             self.__thread.start()
 
     def _finish_process(self):
