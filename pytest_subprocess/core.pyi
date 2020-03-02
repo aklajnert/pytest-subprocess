@@ -33,7 +33,7 @@ class FakePopen:
     __wait: typing.Optional[float]
     __universal_newlines: typing.Optional[bool]
     __callback: typing.Optional[typing.Optional[typing.Callable]]
-    __callback_kwargs: typing.Optional[typing.Dict[str, typing.Any]] = None,
+    __callback_kwargs: typing.Optional[typing.Dict[str, typing.Any]]
     __stdin_callable: typing.Optional[typing.Optional[typing.Callable]]
     __thread: typing.Optional[Thread]
 
