@@ -26,24 +26,24 @@ A plugin to fake subprocess for pytest
 
 .. include-start
 
+Usage
+=====
+
+The plugin adds the ``fake_subprocess`` fixture. It can be used it to register
+subprocess results so you won't need to rely on the real processes. The plugin hooks on the
+``subprocess.Popen()``, which is the base for other subprocess functions. That makes the ``subprocess.run()``,
+``subprocess.call()``, ``subprocess.check_call()`` and ``subprocess.check_output()`` methods also functional.
+
 Installation
 ------------
 
-You can install "pytest-subprocess" via `pip`_ from `PyPI`_::
+You can install ``pytest-subprocess`` via `pip`_ from `PyPI`_::
 
     $ pip install pytest-subprocess
 
 
-Usage
------
-
-After plugin installation, the ``fake_subprocess`` fixture will become available. Use it to register
-subprocess results so you won't need to rely on the real processes. The plugin hooks on the
-``subprocess.Popen()``, which is the base for other subprocess functions. That makes the ``subproces.run()``,
-``subprocess.call()``, ``subprocess.check_call()`` and ``subprocess.check_output()`` methods also functional.
-
 Basic usage
-===========
+-----------
 
 The most important method is ``fake_process.register_subprocess()`` which allows defining the fake
 processes behavior.
@@ -56,16 +56,17 @@ processes behavior.
         )
 
         process = subprocess.Popen(
-            ["git", "branch"], stdout=subprocess.PIPE, universal_newlines=True
+            ["git", "branch"],
+            stdout=subprocess.PIPE,
+            universal_newlines=True,
         )
         out, _ = process.communicate()
 
         assert process.returncode == 0
         assert out == "* fake_branch\n  master\n"
 
-
 Passing input
-=============
+-------------
 
 By default, if you use ``input`` argument to the ``Popen.communicate()`` method, it won't crash, but also
 won't do anything useful. By passing a function as ``stdin_callable`` argument for the
@@ -75,7 +76,7 @@ shall accept one argument, which will be the input data. If the function will re
 
 .. code-block:: python
 
-    def test_stdin(fake_process):
+    def test_pass_input(fake_process):
         def stdin_function(input):
             return {
                 "stdout": "This input was added: {data}".format(
@@ -99,10 +100,8 @@ shall accept one argument, which will be the input data. If the function will re
             b"This input was added: sample input",
         ]
 
-
-
 Unregistered commands
-=====================
+---------------------
 
 By default, when the ``fake_process`` fixture is being used, any attempt to run subprocess that has
 not been registered will raise the ``ProcessNotRegisteredError`` exception. To allow it, use
@@ -126,7 +125,7 @@ real ``subprocess``, or use ``fake_process.pass_command("command")`` to allow ju
 
 
 Differing results
-=================
+-----------------
 
 Each ``register_subprocess()`` or ``pass_command()`` method call will register only one command
 execution. You can call those methods multiple times, to change the faked output on each subprocess
@@ -153,7 +152,8 @@ last registered process forever.
         with pytest.raises(pytest_subprocess.ProcessNotRegisteredError):
             subprocess.check_call("test")
 
-        # now, register two processes once again, but the last one will be kept forever
+        # now, register two processes once again,
+        # but the last one will be kept forever
         fake_process.register_subprocess("test", stdout="first execution")
         fake_process.register_subprocess("test", stdout="second execution")
         fake_process.keep_last_process(True)
@@ -166,7 +166,7 @@ last registered process forever.
 
 
 As a context manager
-====================
+--------------------
 
 The ``fake_process`` fixture provides ``context()`` method that allows us to use it as a context manager.
 It can be used to limit the scope when a certain command is allowed, e.g. to make sure that the code
@@ -189,6 +189,10 @@ doesn't want to execute it somewhere else.
         # context manager has been left, it is not registered anymore
         with pytest.raises(pytest_subprocess.ProcessNotRegisteredError):
             subprocess.check_call("test")
+
+.. _`pip`: https://pypi.org/project/pip/
+.. _`PyPI`: https://pypi.org/project
+
 
 .. include-end
 
@@ -227,5 +231,3 @@ This `pytest`_ plugin was generated with `Cookiecutter`_ along with `@hackebrot`
 .. _`file an issue`: https://github.com/aklajnert/pytest-subprocess/issues
 .. _`pytest`: https://github.com/pytest-dev/pytest
 .. _`tox`: https://tox.readthedocs.io/en/latest/
-.. _`pip`: https://pypi.org/project/pip/
-.. _`PyPI`: https://pypi.org/project
