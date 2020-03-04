@@ -30,9 +30,11 @@ Usage
 =====
 
 The plugin adds the ``fake_subprocess`` fixture. It can be used it to register
-subprocess results so you won't need to rely on the real processes. The plugin hooks on the
-``subprocess.Popen()``, which is the base for other subprocess functions. That makes the ``subprocess.run()``,
-``subprocess.call()``, ``subprocess.check_call()`` and ``subprocess.check_output()`` methods also functional.
+subprocess results so you won't need to rely on the real processes. The plugin
+hooks on the ``subprocess.Popen()``, which is the base for other subprocess
+functions. That makes the ``subprocess.run()``, ``subprocess.call()``,
+``subprocess.check_call()`` and ``subprocess.check_output()`` methods
+also functional.
 
 Installation
 ------------
@@ -45,8 +47,8 @@ You can install ``pytest-subprocess`` via `pip`_ from `PyPI`_::
 Basic usage
 -----------
 
-The most important method is ``fake_process.register_subprocess()`` which allows defining the fake
-processes behavior.
+The most important method is ``fake_process.register_subprocess()`` which
+allows defining the fake processes behavior.
 
 .. code-block:: python
 
@@ -68,11 +70,13 @@ processes behavior.
 Passing input
 -------------
 
-By default, if you use ``input`` argument to the ``Popen.communicate()`` method, it won't crash, but also
-won't do anything useful. By passing a function as ``stdin_callable`` argument for the
-``fake_process.register_subprocess()`` method you can specify the behavior based on the input. The function
-shall accept one argument, which will be the input data. If the function will return a dictionary with
-``stdout`` or ``stderr`` keys, its value will be appended to according stream.
+By default, if you use ``input`` argument to the ``Popen.communicate()``
+method, it won't crash, but also won't do anything useful. By passing
+a function as ``stdin_callable`` argument for the
+``fake_process.register_subprocess()`` method you can specify the behavior
+based on the input. The function shall accept one argument, which will be
+the input data. If the function will return a dictionary with ``stdout`` or
+``stderr`` keys, its value will be appended to according stream.
 
 .. code-block:: python
 
@@ -103,10 +107,12 @@ shall accept one argument, which will be the input data. If the function will re
 Unregistered commands
 ---------------------
 
-By default, when the ``fake_process`` fixture is being used, any attempt to run subprocess that has
-not been registered will raise the ``ProcessNotRegisteredError`` exception. To allow it, use
-``fake_process.allow_unregistered(True)``, which will execute all unregistered processes with
-real ``subprocess``, or use ``fake_process.pass_command("command")`` to allow just a single command.
+By default, when the ``fake_process`` fixture is being used, any attempt to
+run subprocess that has not been registered will raise
+the ``ProcessNotRegisteredError`` exception. To allow it, use
+``fake_process.allow_unregistered(True)``, which will execute all unregistered
+processes with real ``subprocess``, or use
+``fake_process.pass_command("command")`` to allow just a single command.
 
 .. code-block:: python
 
@@ -127,11 +133,11 @@ real ``subprocess``, or use ``fake_process.pass_command("command")`` to allow ju
 Differing results
 -----------------
 
-Each ``register_subprocess()`` or ``pass_command()`` method call will register only one command
-execution. You can call those methods multiple times, to change the faked output on each subprocess
-run. When you call subprocess more times than registered command, the ``ProcessNotRegisteredError``
-will be raised. To prevent that, call ``fake_process.keep_last_process(True)``, which will keep the
-last registered process forever.
+Each ``register_subprocess()`` or ``pass_command()`` method call will register
+only one command execution. You can call those methods multiple times, to
+change the faked output on each subprocess run. When you call subprocess more
+will be raised. To prevent that, call ``fake_process.keep_last_process(True)``,
+which will keep the last registered process forever.
 
 .. code-block:: python
 
@@ -165,12 +171,64 @@ last registered process forever.
         assert subprocess.check_output("test") == b"second execution\n"
 
 
+Using callbacks
+---------------
+
+You can pass a function as ``callback`` argument to the ``register_subprocess()``
+method which will be executed instead of the real subprocess. The callback function
+can raise exceptions which will be interpreted in tests as an exception raised
+by the subprocess. The fixture will pass `FakePopen` class instance into the
+callback function, that can be used to change the return code or modify output
+streams.
+
+.. code-block:: python
+
+    def callback_function(process):
+        process.returncode = 1
+        raise PermissionError("exception raised by subprocess")
+
+
+    def test_raise_exception(fake_process):
+        fake_process.register_subprocess(["test"], callback=callback_function)
+
+        with pytest.raises(
+            PermissionError, match="exception raised by subprocess"
+        ):
+            process = subprocess.Popen(["test"])
+            process.wait()
+
+        assert process.returncode == 1
+
+It is possible to pass additional keyword arguments into ``callback`` by
+``callback_kwargs`` argument:
+
+.. code-block:: python
+
+    def callback_function_with_kwargs(process, return_code):
+        process.returncode = return_code
+
+
+    def test_callback_with_arguments(fake_process):
+        return_code = 127
+
+        fake_process.register_subprocess(
+            ["test"],
+            callback=callback_function_with_kwargs,
+            callback_kwargs={"return_code": return_code},
+        )
+
+        process = subprocess.Popen(["test"])
+        process.wait()
+
+        assert process.returncode == return_code
+
 As a context manager
 --------------------
 
-The ``fake_process`` fixture provides ``context()`` method that allows us to use it as a context manager.
-It can be used to limit the scope when a certain command is allowed, e.g. to make sure that the code
-doesn't want to execute it somewhere else.
+The ``fake_process`` fixture provides ``context()`` method that allows us to
+use it as a context manager. It can be used to limit the scope when a certain
+command is allowed, e.g. to make sure that the code doesn't want to execute
+it somewhere else.
 
 .. code-block:: python
 

@@ -660,6 +660,7 @@ def test_context_manager(fake_process):
 
 def test_raise_exception(fake_process):
     def callback_function(process):
+        process.returncode = 1
         raise PermissionError("exception raised by subprocess")
 
     fake_process.register_subprocess(["test"], callback=callback_function)
@@ -667,3 +668,23 @@ def test_raise_exception(fake_process):
     with pytest.raises(PermissionError, match="exception raised by subprocess"):
         process = subprocess.Popen(["test"])
         process.wait()
+
+    assert process.returncode == 1
+
+
+def test_callback_with_arguments(fake_process):
+    def callback_function(process, return_code):
+        process.returncode = return_code
+
+    return_code = 127
+
+    fake_process.register_subprocess(
+        ["test"],
+        callback=callback_function,
+        callback_kwargs={"return_code": return_code},
+    )
+
+    process = subprocess.Popen(["test"])
+    process.wait()
+
+    assert process.returncode == return_code
