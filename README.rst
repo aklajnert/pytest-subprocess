@@ -204,7 +204,7 @@ It is possible to pass additional keyword arguments into ``callback`` by
 
 .. code-block:: python
 
-    def callback_function(process, return_code):
+    def callback_function_with_kwargs(process, return_code):
         process.returncode = return_code
 
 
@@ -213,7 +213,7 @@ It is possible to pass additional keyword arguments into ``callback`` by
 
         fake_process.register_subprocess(
             ["test"],
-            callback=callback_function,
+            callback=callback_function_with_kwargs,
             callback_kwargs={"return_code": return_code},
         )
 

@@ -672,11 +672,10 @@ def test_raise_exception(fake_process):
     assert process.returncode == 1
 
 
-def callback_function(process, return_code):
-    process.returncode = return_code
-
-
 def test_callback_with_arguments(fake_process):
+    def callback_function(process, return_code):
+        process.returncode = return_code
+
     return_code = 127
 
     fake_process.register_subprocess(
