@@ -1,6 +1,21 @@
 History
 =======
 
+0.1.3 (2020-03-04)  
+------------------
+
+Features  
+~~~~~~~~
+* `#13 <https://github.com/aklajnert/pytest-subprocess/pulls//13>`_: Allow passing keyword arguments into callbacks.
+
+Bug fixes  
+~~~~~~~~~
+* `#12 <https://github.com/aklajnert/pytest-subprocess/pulls//12>`_: Properly raise exceptions from callback functions.
+
+Documentation changes  
+~~~~~~~~~~~~~~~~~~~~~
+* `#15 <https://github.com/aklajnert/pytest-subprocess/pulls//15>`_: Add documentation chapter about the callback functions.
+
 0.1.2 (2020-01-17)  
 ------------------
 

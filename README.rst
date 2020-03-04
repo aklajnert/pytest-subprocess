@@ -177,7 +177,7 @@ Using callbacks
 You can pass a function as ``callback`` argument to the ``register_subprocess()``
 method which will be executed instead of the real subprocess. The callback function
 can raise exceptions which will be interpreted in tests as an exception raised
-by the subprocess. The fixture will pass `FakePopen` class instance into the
+by the subprocess. The fixture will pass ``FakePopen`` class instance into the
 callback function, that can be used to change the return code or modify output
 streams.
 
@@ -199,8 +199,8 @@ streams.
 
         assert process.returncode == 1
 
-It is possible to pass additional keyword arguments into ``callback`` by
-``callback_kwargs`` argument:
+It is possible to pass additional keyword arguments into ``callback`` by using
+the ``callback_kwargs`` argument:
 
 .. code-block:: python
 
