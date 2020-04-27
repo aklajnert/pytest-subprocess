@@ -122,7 +122,7 @@ class FakePopen:
         if kwargs.get("stdout") == subprocess.PIPE:
             self.stdout = self._prepare_buffer(self.__stdout)
         stderr = kwargs.get("stderr")
-        if stderr == subprocess.STDOUT:
+        if stderr == subprocess.STDOUT and self.__stderr:
             self.stdout = self._prepare_buffer(self.__stderr, self.stdout)
         elif stderr == subprocess.PIPE:
             self.stderr = self._prepare_buffer(self.__stderr)
@@ -146,7 +146,7 @@ class FakePopen:
                 input = input.replace("\r\n", "\n")
 
         if io_base is not None:
-            input = io_base.getvalue() + input
+            input = io_base.getvalue() + (input)
 
         io_base = io.StringIO() if self.text_mode else io.BytesIO()
 
