@@ -83,7 +83,7 @@ def test_not_registered(fake_process, monkeypatch):
     setup_fake_popen(monkeypatch)
     fake_process = subprocess.Popen("test", shell=True)
 
-    assert fake_process == ("test", (), {"shell": True})
+    assert fake_process == (("test",), (), {"shell": True})
 
 
 def test_context(fake_process, monkeypatch):

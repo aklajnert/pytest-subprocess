@@ -20,7 +20,9 @@ OPTIONAL_TEXT_OR_ITERABLE = typing.Union[
 ]
 
 
-def _ensure_hashable(input):
+def _ensure_tuple(input):
+    if isinstance(input, str):
+        return tuple(input.split(" "))
     if isinstance(input, list):
         return tuple(input)
     return input
@@ -233,7 +235,7 @@ class ProcessDispatcher:
     @classmethod
     def dispatch(cls, command, **kwargs):
         """This method will be used instead of the subprocess.Popen()"""
-        command = _ensure_hashable(command)
+        command = _ensure_tuple(command)
 
         processes, process_instance = cls._get_process(command)
 
@@ -251,11 +253,7 @@ class ProcessDispatcher:
             if cls._keep_last_process:
                 processes.append(process)
             else:
-                process_instance.definitions.pop(
-                    command, None
-                ) or process_instance.definitions.pop(
-                    cls._get_secondary_command(command), None
-                )
+                del process_instance.definitions[command]
 
         cls._pid += 1
         if process is True:
@@ -267,18 +265,10 @@ class ProcessDispatcher:
         result.run_thread()
         return result
 
-    @staticmethod
-    def _get_secondary_command(command):
-        return (
-            tuple(command.split(" ")) if isinstance(command, str) else " ".join(command)
-        )
-
     @classmethod
     def _get_process(cls, command):
         for proc in reversed(cls.process_list):
-            processes = proc.definitions.get(command) or proc.definitions.get(
-                cls._get_secondary_command(command)
-            )
+            processes = proc.definitions.get(command)
             process_instance = proc
             if processes:
                 return processes, process_instance
@@ -334,7 +324,7 @@ class FakeProcess:
                 "The 'callback' and 'wait' arguments cannot be used "
                 "together. Add sleep() to your callback instead."
             )
-        command = _ensure_hashable(command)
+        command = _ensure_tuple(command)
         self.definitions[command].extend(
             [
                 {
@@ -363,7 +353,7 @@ class FakeProcess:
             command: allow to execute the supplied command
             occurrences: allow multiple usages of the same command
         """
-        command = _ensure_hashable(command)
+        command = _ensure_tuple(command)
         self.definitions[command].extend([True] * occurrences)
 
     def __enter__(self) -> "FakeProcess":

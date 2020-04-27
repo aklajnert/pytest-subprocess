@@ -1,0 +1,8 @@
+git_email: github@aklajnert.pl
+git_user: Andrzej Klajnert
+message: Registering process will be now consistent regardless of the command type.
+os_user: andrzejk
+pr_ids:
+- '20'
+timestamp: 1587995575
+type: bug
