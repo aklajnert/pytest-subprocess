@@ -83,7 +83,7 @@ def test_not_registered(fake_process, monkeypatch):
     setup_fake_popen(monkeypatch)
     fake_process = subprocess.Popen("test", shell=True)
 
-    assert fake_process == ("test", (), {"shell": True})
+    assert fake_process == (("test",), (), {"shell": True})
 
 
 def test_context(fake_process, monkeypatch):
@@ -716,3 +716,32 @@ def test_subprocess_pipe_without_stream_definition(fake_process):
         subprocess.check_output(["test-no-streams"], stderr=subprocess.STDOUT).decode()
         == ""
     )
+
+
+@pytest.mark.parametrize("command", (("test",), "test"))
+def test_different_command_type(fake_process, command):
+    """
+    From GitHub #18 - registering process as ["command"] or "command" should make no
+    difference, and none of those command usage attempts shall raise error.
+    """
+    fake_process.keep_last_process(True)
+
+    fake_process.register_subprocess(command)
+
+    assert subprocess.check_call("test") == 0
+    assert subprocess.check_call(["test"]) == 0
+
+
+@pytest.mark.parametrize(
+    "command", (("test", "with", "arguments"), "test with arguments")
+)
+def test_different_command_type_complex_command(fake_process, command):
+    """
+    Similar to previous test, but the command is more complex.
+    """
+    fake_process.keep_last_process(True)
+
+    fake_process.register_subprocess(command)
+
+    assert subprocess.check_call("test with arguments") == 0
+    assert subprocess.check_call(["test", "with", "arguments"]) == 0

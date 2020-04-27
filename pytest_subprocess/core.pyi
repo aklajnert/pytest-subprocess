@@ -15,9 +15,9 @@ OPTIONAL_TEXT_OR_ITERABLE = typing.Union[
 BUFFER = typing.Union[None, io.BytesIO, io.StringIO]
 
 
-def _ensure_hashable(
+def _ensure_tupple(
         input: typing.Union[typing.List[str], typing.Tuple[str, ...], str]
-) -> typing.Union[typing.Tuple[str, ...], str]: ...
+) -> typing.Tuple[str, ...]: ...
 
 
 class FakePopen:
@@ -121,7 +121,7 @@ class IncorrectProcessDefinition(Exception): ...
 
 
 class FakeProcess:
-    definitions: typing.DefaultDict[str, typing.Deque[typing.Union[typing.Dict, bool]]]
+    definitions: typing.DefaultDict[typing.Tuple[str, ...], typing.Deque[typing.Union[typing.Dict, bool]]]
 
     def __init__(self) -> None: ...
 

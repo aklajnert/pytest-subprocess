@@ -20,7 +20,9 @@ OPTIONAL_TEXT_OR_ITERABLE = typing.Union[
 ]
 
 
-def _ensure_hashable(input):
+def _ensure_tuple(input):
+    if isinstance(input, str):
+        return tuple(input.split(" "))
     if isinstance(input, list):
         return tuple(input)
     return input
@@ -233,7 +235,7 @@ class ProcessDispatcher:
     @classmethod
     def dispatch(cls, command, **kwargs):
         """This method will be used instead of the subprocess.Popen()"""
-        command = _ensure_hashable(command)
+        command = _ensure_tuple(command)
 
         processes, process_instance = cls._get_process(command)
 
@@ -322,7 +324,7 @@ class FakeProcess:
                 "The 'callback' and 'wait' arguments cannot be used "
                 "together. Add sleep() to your callback instead."
             )
-        command = _ensure_hashable(command)
+        command = _ensure_tuple(command)
         self.definitions[command].extend(
             [
                 {
@@ -351,7 +353,7 @@ class FakeProcess:
             command: allow to execute the supplied command
             occurrences: allow multiple usages of the same command
         """
-        command = _ensure_hashable(command)
+        command = _ensure_tuple(command)
         self.definitions[command].extend([True] * occurrences)
 
     def __enter__(self) -> "FakeProcess":
