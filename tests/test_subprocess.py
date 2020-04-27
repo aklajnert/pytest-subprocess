@@ -716,3 +716,15 @@ def test_subprocess_pipe_without_stream_definition(fake_process):
         subprocess.check_output(["test-no-streams"], stderr=subprocess.STDOUT).decode()
         == ""
     )
+
+
+@pytest.mark.parametrize("command", (("test",), "test"))
+def test_different_command_type(fake_process, command):
+    """
+    From GitHub #18 - registering process as ["command"] or "command" should make no
+    difference, and none of those command usage attempts shall raise error.
+    """
+    fake_process.register_subprocess(command)
+
+    assert subprocess.check_call("test") == 0
+    assert subprocess.check_call(["test"]) == 0
