@@ -1,0 +1,8 @@
+git_email: github@aklajnert.pl
+git_user: Andrzej Klajnert
+message: Fixed crash for stderr redirect with an empty stream definition.
+os_user: andrzejk
+pr_ids:
+- '19'
+timestamp: 1587964114
+type: bug
