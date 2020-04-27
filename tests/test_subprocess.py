@@ -688,3 +688,31 @@ def test_callback_with_arguments(fake_process):
     process.wait()
 
     assert process.returncode == return_code
+
+
+def test_subprocess_pipe_without_stream_definition(fake_process):
+    """
+    From GitHub #17 - the fake_subprocess was crashing if the subprocess was called
+    with stderr=subprocess.PIPE but the stderr was not defined during the process
+    registration.
+    """
+    fake_process.register_subprocess(
+        ["test-no-stderr"], stdout="test",
+    )
+    fake_process.register_subprocess(
+        ["test-no-stdout"], stderr="test",
+    )
+    fake_process.register_subprocess(["test-no-streams"],)
+
+    assert (
+        subprocess.check_output(["test-no-stderr"], stderr=subprocess.STDOUT).decode()
+        == "test" + os.linesep
+    )
+    assert (
+        subprocess.check_output(["test-no-stdout"], stderr=subprocess.STDOUT).decode()
+        == "test" + os.linesep
+    )
+    assert (
+        subprocess.check_output(["test-no-streams"], stderr=subprocess.STDOUT).decode()
+        == ""
+    )
