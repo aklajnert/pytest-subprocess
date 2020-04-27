@@ -251,7 +251,11 @@ class ProcessDispatcher:
             if cls._keep_last_process:
                 processes.append(process)
             else:
-                del process_instance.definitions[command]
+                process_instance.definitions.pop(
+                    command, None
+                ) or process_instance.definitions.pop(
+                    cls._get_secondary_command(command), None
+                )
 
         cls._pid += 1
         if process is True:
@@ -263,10 +267,18 @@ class ProcessDispatcher:
         result.run_thread()
         return result
 
+    @staticmethod
+    def _get_secondary_command(command):
+        return (
+            tuple(command.split(" ")) if isinstance(command, str) else " ".join(command)
+        )
+
     @classmethod
     def _get_process(cls, command):
         for proc in reversed(cls.process_list):
-            processes = proc.definitions.get(command)
+            processes = proc.definitions.get(command) or proc.definitions.get(
+                cls._get_secondary_command(command)
+            )
             process_instance = proc
             if processes:
                 return processes, process_instance

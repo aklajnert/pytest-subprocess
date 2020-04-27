@@ -105,6 +105,9 @@ class ProcessDispatcher:
             **kwargs: typing.Optional[typing.Dict]
     ) -> FakePopen: ...
 
+    @staticmethod
+    def _get_secondary_command(command: typing.Union[str, tuple]) -> typing.Union[str, tuple]: ...
+
     @classmethod
     def _get_process(
             cls, command: str
