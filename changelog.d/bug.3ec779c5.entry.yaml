@@ -1,0 +1,8 @@
+git_email: github@aklajnert.pl
+git_user: Andrzej Klajnert
+message: The exception raised from callback will take precedence over those from subprocess.
+os_user: andrzejk
+pr_ids:
+- '21'
+timestamp: 1588052678
+type: bug
