@@ -63,8 +63,7 @@ class FakePopen:
         return self
 
     def __exit__(self, *args, **kwargs):
-        if self.__thread and self.__thread.exception:
-            raise self.__thread.exception
+        pass
 
     def communicate(self, input=None, timeout=None):
         if input and self.__stdin_callable:

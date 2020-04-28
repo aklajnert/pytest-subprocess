@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
 import platform
-import re
 import subprocess
 import sys
 
@@ -758,17 +757,12 @@ def test_raise_exception_check_output(fake_process):
     def callback_function(_):
         raise FileNotFoundError("raised in callback")
 
-    # fake_process.register_subprocess("regular-behavior", returncode=1)
+    fake_process.register_subprocess("regular-behavior", returncode=1)
     fake_process.register_subprocess(
         "custom-exception", returncode=1, callback=callback_function
     )
 
-    with pytest.raises(
-        subprocess.CalledProcessError,
-        match=re.escape(
-            "Command '('regular-behavior',)' returned non-zero exit status 1."
-        ),
-    ):
+    with pytest.raises(subprocess.CalledProcessError):
         subprocess.check_output("regular-behavior")
 
     with pytest.raises(FileNotFoundError, match="raised in callback"):
