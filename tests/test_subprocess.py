@@ -767,3 +767,33 @@ def test_raise_exception_check_output(fake_process):
 
     with pytest.raises(FileNotFoundError, match="raised in callback"):
         subprocess.check_output("custom-exception")
+
+
+def test_callback_and_return_code(fake_process):
+    """Regression - the returncode was ignored when callback_function was present."""
+
+    def dummy_callback(_):
+        pass
+
+    def override_returncode(process):
+        process.returncode = 5
+
+    return_code = 1
+
+    fake_process.register_subprocess(
+        "test-dummy", returncode=return_code, callback=dummy_callback
+    )
+
+    process = subprocess.Popen("test-dummy")
+    process.wait()
+
+    assert process.returncode == return_code
+
+    fake_process.register_subprocess(
+        "test-increment", returncode=return_code, callback=override_returncode
+    )
+
+    process = subprocess.Popen("test-increment")
+    process.wait()
+
+    assert process.returncode == 5
