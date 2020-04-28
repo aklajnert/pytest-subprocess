@@ -96,6 +96,8 @@ class FakePopen:
             raise subprocess.TimeoutExpired(self.args, timeout)
         if self.__thread is not None:
             self.__thread.join()
+            if self.returncode is None and self.__returncode is not None:
+                self.returncode = self.__returncode
             if self.__thread.exception:
                 raise self.__thread.exception
         return self.returncode

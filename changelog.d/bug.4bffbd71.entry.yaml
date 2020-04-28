@@ -1,0 +1,8 @@
+git_email: github@aklajnert.pl
+git_user: Andrzej Klajnert
+message: The `returncode` will not be ignored when `callback` is used.
+os_user: andrzejk
+pr_ids:
+- '22'
+timestamp: 1588058646
+type: bug
