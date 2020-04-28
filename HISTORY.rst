@@ -1,6 +1,16 @@
 History
 =======
 
+0.1.4 (2020-04-28)  
+------------------
+
+Bug fixes  
+~~~~~~~~~
+* `#22 <https://github.com/aklajnert/pytest-subprocess/pulls//22>`_: The `returncode` will not be ignored when `callback` is used.
+* `#21 <https://github.com/aklajnert/pytest-subprocess/pulls//21>`_: The exception raised from callback will take precedence over those from subprocess.
+* `#20 <https://github.com/aklajnert/pytest-subprocess/pulls//20>`_: Registering process will be now consistent regardless of the command type.
+* `#19 <https://github.com/aklajnert/pytest-subprocess/pulls//19>`_: Fixed crash for stderr redirect with an empty stream definition.
+
 0.1.3 (2020-03-04)  
 ------------------
 
