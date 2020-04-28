@@ -745,3 +745,25 @@ def test_different_command_type_complex_command(fake_process, command):
 
     assert subprocess.check_call("test with arguments") == 0
     assert subprocess.check_call(["test", "with", "arguments"]) == 0
+
+
+def test_raise_exception_check_output(fake_process):
+    """
+    From GitHub#16 - the check_output raises the CalledProcessError exception
+    when the exit code is not zero. The exception should not shadow the exception
+    from the callback, if any.
+    """
+
+    def callback_function(_):
+        raise FileNotFoundError("raised in callback")
+
+    fake_process.register_subprocess("regular-behavior", returncode=1)
+    fake_process.register_subprocess(
+        "custom-exception", returncode=1, callback=callback_function
+    )
+
+    with pytest.raises(subprocess.CalledProcessError):
+        subprocess.check_output("regular-behavior")
+
+    with pytest.raises(FileNotFoundError, match="raised in callback"):
+        subprocess.check_output("custom-exception")
