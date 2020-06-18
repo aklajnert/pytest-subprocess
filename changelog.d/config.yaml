@@ -1,5 +1,5 @@
 context:
-  prs_url: https://github.com/aklajnert/pytest-subprocess/pulls/
+  prs_url: https://github.com/aklajnert/pytest-subprocess/pull
 message_types:
 - name: feature
   title: Features
