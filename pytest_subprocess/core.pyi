@@ -45,8 +45,7 @@ class FakePopen:
             returncode: int = 0,
             wait: typing.Optional[float] = None,
             callback: typing.Optional[typing.Callable] = None,
-
-        callback_kwargs: typing.Optional[typing.Dict[str, typing.Any]] = None,
+            callback_kwargs: typing.Optional[typing.Dict[str, typing.Any]] = None,
             stdin_callable: typing.Optional[typing.Callable] = None,
             **_: typing.Dict[str, typing.Any]
     ) -> None: ...
