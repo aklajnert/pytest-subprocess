@@ -800,16 +800,23 @@ def test_callback_and_return_code(fake_process):
     assert process.returncode == 5
 
 
+@pytest.mark.skipif(
+    sys.version_info <= (3, 5), reason="encoding and errors has been introduced in 3.6",
+)
+@pytest.mark.parametrize("argument", ["encoding", "errors"])
 @pytest.mark.parametrize("fake", [False, True])
-def test_encoding(fake_process, fake):
-    """If encoding is provided, the streams values shall be decoded."""
+def test_encoding(fake_process, fake, argument):
+    """If encoding or errors is provided, the `text=True` behavior should be enabled."""
     username = getpass.getuser()
+    values = {"encoding": "utf-8", "errors": "strict"}
 
     fake_process.allow_unregistered(not fake)
     if fake:
         fake_process.register_subprocess(["whoami"], stdout=username)
 
-    output = subprocess.check_output(["whoami"], encoding="utf-8").strip()
+    output = subprocess.check_output(
+        ["whoami"], **{argument: values.get(argument)}
+    ).strip()
 
     assert isinstance(output, str)
     assert output.endswith(username)

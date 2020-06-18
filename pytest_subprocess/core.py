@@ -105,13 +105,14 @@ class FakePopen:
     def configure(self, **kwargs):
         """Setup the FakePopen instance based on a real Popen arguments."""
         self.__universal_newlines = kwargs.get("universal_newlines", None)
-        encoding = kwargs.get("encoding", None)
         text = kwargs.get("text", None)
+        encoding = kwargs.get("encoding", None)
+        errors = kwargs.get("errors", None)
 
         if text and sys.version_info < (3, 7):
             raise TypeError("__init__() got an unexpected keyword argument 'text'")
 
-        self.text_mode = bool(text or self.__universal_newlines or encoding)
+        self.text_mode = bool(text or self.__universal_newlines or encoding or errors)
 
         # validation taken from the real subprocess
         if (
