@@ -801,7 +801,7 @@ def test_callback_and_return_code(fake_process):
 
 
 @pytest.mark.skipif(
-    sys.version_info <= (3, 5), reason="encoding and errors has been introduced in 3.6",
+    sys.version_info <= (3, 6), reason="encoding and errors has been introduced in 3.6",
 )
 @pytest.mark.parametrize("argument", ["encoding", "errors"])
 @pytest.mark.parametrize("fake", [False, True])
