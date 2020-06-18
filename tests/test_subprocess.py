@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import getpass
 import os
 import platform
 import subprocess
@@ -797,3 +798,18 @@ def test_callback_and_return_code(fake_process):
     process.wait()
 
     assert process.returncode == 5
+
+
+@pytest.mark.parametrize("fake", [False, True])
+def test_encoding(fake_process, fake):
+    """If encoding is provided, the streams values shall be decoded."""
+    username = getpass.getuser()
+
+    fake_process.allow_unregistered(not fake)
+    if fake:
+        fake_process.register_subprocess(["whoami"], stdout=username)
+
+    output = subprocess.check_output(["whoami"], encoding="utf-8").strip()
+
+    assert isinstance(output, str)
+    assert output.endswith(username)
