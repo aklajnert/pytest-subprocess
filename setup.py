@@ -19,7 +19,7 @@ if sys.version_info <= (3, 5):
 
 setup(
     name="pytest-subprocess",
-    version="0.1.4",
+    version="0.1.5",
     author="Andrzej Klajnert",
     author_email="python@aklajnert.pl",
     maintainer="Andrzej Klajnert",

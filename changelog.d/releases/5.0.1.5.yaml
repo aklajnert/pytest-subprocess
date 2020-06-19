@@ -1,0 +1,13 @@
+entries:
+  bug:
+  - git_email: github@aklajnert.pl
+    git_user: Andrzej Klajnert
+    message: '`encoding` and `errors` arguments will properly trigger `text` mode.'
+    os_user: andrzejk
+    pr_ids:
+    - '26'
+    timestamp: 1592481300
+previous_release: 0.1.4
+release_date: '2020-06-19'
+release_description: ''
+release_version: 0.1.5
