@@ -82,9 +82,9 @@ def test_not_registered(fake_process, monkeypatch):
 
     fake_process.allow_unregistered(True)
     setup_fake_popen(monkeypatch)
-    fake_process = subprocess.Popen("test", shell=True)
+    result = subprocess.Popen("test", shell=True)
 
-    assert fake_process == (("test",), (), {"shell": True})
+    assert result == ("test", (), {"shell": True})
 
 
 def test_context(fake_process, monkeypatch):
@@ -820,3 +820,13 @@ def test_encoding(fake_process, fake, argument):
 
     assert isinstance(output, str)
     assert output.endswith(username)
+
+
+@pytest.mark.parametrize("command", ["ls -lah", ["ls", "-lah"]])
+def test_string_or_tuple(fake_process, command):
+    """
+    It doesn't matter how you register the command, it should work as string or list.
+    """
+    fake_process.register_subprocess(command, occurrences=2)
+    assert subprocess.check_call("ls -lah") == 0
+    assert subprocess.check_call(["ls", "-lah"]) == 0

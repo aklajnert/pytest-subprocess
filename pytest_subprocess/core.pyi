@@ -2,7 +2,7 @@
 import io
 import typing
 
-from .utils import Thread
+from .utils import Thread, Command
 
 OPTIONAL_TEXT = typing.Union[str, bytes, None]
 OPTIONAL_TEXT_OR_ITERABLE = typing.Union[
@@ -107,7 +107,11 @@ class ProcessDispatcher:
     @classmethod
     def _get_process(
             cls, command: str
-    ) -> typing.Tuple[typing.Optional[typing.Deque[typing.Dict]], typing.Optional["FakeProcess"]]: ...
+    ) -> typing.Tuple[
+        typing.Optional[Command],
+        typing.Optional[typing.Deque[typing.Dict]],
+        typing.Optional["FakeProcess"]
+    ]: ...
 
     @classmethod
     def allow_unregistered(cls, allow: bool) -> None: ...
