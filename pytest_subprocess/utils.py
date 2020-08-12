@@ -37,3 +37,6 @@ class Command:
 
     def __repr__(self):
         return self.command
+
+    def __str__(self):
+        return str(self.command)

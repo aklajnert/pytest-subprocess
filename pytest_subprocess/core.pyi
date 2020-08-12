@@ -15,11 +15,6 @@ OPTIONAL_TEXT_OR_ITERABLE = typing.Union[
 BUFFER = typing.Union[None, io.BytesIO, io.StringIO]
 
 
-def _ensure_tupple(
-        input: typing.Union[typing.List[str], typing.Tuple[str, ...], str]
-) -> typing.Tuple[str, ...]: ...
-
-
 class FakePopen:
     args: typing.Union[typing.List[str], typing.Tuple[str, ...], str]
     stdout: BUFFER

@@ -21,14 +21,6 @@ OPTIONAL_TEXT_OR_ITERABLE = typing.Union[
 ]
 
 
-def _ensure_tuple(input):
-    if isinstance(input, str):
-        return tuple(input.split(" "))
-    if isinstance(input, list):
-        return tuple(input)
-    return input
-
-
 class FakePopen:
     """Base class that fakes the real subprocess.Popen()"""
 
@@ -272,7 +264,7 @@ class ProcessDispatcher:
     @classmethod
     def _get_process(cls, command):
         for proc in reversed(cls.process_list):
-            command, processes = next(
+            command_instance, processes = next(
                 (
                     (key, value)
                     for key, value in proc.definitions.items()
@@ -282,7 +274,7 @@ class ProcessDispatcher:
             )
             process_instance = proc
             if processes:
-                return command, processes, process_instance
+                return command_instance, processes, process_instance
         return None, None, None
 
     @classmethod
@@ -364,7 +356,7 @@ class FakeProcess:
             command: allow to execute the supplied command
             occurrences: allow multiple usages of the same command
         """
-        command = _ensure_tuple(command)
+        command = Command(command)
         self.definitions[command].extend([True] * occurrences)
 
     def __enter__(self) -> "FakeProcess":
