@@ -27,10 +27,17 @@ class Command:
 
     def __eq__(self, other):
         if isinstance(other, str):
-            return other == " ".join(self.command)
+            other = other.split(" ")
         elif isinstance(other, list):
-            return tuple(other) == self.command
-        return other == self.command
+            other = tuple(other)
+        if other == self.command:
+            return True
+
+        for (other_item, self_item) in zip(other, self.command):
+            if other_item != self_item and not isinstance(self_item, Any):
+                return False
+
+        return True
 
     def __hash__(self):
         return hash(self.command)
@@ -40,3 +47,10 @@ class Command:
 
     def __str__(self):
         return str(self.command)
+
+
+class Any:
+    """Wildcard definition class."""
+
+    def __init__(self, arguments=0):
+        self.arguments = arguments
