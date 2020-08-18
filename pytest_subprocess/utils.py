@@ -27,11 +27,16 @@ class Command:
 
     def __eq__(self, other):
         if isinstance(other, str):
-            other = other.split(" ")
+            other = tuple(other.split(" "))
         elif isinstance(other, list):
             other = tuple(other)
+
         if other == self.command:
+            # straightforward matching
             return True
+
+        if len(other) < len(self.command):
+            return False
 
         for (other_item, self_item) in zip(other, self.command):
             if other_item != self_item and not isinstance(self_item, Any):

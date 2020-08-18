@@ -46,7 +46,5 @@ def test_simple_wildcards():
     assert check_match(command, ["test", "something", "other_test"])
     assert check_match(command, ["test", "something_else", "other_test"])
 
-    # the two tests below are commented-out as the current implementation doesn't
-    # support matching for non-exact lists
-    # assert check_not_match(command, ["test", "something_else"])
-    # assert check_not_match(command, ["test", "other_test"])
+    assert check_not_match(command, ["test", "something_else"])
+    assert check_not_match(command, ["test", "other_test"])
