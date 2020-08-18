@@ -35,14 +35,30 @@ class Command:
             # straightforward matching
             return True
 
-        if len(other) < len(self.command):
-            return False
+        command_index = 0
+        command_elem = self.command[command_index]
+        next_command_elem = self._get_next_elem(command_index)
+        for elem in other:
+            if isinstance(command_elem, Any):
+                if command_elem.arguments == -1:
+                    if next_command_elem != elem:
+                        continue
+            else:
+                if elem != command_elem:
+                    return False
 
-        for (other_item, self_item) in zip(other, self.command):
-            if other_item != self_item and not isinstance(self_item, Any):
-                return False
+            command_index += 1
+            command_elem = next_command_elem
+            next_command_elem = self._get_next_elem(command_index)
 
-        return True
+        return command_index == len(self.command) - 1
+
+    def _get_next_elem(self, command_index):
+        return (
+            self.command[command_index + 1]
+            if len(self.command) > command_index + 1
+            else None
+        )
 
     def __hash__(self):
         return hash(self.command)
@@ -57,5 +73,5 @@ class Command:
 class Any:
     """Wildcard definition class."""
 
-    def __init__(self, arguments=0):
+    def __init__(self, arguments=-1):
         self.arguments = arguments

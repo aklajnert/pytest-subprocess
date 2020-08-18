@@ -36,15 +36,29 @@ def test_simple_wildcards():
     assert check_match(command, ["test", "something"])
     assert check_match(command, ["test", "something_else"])
     assert check_not_match(command, ["something", "test"])
+    assert check_match(command, ["test"])
 
     command = Command([Any(), "test"])
     assert check_match(command, ["something", "test"])
     assert check_match(command, ["something_else", "test"])
     assert check_not_match(command, ["test", "something"])
+    assert check_match(command, ["test"])
 
     command = Command(["test", Any(), "other_test"])
     assert check_match(command, ["test", "something", "other_test"])
     assert check_match(command, ["test", "something_else", "other_test"])
+    assert check_match(command, ["test", "other_test"])
 
     assert check_not_match(command, ["test", "something_else"])
-    assert check_not_match(command, ["test", "other_test"])
+
+
+def test_more_complex_wildcards():
+    command = Command(["test", Any()])
+    assert check_match(command, ["test", "with", "more", "arguments"])
+
+    command = Command(["test", Any(), "end"])
+    assert check_match(command, ["test", "blah", "end"])
+    assert check_match(command, ["test", "with", "more", "arguments", "end"])
+    assert check_not_match(
+        command, ["test", "with", "more", "arguments", "invalid_end"]
+    )

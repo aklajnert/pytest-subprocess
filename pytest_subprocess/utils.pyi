@@ -16,4 +16,6 @@ class Command:
     def __init__(self, command: typing.Union[typing.Tuple[ARGUMENT, ...], typing.List[ARGUMENT], str]) -> None: ...
 
 class Any:
+    arguments: int
+
     def __init__(self, arguments:int=0) -> None: ...
