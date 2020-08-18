@@ -40,9 +40,8 @@ class Command:
         next_command_elem = self._get_next_elem(command_index)
         for elem in other:
             if isinstance(command_elem, Any):
-                if command_elem.arguments == -1:
-                    if next_command_elem != elem:
-                        continue
+                if command_elem.arguments == -1 and next_command_elem != elem:
+                    continue
             else:
                 if elem != command_elem:
                     return False
