@@ -51,12 +51,11 @@ class Command:
                     if max_ == None:
                         max_ = command_elem.max
 
-                    if next_command_elem == elem or next_command_elem is None:
-                        if not self._thresholds_ok(min_, max_):
-                            return False
-
-                    max_ -= 1
-                    if next_command_elem is None:
+                    if not self._thresholds_ok(min_, max_):
+                        return False
+                    if next_command_elem != elem:
+                        if max_ is not None:
+                            max_ -= 1
                         continue
             else:
                 if elem != command_elem:
