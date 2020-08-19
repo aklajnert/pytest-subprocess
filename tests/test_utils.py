@@ -32,6 +32,12 @@ def test_more_complex_command(command):
 
 
 def test_simple_wildcards():
+    command = Command([Any()])
+    assert check_match(command, ["test"])
+    assert check_match(command, ["not_test"])
+    assert check_match(command, ["something", "a", "bit", "longer"])
+    assert check_match(command, ["basically", "everything", "will", "match"])
+
     command = Command(["test", Any()])
     assert check_match(command, ["test", "something"])
     assert check_match(command, ["test", "something_else"])
@@ -62,3 +68,24 @@ def test_more_complex_wildcards():
     assert check_not_match(
         command, ["test", "with", "more", "arguments", "invalid_end"]
     )
+
+
+def test_any_max():
+    command = Command([Any(max=1)])
+    assert check_match(command, ["test"])
+    assert check_match(command, ["other_test"])
+
+    assert check_not_match(command, ["two", "arguments"])
+    assert check_not_match(command, ["th", "ree", "arguments"])
+
+    command = Command(["test", Any(max=3)])
+    assert check_match(command, ["test", "max", "3", "args"])
+    assert check_match(command, ["test", "can_be", "less"])
+    assert check_match(command, ["test"])
+
+    assert check_not_match(command, ["wrong", "first", "argument"])
+    assert check_not_match(command, ["test", "more", "than", "3", "args"])
+
+    # easy cases are covered, but more complex are not yet
+    # command = Command(["test", Any(max=2), "end"])
+    # assert check_match(command, ["test", "two", "args", "end"])
