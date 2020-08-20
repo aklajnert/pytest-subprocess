@@ -93,8 +93,7 @@ def test_any_max():
     assert check_not_match(command, ["test", "oops", "three", "args", "end"])
     assert check_not_match(command, ["test", "two", "args", "wrong_end"])
 
-    # need to figure out how to make the following tests work
-    # command = Command(["test", Any(max=1), "middle", Any(max=2), "end"])
-    # assert check_match(
-    #     command, ["test", "one_argument", "middle", "two", "args", "end"]
-    # )
+    command = Command(["test", Any(max=1), "middle", Any(max=2), "end"])
+    assert check_match(
+        command, ["test", "one_argument", "middle", "two", "args", "end"]
+    )

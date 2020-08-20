@@ -46,13 +46,11 @@ class Command:
                     if next_command_elem != elem:
                         continue
                 else:
-                    if min_ == None:
-                        min_ = command_elem.min
-                    if max_ == None:
-                        max_ = command_elem.max
+                    max_, min_ = self._get_max_min(command_elem, max_, min_)
 
                     if not self._thresholds_ok(min_, max_):
                         return False
+
                     if next_command_elem != elem:
                         if max_ is not None:
                             max_ -= 1
@@ -68,6 +66,13 @@ class Command:
         return (
             self._thresholds_ok(min_, max_) and command_index == len(self.command) - 1
         )
+
+    def _get_max_min(self, command_elem, max_, min_):
+        if min_ == None:
+            min_ = command_elem.min
+        if max_ == None:
+            max_ = command_elem.max
+        return max_, min_
 
     def _get_next_elem(self, command_index):
         return (
