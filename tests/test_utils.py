@@ -145,3 +145,11 @@ def test_min_max_combined():
 
     assert check_not_match(command, ["start", "end"])
     assert check_not_match(command, ["start", "too", "many", "end"])
+
+
+def test_invalid_instantiation():
+    with pytest.raises(AttributeError, match="min cannot be greater than max"):
+        Any(min=3, max=2)
+
+    with pytest.raises(AttributeError, match="Cannot use `Any\(\)` one after another."):
+        Command([Any(), Any()])

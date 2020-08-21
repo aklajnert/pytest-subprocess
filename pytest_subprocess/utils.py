@@ -25,6 +25,12 @@ class Command:
             raise TypeError("Command can be only of type string, list or tuple.")
         self.command = command
 
+        for (i, command_elem) in enumerate(self.command):
+            if isinstance(command_elem, Any) and isinstance(
+                self._get_next_command_elem(i), Any
+            ):
+                raise AttributeError("Cannot use `Any()` one after another.")
+
     def __eq__(self, other):
         if isinstance(other, str):
             other = other.split(" ")
