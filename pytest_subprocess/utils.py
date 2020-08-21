@@ -40,9 +40,7 @@ class Command:
             if isinstance(command_elem, Any):
                 next_command_elem = self._get_next_command_elem(i)
                 if next_command_elem is None:
-                    if command_elem.max is not None and len(other) > command_elem.max:
-                        return False
-                    if command_elem.min is not None and len(other) < command_elem.min:
+                    if not self._are_thresholds_ok(command_elem, len(other)):
                         return False
                     return True
                 else:
@@ -52,16 +50,24 @@ class Command:
                     if next_matching_elem is None:
                         return False
                     else:
-                        if command_elem.max and next_matching_elem > command_elem.max:
+                        if not self._are_thresholds_ok(
+                            command_elem, next_matching_elem
+                        ):
                             return False
-                        if command_elem.min and next_matching_elem < command_elem.min:
-                            return False
+
                         other = other[next_matching_elem:]
             else:
                 if other.pop(0) != command_elem:
                     return False
 
         return len(other) == 0
+
+    def _are_thresholds_ok(self, command_elem, value):
+        if command_elem.max is not None and value > command_elem.max:
+            return False
+        if command_elem.min is not None and value < command_elem.min:
+            return False
+        return True
 
     def _get_next_command_elem(self, index):
         try:
