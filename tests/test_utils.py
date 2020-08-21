@@ -98,3 +98,50 @@ def test_any_max():
     assert check_match(
         command, ["test", "one_argument", "middle", "two", "args", "end"]
     )
+    assert check_match(command, ["test", "middle", "one_arg", "end"])
+
+    assert check_not_match(
+        command, ["test", "two", "args", "middle", "two", "args", "end"]
+    )
+
+
+def test_any_min():
+    command = Command([Any(min=2)])
+    assert check_match(command, ["any", "two"])
+    assert check_match(command, ["or", "even", "three"])
+
+    assert check_not_match(command, ["but_not_one"])
+
+    command = Command(["test", Any(min=1), "end"])
+    assert check_match(command, ["test", "with", "more", "arguments", "end"])
+    assert check_match(command, ["test", "only_one", "end"])
+
+    assert check_not_match(command, ["only_one", "end"])
+    assert check_not_match(command, ["test", "only_one"])
+    assert check_not_match(command, ["test", "end"])
+
+    command = Command(["test", Any(min=1), "middle", Any(min=2), "end"])
+    assert check_match(
+        command, ["test", "one_argument", "middle", "two", "args", "end"]
+    )
+
+    assert check_not_match(command, ["test", "middle", "two", "args", "end"])
+    assert check_not_match(
+        command, ["test", "one_argument", "middle", "one_argument", "end"]
+    )
+
+
+def test_min_max_combined():
+    command = Command([Any(min=2, max=4)])
+    assert check_match(command, ["just", "two"])
+    assert check_match(command, ["now", "three", "arguments"])
+    assert check_match(command, ["up", "to", "even", "four"])
+
+    assert check_not_match(command, ["single_argument"])
+    assert check_not_match(command, ["five", "is", "little", "too", "many"])
+
+    command = Command(["start", Any(min=1, max=1), "end"])
+    assert check_match(command, ["start", "anything", "end"])
+
+    assert check_not_match(command, ["start", "end"])
+    assert check_not_match(command, ["start", "too", "many", "end"])

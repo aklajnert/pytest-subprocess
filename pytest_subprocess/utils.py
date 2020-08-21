@@ -42,6 +42,8 @@ class Command:
                 if next_command_elem is None:
                     if command_elem.max is not None and len(other) > command_elem.max:
                         return False
+                    if command_elem.min is not None and len(other) < command_elem.min:
+                        return False
                     return True
                 else:
                     next_matching_elem = self._get_next_matching_elem_index(
@@ -51,6 +53,8 @@ class Command:
                         return False
                     else:
                         if command_elem.max and next_matching_elem > command_elem.max:
+                            return False
+                        if command_elem.min and next_matching_elem < command_elem.min:
                             return False
                         other = other[next_matching_elem:]
             else:
