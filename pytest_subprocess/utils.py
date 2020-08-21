@@ -27,72 +27,54 @@ class Command:
 
     def __eq__(self, other):
         if isinstance(other, str):
-            other = tuple(other.split(" "))
-        elif isinstance(other, list):
-            other = tuple(other)
+            other = other.split(" ")
+        elif isinstance(other, tuple):
+            other = list(other)
 
-        if other == self.command:
+        if other == list(self.command):
             # straightforward matching
             return True
 
-        command_index = 0
-        command_elem = self.command[command_index]
-        next_command_elem = self._get_next_elem(command_index)
-        min_ = None
-        max_ = None
-        for elem in other:
+        other = [*other]
+        for (i, command_elem) in enumerate(self.command):
             if isinstance(command_elem, Any):
-                if command_elem.min == None and command_elem.max == None:
-                    if next_command_elem != elem:
-                        continue
-                else:
-                    max_, min_ = self._get_max_min(command_elem, max_, min_)
-
-                    if not self._thresholds_ok(min_, max_):
+                next_command_elem = self._get_next_command_elem(i)
+                if next_command_elem is None:
+                    if command_elem.max is not None and len(other) > command_elem.max:
                         return False
-
-                    if next_command_elem != elem:
-                        if max_ is not None:
-                            max_ -= 1
-                        continue
+                    return True
+                else:
+                    next_matching_elem = self._get_next_matching_elem_index(
+                        other, next_command_elem
+                    )
+                    if next_matching_elem is None:
+                        return False
+                    else:
+                        if command_elem.max and next_matching_elem > command_elem.max:
+                            return False
+                        other = other[next_matching_elem:]
             else:
-                if elem != command_elem:
+                if other.pop(0) != command_elem:
                     return False
 
-            command_index += 1
-            command_elem = next_command_elem
-            next_command_elem = self._get_next_elem(command_index)
+        return len(other) == 0
 
-        return (
-            self._thresholds_ok(min_, max_) and command_index == len(self.command) - 1
+    def _get_next_command_elem(self, index):
+        try:
+            return self.command[index + 1]
+        except IndexError:
+            return None
+
+    def _get_next_matching_elem_index(self, other, elem):
+        return next(
+            (i for i, other_elem in enumerate(other) if elem == other_elem), None
         )
-
-    def _get_max_min(self, command_elem, max_, min_):
-        if min_ == None:
-            min_ = command_elem.min
-        if max_ == None:
-            max_ = command_elem.max
-        return max_, min_
-
-    def _get_next_elem(self, command_index):
-        return (
-            self.command[command_index + 1]
-            if len(self.command) > command_index + 1
-            else None
-        )
-
-    def _thresholds_ok(self, min_, max_):
-        if min_ is not None and min_ >= 0:
-            return False
-        if max_ is not None and max_ < 0:
-            return False
-        return True
 
     def __hash__(self):
         return hash(self.command)
 
     def __repr__(self):
-        return self.command
+        return str(self.command)
 
     def __str__(self):
         return str(self.command)
@@ -106,3 +88,6 @@ class Any:
             raise AttributeError("min cannot be greater than max")
         self.min = min
         self.max = max
+
+    def __repr__(self):
+        return "Any (min={}, max={})".format(self.min, self.max)
