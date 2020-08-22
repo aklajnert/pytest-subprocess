@@ -2,7 +2,7 @@
 import io
 import typing
 
-from .utils import Thread
+from .utils import Thread, Command, Any
 
 OPTIONAL_TEXT = typing.Union[str, bytes, None]
 OPTIONAL_TEXT_OR_ITERABLE = typing.Union[
@@ -13,12 +13,7 @@ OPTIONAL_TEXT_OR_ITERABLE = typing.Union[
     typing.Tuple[typing.Union[str, bytes], ...],
 ]
 BUFFER = typing.Union[None, io.BytesIO, io.StringIO]
-
-
-def _ensure_tupple(
-        input: typing.Union[typing.List[str], typing.Tuple[str, ...], str]
-) -> typing.Tuple[str, ...]: ...
-
+ARGUMENT = typing.Union[str, Any]
 
 class FakePopen:
     args: typing.Union[typing.List[str], typing.Tuple[str, ...], str]
@@ -107,7 +102,11 @@ class ProcessDispatcher:
     @classmethod
     def _get_process(
             cls, command: str
-    ) -> typing.Tuple[typing.Optional[typing.Deque[typing.Dict]], typing.Optional["FakeProcess"]]: ...
+    ) -> typing.Tuple[
+        typing.Optional[Command],
+        typing.Optional[typing.Deque[typing.Dict]],
+        typing.Optional["FakeProcess"]
+    ]: ...
 
     @classmethod
     def allow_unregistered(cls, allow: bool) -> None: ...
@@ -120,13 +119,14 @@ class IncorrectProcessDefinition(Exception): ...
 
 
 class FakeProcess:
+    any: typing.Type[Any]
     definitions: typing.DefaultDict[typing.Tuple[str, ...], typing.Deque[typing.Union[typing.Dict, bool]]]
 
     def __init__(self) -> None: ...
 
     def register_subprocess(
             self,
-            command: typing.Union[typing.List[str], typing.Tuple[str, ...], str],
+            command: typing.Union[typing.List[ARGUMENT], typing.Tuple[ARGUMENT, ...], str],
             stdout: OPTIONAL_TEXT_OR_ITERABLE = None,
             stderr: OPTIONAL_TEXT_OR_ITERABLE = None,
             returncode: int = 0,

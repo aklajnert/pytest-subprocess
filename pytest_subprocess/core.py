@@ -9,6 +9,8 @@ from collections import defaultdict
 from collections import deque
 from copy import deepcopy
 
+from .utils import Any
+from .utils import Command
 from .utils import Thread
 
 OPTIONAL_TEXT_OR_ITERABLE = typing.Union[
@@ -18,14 +20,6 @@ OPTIONAL_TEXT_OR_ITERABLE = typing.Union[
     typing.List[typing.Union[str, bytes]],
     typing.Tuple[typing.Union[str, bytes], ...],
 ]
-
-
-def _ensure_tuple(input):
-    if isinstance(input, str):
-        return tuple(input.split(" "))
-    if isinstance(input, list):
-        return tuple(input)
-    return input
 
 
 class FakePopen:
@@ -240,9 +234,7 @@ class ProcessDispatcher:
     @classmethod
     def dispatch(cls, command, **kwargs):
         """This method will be used instead of the subprocess.Popen()"""
-        command = _ensure_tuple(command)
-
-        processes, process_instance = cls._get_process(command)
+        command_instance, processes, process_instance = cls._get_process(command)
 
         if not processes:
             if not cls._allow_unregistered:
@@ -258,7 +250,7 @@ class ProcessDispatcher:
             if cls._keep_last_process:
                 processes.append(process)
             else:
-                del process_instance.definitions[command]
+                del process_instance.definitions[command_instance]
 
         cls._pid += 1
         if process is True:
@@ -273,11 +265,18 @@ class ProcessDispatcher:
     @classmethod
     def _get_process(cls, command):
         for proc in reversed(cls.process_list):
-            processes = proc.definitions.get(command)
+            command_instance, processes = next(
+                (
+                    (key, value)
+                    for key, value in proc.definitions.items()
+                    if key == command
+                ),
+                (None, None),
+            )
             process_instance = proc
             if processes:
-                return processes, process_instance
-        return None, None
+                return command_instance, processes, process_instance
+        return None, None, None
 
     @classmethod
     def allow_unregistered(cls, allow):
@@ -294,6 +293,8 @@ class IncorrectProcessDefinition(Exception):
 
 class FakeProcess:
     """Main class responsible for process operations"""
+
+    any = Any
 
     def __init__(self):
         self.definitions = defaultdict(deque)
@@ -329,7 +330,7 @@ class FakeProcess:
                 "The 'callback' and 'wait' arguments cannot be used "
                 "together. Add sleep() to your callback instead."
             )
-        command = _ensure_tuple(command)
+        command = Command(command)
         self.definitions[command].extend(
             [
                 {
@@ -358,7 +359,7 @@ class FakeProcess:
             command: allow to execute the supplied command
             occurrences: allow multiple usages of the same command
         """
-        command = _ensure_tuple(command)
+        command = Command(command)
         self.definitions[command].extend([True] * occurrences)
 
     def __enter__(self) -> "FakeProcess":

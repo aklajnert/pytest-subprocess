@@ -82,9 +82,9 @@ def test_not_registered(fake_process, monkeypatch):
 
     fake_process.allow_unregistered(True)
     setup_fake_popen(monkeypatch)
-    fake_process = subprocess.Popen("test", shell=True)
+    result = subprocess.Popen("test", shell=True)
 
-    assert fake_process == (("test",), (), {"shell": True})
+    assert result == ("test", (), {"shell": True})
 
 
 def test_context(fake_process, monkeypatch):
@@ -820,3 +820,33 @@ def test_encoding(fake_process, fake, argument):
 
     assert isinstance(output, str)
     assert output.endswith(username)
+
+
+@pytest.mark.parametrize("command", ["ls -lah", ["ls", "-lah"]])
+def test_string_or_tuple(fake_process, command):
+    """
+    It doesn't matter how you register the command, it should work as string or list.
+    """
+    fake_process.register_subprocess(command, occurrences=2)
+    assert subprocess.check_call("ls -lah") == 0
+    assert subprocess.check_call(["ls", "-lah"]) == 0
+
+
+def test_with_wildcards(fake_process):
+    """Use Any() with real example"""
+    fake_process.keep_last_process(True)
+    fake_process.register_subprocess(("ls", fake_process.any()))
+
+    assert subprocess.check_call("ls -lah") == 0
+    assert subprocess.check_call(["ls", "-lah", "/tmp"]) == 0
+    assert subprocess.check_call(["ls"]) == 0
+
+    fake_process.register_subprocess(["cp", fake_process.any(min=2)])
+    with pytest.raises(pytest_subprocess.ProcessNotRegisteredError):
+        subprocess.check_call("cp /source/dir")
+    assert subprocess.check_call("cp /source/dir /tmp/random-dir") == 0
+
+    fake_process.register_subprocess(["cd", fake_process.any(max=1)])
+    with pytest.raises(pytest_subprocess.ProcessNotRegisteredError):
+        subprocess.check_call(["cd ~/ /tmp"])
+    assert subprocess.check_call("cd ~/") == 0

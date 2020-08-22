@@ -248,6 +248,51 @@ it somewhere else.
         with pytest.raises(pytest_subprocess.ProcessNotRegisteredError):
             subprocess.check_call("test")
 
+Non-exact command matching
+--------------------------
+
+If you need to catch a command with some non-predictable elements, like path
+to randomly-generated file name, you can use ``fake_subprocess.any()`` for
+that purpose. The number of arguments that should be matched can be controlled
+by ``min`` and ``max`` arguments. To use ``fake_subprocess.any()`` you need
+to define the command as a ``tuple`` or ``list``. The matching will work even
+if the subprocess command will be called with a string argument.
+
+.. code-block:: python
+
+    def test_non_exact_matching(fake_process):
+        # define a command that will take any number of arguments
+        fake_process.register_subprocess(["ls", fake_process.any()])
+        assert subprocess.check_call("ls -lah") == 0
+
+        # `fake_subprocess.any()` is OK even with no arguments
+        fake_process.register_subprocess(["ls", fake_process.any()])
+        assert subprocess.check_call("ls") == 0
+
+        # but it can force a minimum amount of arguments
+        fake_process.register_subprocess(["cp", fake_process.any(min=2)])
+
+        with pytest.raises(pytest_subprocess.ProcessNotRegisteredError):
+            # only one argument is used, so registered command won't match
+            subprocess.check_call("cp /source/dir")
+        # but two arguments will be fine
+        assert subprocess.check_call("cp /source/dir /tmp/random-dir") == 0
+
+        # the `max` argument can be used to limit maximum amount of arguments
+        fake_process.register_subprocess(["cd", fake_process.any(max=1)])
+
+        with pytest.raises(pytest_subprocess.ProcessNotRegisteredError):
+            # cd with two arguments won't match with max=1
+            subprocess.check_call("cd ~/ /tmp")
+        # but any single argument is fine
+        assert subprocess.check_call("cd ~/") == 0
+
+        # `min` and `max` can be used together
+        fake_process.register_subprocess(
+            ["my_app", fake_process.any(min=1, max=2)]
+        )
+        assert subprocess.check_call(["my_app", "--help"]) == 0
+
 .. _`pip`: https://pypi.org/project/pip/
 .. _`PyPI`: https://pypi.org/project
 
