@@ -1,8 +1,0 @@
-git_email: github@aklajnert.pl
-git_user: Andrzej Klajnert
-message: Allow to match a command with variable arguments (non-exact matching).
-os_user: aklajnert
-pr_ids:
-- '28'
-timestamp: 1598077558
-type: feature

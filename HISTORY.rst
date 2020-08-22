@@ -1,6 +1,14 @@
 History
 =======
 
+1.0.0 (2020-08-22)  
+------------------
+
+Features  
+~~~~~~~~
+* `#29 <https://github.com/aklajnert/pytest-subprocess/pull/29>`_: Remember subprocess calls to check if expected commands were executed.
+* `#28 <https://github.com/aklajnert/pytest-subprocess/pull/28>`_: Allow to match a command with variable arguments (non-exact matching).
+
 0.1.5 (2020-06-19)  
 ------------------
 
