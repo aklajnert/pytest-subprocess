@@ -63,7 +63,7 @@ class Command:
 
                         other = other[next_matching_elem:]
             else:
-                if other.pop(0) != command_elem:
+                if len(other) == 0 or other.pop(0) != command_elem:
                     return False
 
         return len(other) == 0
