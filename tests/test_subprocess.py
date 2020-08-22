@@ -845,3 +845,8 @@ def test_with_wildcards(fake_process):
     with pytest.raises(pytest_subprocess.ProcessNotRegisteredError):
         subprocess.check_call("cp /source/dir")
     assert subprocess.check_call("cp /source/dir /tmp/random-dir") == 0
+
+    fake_process.register_subprocess(["cd", fake_process.any(max=1)])
+    with pytest.raises(pytest_subprocess.ProcessNotRegisteredError):
+        subprocess.check_call(["cd ~/ /tmp"])
+    assert subprocess.check_call("cd ~/") == 0

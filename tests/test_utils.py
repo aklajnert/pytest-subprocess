@@ -151,5 +151,7 @@ def test_invalid_instantiation():
     with pytest.raises(AttributeError, match="min cannot be greater than max"):
         Any(min=3, max=2)
 
-    with pytest.raises(AttributeError, match="Cannot use `Any\(\)` one after another."):
+    with pytest.raises(
+        AttributeError, match=r"Cannot use `Any\(\)` one after another."
+    ):
         Command([Any(), Any()])

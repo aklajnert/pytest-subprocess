@@ -283,13 +283,13 @@ if the subprocess command will be called with a string argument.
 
         with pytest.raises(pytest_subprocess.ProcessNotRegisteredError):
             # cd with two arguments won't match with max=1
-            subprocess.check_call("cp ~/ /tmp")
+            subprocess.check_call("cd ~/ /tmp")
         # but any single argument is fine
-        assert subprocess.check_call("cp ~/") == 0
+        assert subprocess.check_call("cd ~/") == 0
 
         # `min` and `max` can be used together
         fake_process.register_subprocess(
-            ["my_app", fake_proceess.any(min=1, max=2)]
+            ["my_app", fake_process.any(min=1, max=2)]
         )
         assert subprocess.check_call(["my_app", "--help"]) == 0
 
