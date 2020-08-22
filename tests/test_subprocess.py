@@ -830,3 +830,18 @@ def test_string_or_tuple(fake_process, command):
     fake_process.register_subprocess(command, occurrences=2)
     assert subprocess.check_call("ls -lah") == 0
     assert subprocess.check_call(["ls", "-lah"]) == 0
+
+
+def test_with_wildcards(fake_process):
+    """Use Any() with real example"""
+    fake_process.keep_last_process(True)
+    fake_process.register_subprocess(("ls", fake_process.any()))
+
+    assert subprocess.check_call("ls -lah") == 0
+    assert subprocess.check_call(["ls", "-lah", "/tmp"]) == 0
+    assert subprocess.check_call(["ls"]) == 0
+
+    fake_process.register_subprocess(["cp", fake_process.any(min=2)])
+    with pytest.raises(pytest_subprocess.ProcessNotRegisteredError):
+        subprocess.check_call("cp /source/dir")
+    assert subprocess.check_call("cp /source/dir /tmp/random-dir") == 0

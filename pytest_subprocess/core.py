@@ -9,6 +9,7 @@ from collections import defaultdict
 from collections import deque
 from copy import deepcopy
 
+from .utils import Any
 from .utils import Command
 from .utils import Thread
 
@@ -292,6 +293,8 @@ class IncorrectProcessDefinition(Exception):
 
 class FakeProcess:
     """Main class responsible for process operations"""
+
+    any = Any
 
     def __init__(self):
         self.definitions = defaultdict(deque)
