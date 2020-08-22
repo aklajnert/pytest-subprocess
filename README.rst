@@ -251,8 +251,8 @@ it somewhere else.
 Non-exact command matching
 --------------------------
 
-If you need to catch a command with some non-predictable elements, like path
-to randomly-generated file name, you can use ``fake_subprocess.any()`` for
+If you need to catch a command with some non-predictable elements, like a path
+to a randomly-generated file name, you can use ``fake_subprocess.any()`` for
 that purpose. The number of arguments that should be matched can be controlled
 by ``min`` and ``max`` arguments. To use ``fake_subprocess.any()`` you need
 to define the command as a ``tuple`` or ``list``. The matching will work even
@@ -299,7 +299,7 @@ Check if process was called
 
 You may want to simply check if a certain command was called, you can do this
 by accessing ``fake_process.calls``, where all commands are stored as-called.
-You can also use an utility function ``fake_process.call_count()`` to see
+You can also use a utility function ``fake_process.call_count()`` to see
 how many a command has been called. The latter supports ``fake_process.any()``.
 
 .. code-block:: python

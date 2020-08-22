@@ -19,7 +19,7 @@ if sys.version_info <= (3, 5):
 
 setup(
     name="pytest-subprocess",
-    version="0.1.5",
+    version="1.0.0",
     author="Andrzej Klajnert",
     author_email="python@aklajnert.pl",
     maintainer="Andrzej Klajnert",
@@ -54,7 +54,7 @@ setup(
     packages=find_packages(exclude=["docs", "tests"]),
     package_data={"pytest_subprocess": ["py.typed", "core.pyi", "fixtures.pyi",]},
     classifiers=[
-        "Development Status :: 4 - Beta",
+        "Development Status :: 5 - Production/Stable",
         "Framework :: Pytest",
         "Intended Audience :: Developers",
         "Topic :: Software Development :: Testing",
