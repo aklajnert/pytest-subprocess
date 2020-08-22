@@ -155,3 +155,8 @@ def test_invalid_instantiation():
         AttributeError, match=r"Cannot use `Any\(\)` one after another."
     ):
         Command([Any(), Any()])
+
+    with pytest.raises(
+        TypeError, match="Command can be only of type string, list or tuple."
+    ):
+        Command(dict(command="ls"))
