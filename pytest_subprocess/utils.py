@@ -41,7 +41,7 @@ class Command:
             # straightforward matching
             return True
 
-        other = [*other]
+        other = list(other)
         for (i, command_elem) in enumerate(self.command):
             if isinstance(command_elem, Any):
                 next_command_elem = self._get_next_command_elem(i)
@@ -68,7 +68,8 @@ class Command:
 
         return len(other) == 0
 
-    def _are_thresholds_ok(self, command_elem, value):
+    @staticmethod
+    def _are_thresholds_ok(command_elem, value):
         if command_elem.max is not None and value > command_elem.max:
             return False
         if command_elem.min is not None and value < command_elem.min:
@@ -81,7 +82,8 @@ class Command:
         except IndexError:
             return None
 
-    def _get_next_matching_elem_index(self, other, elem):
+    @staticmethod
+    def _get_next_matching_elem_index(other, elem):
         return next(
             (i for i, other_elem in enumerate(other) if elem == other_elem), None
         )
