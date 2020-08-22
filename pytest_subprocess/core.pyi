@@ -14,6 +14,7 @@ OPTIONAL_TEXT_OR_ITERABLE = typing.Union[
 ]
 BUFFER = typing.Union[None, io.BytesIO, io.StringIO]
 ARGUMENT = typing.Union[str, Any]
+COMMAND = typing.Union[typing.List[ARGUMENT], typing.Tuple[ARGUMENT, ...], str]
 
 class FakePopen:
     args: typing.Union[typing.List[str], typing.Tuple[str, ...], str]
@@ -121,12 +122,13 @@ class IncorrectProcessDefinition(Exception): ...
 class FakeProcess:
     any: typing.Type[Any]
     definitions: typing.DefaultDict[typing.Tuple[str, ...], typing.Deque[typing.Union[typing.Dict, bool]]]
+    calls: typing.Deque[Command]
 
     def __init__(self) -> None: ...
 
     def register_subprocess(
             self,
-            command: typing.Union[typing.List[ARGUMENT], typing.Tuple[ARGUMENT, ...], str],
+            command: COMMAND,
             stdout: OPTIONAL_TEXT_OR_ITERABLE = None,
             stderr: OPTIONAL_TEXT_OR_ITERABLE = None,
             returncode: int = 0,
@@ -149,6 +151,8 @@ class FakeProcess:
 
     @classmethod
     def keep_last_process(cls, keep: bool) -> None: ...
+
+    def call_count(self, command: COMMAND) -> int: ...
 
     @classmethod
     def context(cls) -> "FakeProcess": ...
