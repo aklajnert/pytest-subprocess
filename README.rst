@@ -293,6 +293,43 @@ if the subprocess command will be called with a string argument.
         )
         assert subprocess.check_call(["my_app", "--help"]) == 0
 
+
+Check if process was called
+---------------------------
+
+You may want to simply check if a certain command was called, you can do this
+by accessing ``fake_process.calls``, where all commands are stored as-called.
+You can also use an utility function ``fake_process.call_count()`` to see
+how many a command has been called. The latter supports ``fake_process.any()``.
+
+.. code-block:: python
+
+    def test_check_if_called(fake_process):
+        fake_process.keep_last_process(True)
+        # any command can be called
+        fake_process.register_subprocess([fake_process.any()])
+
+        subprocess.check_call(["cp", "/tmp/source", "/source"])
+        subprocess.check_call(["cp", "/source", "/destination"])
+        subprocess.check_call(["cp", "/source", "/other/destination"])
+
+        # you can check if command is in ``fake_process.calls``
+        assert ["cp", "/tmp/source", "/source"] in fake_process.calls
+        assert ["cp", "/source", "/destination"] in fake_process.calls
+        assert ["cp", "/source", "/other/destination"] in fake_process.calls
+
+        # or check how many it was called, possibly with wildcard arguments
+        assert fake_process.call_count(["cp", "/source", "/destination"]) == 1
+
+        # with ``call_count()`` you don't need to use the same type as
+        # the subprocess was called
+        assert fake_process.call_count("cp /tmp/source /source") == 1
+
+        # can be used with ``fake_process.any()`` to match more calls
+        assert fake_process.call_count(["cp", fake_process.any()]) == 3
+
+
+
 .. _`pip`: https://pypi.org/project/pip/
 .. _`PyPI`: https://pypi.org/project
 

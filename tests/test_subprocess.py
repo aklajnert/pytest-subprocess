@@ -850,3 +850,24 @@ def test_with_wildcards(fake_process):
     with pytest.raises(pytest_subprocess.ProcessNotRegisteredError):
         subprocess.check_call(["cd ~/ /tmp"])
     assert subprocess.check_call("cd ~/") == 0
+
+
+def test_call_count(fake_process):
+    """Check if commands are registered and counted properly"""
+    fake_process.keep_last_process(True)
+    fake_process.register_subprocess([fake_process.any()])
+
+    assert subprocess.check_call("ls -lah") == 0
+    assert subprocess.check_call(["cp", "/tmp/source", "/source"]) == 0
+    assert subprocess.check_call(["cp", "/source", "/destination"]) == 0
+    assert subprocess.check_call(["cp", "/source", "/other/destination"]) == 0
+
+    assert "ls -lah" in fake_process.calls
+    assert ["cp", "/tmp/source", "/source"] in fake_process.calls
+    assert ["cp", "/source", "/destination"] in fake_process.calls
+    assert ["cp", "/source", "/other/destination"] in fake_process.calls
+
+    assert fake_process.call_count("cp /tmp/source /source") == 1
+    assert fake_process.call_count(["cp", "/source", fake_process.any()]) == 2
+    assert fake_process.call_count(["cp", fake_process.any()]) == 3
+    assert fake_process.call_count(["ls", "-lah"]) == 1

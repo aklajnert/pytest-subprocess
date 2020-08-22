@@ -20,6 +20,8 @@ OPTIONAL_TEXT_OR_ITERABLE = typing.Union[
     typing.List[typing.Union[str, bytes]],
     typing.Tuple[typing.Union[str, bytes], ...],
 ]
+ARGUMENT = typing.Union[str, Any]
+COMMAND = typing.Union[typing.List[ARGUMENT], typing.Tuple[ARGUMENT, ...], str]
 
 
 class FakePopen:
@@ -236,6 +238,9 @@ class ProcessDispatcher:
         """This method will be used instead of the subprocess.Popen()"""
         command_instance, processes, process_instance = cls._get_process(command)
 
+        if process_instance:
+            process_instance.calls.append(command)
+
         if not processes:
             if not cls._allow_unregistered:
                 raise ProcessNotRegisteredError(
@@ -298,6 +303,7 @@ class FakeProcess:
 
     def __init__(self):
         self.definitions = defaultdict(deque)
+        self.calls = deque()
 
     def register_subprocess(
         self,
@@ -378,6 +384,20 @@ class FakeProcess:
             allow: decide whether the unregistered process shall be allowed
         """
         ProcessDispatcher.allow_unregistered(allow)
+
+    def call_count(self, command: COMMAND) -> int:
+        """
+        Count how many times a certain command was called. Can be used
+        together with `fake_process.any()`.
+
+        Args:
+            command: lookup command
+
+        Returns:
+            number of times a command was called
+        """
+        command = Command(command)
+        return len(tuple(filter(lambda elem: elem == command, self.calls)))
 
     @classmethod
     def keep_last_process(cls, keep: bool) -> None:
