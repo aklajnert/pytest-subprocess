@@ -1,5 +1,4 @@
 import threading
-from collections import Iterable
 
 
 class Thread(threading.Thread):
