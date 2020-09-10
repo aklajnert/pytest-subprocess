@@ -1,4 +1,5 @@
 import threading
+from collections import Iterable
 
 
 class Thread(threading.Thread):
@@ -15,6 +16,8 @@ class Thread(threading.Thread):
 
 class Command:
     """Command definition class."""
+
+    __slots__ = "command"
 
     def __init__(self, command):
         if isinstance(command, str):
@@ -67,6 +70,9 @@ class Command:
                     return False
 
         return len(other) == 0
+
+    def __iter__(self):
+        return iter(self.command)
 
     @staticmethod
     def _are_thresholds_ok(command_elem, value):
