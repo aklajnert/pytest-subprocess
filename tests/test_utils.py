@@ -160,3 +160,9 @@ def test_invalid_instantiation():
         TypeError, match="Command can be only of type string, list or tuple."
     ):
         Command(dict(command="ls"))
+
+
+def test_command_iter():
+    """Make sure Command supports iteration"""
+    command = Command(["a", "a", "a"])
+    assert all(elem == "a" for elem in command)
