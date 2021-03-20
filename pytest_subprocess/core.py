@@ -136,17 +136,18 @@ class FakePopen:
         if isinstance(input, (list, tuple)):
             input = linesep.join(map(self._convert, input))
 
+            # Add trailing newline if data is present.
+            if input:
+                input += linesep
+
         if isinstance(input, str) and not self.text_mode:
             input = input.encode()
 
         if isinstance(input, bytes) and self.text_mode:
             input = input.decode()
 
-        if input:
-            if not input.endswith(linesep):
-                input += linesep
-            if self.text_mode and self.__universal_newlines:
-                input = input.replace("\r\n", "\n")
+        if input and self.__universal_newlines:
+            input = input.replace("\r\n", "\n")
 
         if io_base is not None:
             input = io_base.getvalue() + (input)

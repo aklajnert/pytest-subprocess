@@ -43,18 +43,18 @@ def test_multiple_levels(fake_process):
 
         assert (
             subprocess.check_output("first_command")
-            == ("first command lower-level" + os.linesep).encode()
+            == ("first command lower-level").encode()
         )
         assert (
             subprocess.check_output("second_command")
-            == ("second command lower-level" + os.linesep).encode()
+            == ("second command lower-level").encode()
         )
 
     # first command definition shall be back at top-level definition, and the second
     # command is no longer defined so it shall raise an exception
     assert (
         subprocess.check_output("first_command")
-        == ("first command top-level" + os.linesep).encode()
+        == ("first command top-level").encode()
     )
     with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
         subprocess.check_call("second_command")
@@ -135,8 +135,8 @@ def test_basic_process_merge_streams(fake_process, fake):
     if fake:
         fake_process.register_subprocess(
             ["python", "example_script.py", "stderr"],
-            stdout="Stdout line 1\nStdout line 2",
-            stderr="Stderr line 1",
+            stdout=["Stdout line 1", "Stdout line 2"],
+            stderr=["Stderr line 1"],
         )
 
     process = subprocess.Popen(
@@ -270,7 +270,8 @@ def test_universal_newlines(fake_process, fake):
     fake_process.allow_unregistered(not fake)
     if fake:
         fake_process.register_subprocess(
-            ["python", "example_script.py"], stdout=b"Stdout line 1\r\nStdout line 2",
+            ["python", "example_script.py"],
+            stdout=b"Stdout line 1\r\nStdout line 2\r\n",
         )
     process = subprocess.Popen(
         ("python", "example_script.py"), universal_newlines=True, stdout=subprocess.PIPE
@@ -301,6 +302,38 @@ def test_text(fake_process, fake):
         process.wait()
 
         assert process.stdout.read().splitlines() == ["Stdout line 1", "Stdout line 2"]
+
+
+def test_binary(fake_process):
+    fake_process.register_subprocess(
+        ["some-cmd"],
+        stdout=bytes.fromhex("aabbcc"),
+    )
+
+    process = subprocess.Popen(
+        ["some-cmd"], stdout=subprocess.PIPE
+    )
+    process.wait()
+
+    assert process.stdout.read() == b"\xaa\xbb\xcc"
+
+
+def test_empty_stdout(fake_process):
+    fake_process.register_subprocess(["some-cmd"], stdout=b"")
+
+    process = subprocess.Popen(["some-cmd"], stdout=subprocess.PIPE)
+    process.wait()
+
+    assert process.stdout.read() == b""
+
+
+def test_empty_stdout_list(fake_process):
+    fake_process.register_subprocess(["some-cmd"], stdout=[])
+
+    process = subprocess.Popen(["some-cmd"], stdout=subprocess.PIPE)
+    process.wait()
+
+    assert process.stdout.read() == b""
 
 
 @pytest.mark.parametrize("fake", [False, True])
@@ -452,10 +485,10 @@ def test_different_output(fake_process):
     # the third execution will return non-zero exit code
     fake_process.register_subprocess("test", stdout="third execution", returncode=1)
 
-    assert subprocess.check_output("test") == b"first execution" + os.linesep.encode()
-    assert subprocess.check_output("test") == b"second execution" + os.linesep.encode()
+    assert subprocess.check_output("test") == b"first execution"
+    assert subprocess.check_output("test") == b"second execution"
     third_process = subprocess.Popen("test", stdout=subprocess.PIPE)
-    assert third_process.stdout.read() == b"third execution" + os.linesep.encode()
+    assert third_process.stdout.read() == b"third execution"
     assert third_process.returncode == 1
 
     # 4-th time shall raise an exception
@@ -470,10 +503,10 @@ def test_different_output(fake_process):
     fake_process.keep_last_process(True)
 
     # now the processes can be called forever
-    assert subprocess.check_output("test") == b"first execution" + os.linesep.encode()
-    assert subprocess.check_output("test") == b"second execution" + os.linesep.encode()
-    assert subprocess.check_output("test") == b"second execution" + os.linesep.encode()
-    assert subprocess.check_output("test") == b"second execution" + os.linesep.encode()
+    assert subprocess.check_output("test") == b"first execution"
+    assert subprocess.check_output("test") == b"second execution"
+    assert subprocess.check_output("test") == b"second execution"
+    assert subprocess.check_output("test") == b"second execution"
 
 
 def test_different_output_with_context(fake_process):
@@ -488,8 +521,8 @@ def test_different_output_with_context(fake_process):
     with fake_process.context() as nested:
         nested.register_subprocess("test", stdout="nested")
 
-        assert subprocess.check_output("test") == b"nested" + os.linesep.encode()
-        assert subprocess.check_output("test") == b"top-level" + os.linesep.encode()
+        assert subprocess.check_output("test") == b"nested"
+        assert subprocess.check_output("test") == b"top-level"
 
         with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
             subprocess.check_call("test")
@@ -500,15 +533,15 @@ def test_different_output_with_context(fake_process):
         # another nest level, the top level shall reappear
         nested2.register_subprocess("test", stdout="nested2")
 
-        assert subprocess.check_output("test") == b"nested2" + os.linesep.encode()
-        assert subprocess.check_output("test") == b"top-level" + os.linesep.encode()
+        assert subprocess.check_output("test") == b"nested2"
+        assert subprocess.check_output("test") == b"top-level"
 
         with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
             subprocess.check_call("test")
 
         assert str(exc.value) == "The process 'test' was not registered."
 
-    assert subprocess.check_output("test") == b"top-level" + os.linesep.encode()
+    assert subprocess.check_output("test") == b"top-level"
 
     with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
         subprocess.check_call("test")
@@ -529,25 +562,25 @@ def test_different_output_with_context_multilevel(fake_process):
             second_level.register_subprocess("test", stdout="second-level")
 
             assert (
-                subprocess.check_output("test") == b"second-level" + os.linesep.encode()
+                subprocess.check_output("test") == b"second-level"
             )
             assert (
-                subprocess.check_output("test") == b"first-level" + os.linesep.encode()
+                subprocess.check_output("test") == b"first-level"
             )
-            assert subprocess.check_output("test") == b"top-level" + os.linesep.encode()
+            assert subprocess.check_output("test") == b"top-level"
 
             with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
                 subprocess.check_call("test")
 
-        assert subprocess.check_output("test") == b"first-level" + os.linesep.encode()
-        assert subprocess.check_output("test") == b"top-level" + os.linesep.encode()
+        assert subprocess.check_output("test") == b"first-level"
+        assert subprocess.check_output("test") == b"top-level"
 
         with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
             subprocess.check_call("test")
 
         assert str(exc.value) == "The process 'test' was not registered."
 
-    assert subprocess.check_output("test") == b"top-level" + os.linesep.encode()
+    assert subprocess.check_output("test") == b"top-level"
 
     with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
         subprocess.check_call("test")
@@ -559,17 +592,17 @@ def test_multiple_level_early_consuming(fake_process):
     be consumed before entering the context manager.
     """
     fake_process.register_subprocess("test", stdout="top-level", occurrences=2)
-    assert subprocess.check_output("test") == b"top-level" + os.linesep.encode()
+    assert subprocess.check_output("test") == b"top-level"
 
     with fake_process.context():
-        assert subprocess.check_output("test") == b"top-level" + os.linesep.encode()
+        assert subprocess.check_output("test") == b"top-level"
 
         with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
             subprocess.check_call("test")
 
         assert str(exc.value) == "The process 'test' was not registered."
 
-    assert subprocess.check_output("test") == b"top-level" + os.linesep.encode()
+    assert subprocess.check_output("test") == b"top-level"
 
     with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
         subprocess.check_call("test")
@@ -586,10 +619,10 @@ def test_keep_last_process(fake_process):
     fake_process.register_subprocess("test", stdout="First run")
     fake_process.register_subprocess("test", stdout="Second run")
 
-    assert subprocess.check_output("test") == b"First run" + os.linesep.encode()
-    assert subprocess.check_output("test") == b"Second run" + os.linesep.encode()
-    assert subprocess.check_output("test") == b"Second run" + os.linesep.encode()
-    assert subprocess.check_output("test") == b"Second run" + os.linesep.encode()
+    assert subprocess.check_output("test") == b"First run"
+    assert subprocess.check_output("test") == b"Second run"
+    assert subprocess.check_output("test") == b"Second run"
+    assert subprocess.check_output("test") == b"Second run"
 
 
 def test_git(fake_process):
@@ -609,7 +642,7 @@ def test_git(fake_process):
 def test_use_real(fake_process):
     fake_process.pass_command(["python", "example_script.py"], occurrences=3)
     fake_process.register_subprocess(
-        ["python", "example_script.py"], stdout="Fake line 1\nFake line 2"
+        ["python", "example_script.py"], stdout=["Fake line 1", "Fake line 2"]
     )
 
     for _ in range(0, 3):
@@ -707,11 +740,11 @@ def test_subprocess_pipe_without_stream_definition(fake_process):
 
     assert (
         subprocess.check_output(["test-no-stderr"], stderr=subprocess.STDOUT).decode()
-        == "test" + os.linesep
+        == "test"
     )
     assert (
         subprocess.check_output(["test-no-stdout"], stderr=subprocess.STDOUT).decode()
-        == "test" + os.linesep
+        == "test"
     )
     assert (
         subprocess.check_output(["test-no-streams"], stderr=subprocess.STDOUT).decode()
