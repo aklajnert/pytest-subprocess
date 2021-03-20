@@ -52,6 +52,25 @@ allows defining the fake processes behavior.
 
 .. code-block:: python
 
+    def test_echo_null_byte(fake_process):
+        fake_process.register_subprocess(
+            ["echo", "-ne", "\x00"], stdout=bytes.fromhex("00")
+        )
+
+        process = subprocess.Popen(
+            ["echo", "-ne", "\x00"],
+            stdout=subprocess.PIPE,
+        )
+        out, _ = process.communicate()
+
+        assert process.returncode == 0
+        assert out == b'\x00'
+
+Optionally, the ``stdout`` and ``stderr`` parameters can be a list (or tuple)
+of lines to be joined together with a trailing ``os.linesep`` on each line.
+
+.. code-block:: python
+
     def test_git(fake_process):
         fake_process.register_subprocess(
             ["git", "branch"], stdout=["* fake_branch", "  master"]
@@ -97,7 +116,7 @@ the input data. If the function will return a dictionary with ``stdout`` or
         process = subprocess.Popen(
             ["command"], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
         )
-        out, _ = process.communicate(input=b"sample input")
+        out, _ = process.communicate(input=b"sample input\n")
 
         assert out.splitlines() == [
             b"Just stdout",
@@ -149,9 +168,9 @@ which will keep the last registered process forever.
             "test", stdout="second execution", returncode=1
         )
 
-        assert subprocess.check_output("test") == b"first execution\n"
+        assert subprocess.check_output("test") == b"first execution"
         second_process = subprocess.run("test", stdout=subprocess.PIPE)
-        assert second_process.stdout == b"second execution\n"
+        assert second_process.stdout == b"second execution"
         assert second_process.returncode == 1
 
         # 3rd time shall raise an exception
@@ -165,10 +184,10 @@ which will keep the last registered process forever.
         fake_process.keep_last_process(True)
 
         # now the processes can be called forever
-        assert subprocess.check_output("test") == b"first execution\n"
-        assert subprocess.check_output("test") == b"second execution\n"
-        assert subprocess.check_output("test") == b"second execution\n"
-        assert subprocess.check_output("test") == b"second execution\n"
+        assert subprocess.check_output("test") == b"first execution"
+        assert subprocess.check_output("test") == b"second execution"
+        assert subprocess.check_output("test") == b"second execution"
+        assert subprocess.check_output("test") == b"second execution"
 
 
 Using callbacks
