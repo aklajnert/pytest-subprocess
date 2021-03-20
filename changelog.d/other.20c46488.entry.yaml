@@ -1,8 +1,0 @@
-git_email: github@aklajnert.pl
-git_user: Andrzej Klajnert
-message: Make the ``Command`` class iterable.
-os_user: aklajnert
-pr_ids:
-- '32'
-timestamp: 1599744085
-type: other

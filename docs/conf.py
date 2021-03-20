@@ -11,6 +11,7 @@
 # import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
+import datetime
 from pathlib import Path
 
 import pkg_resources
@@ -23,7 +24,7 @@ changelogd.release(partial=True, output="history.rst", config=ROOT_PATH / "chang
 # -- Project information -----------------------------------------------------
 
 project = "pytest-subprocess"
-copyright = "2019-2020, Andrzej Klajnert"
+copyright = f"2019-{datetime.datetime.now().year}, Andrzej Klajnert"
 author = "Andrzej Klajnert"
 
 # The full version, including alpha/beta/rc tags

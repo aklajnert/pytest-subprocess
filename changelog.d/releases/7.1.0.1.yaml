@@ -1,0 +1,21 @@
+entries:
+  bug:
+  - git_email: github@aklajnert.pl
+    git_user: Andrzej Klajnert
+    message: Prevent appending newlines to outputs unless defined as list/tuple.
+    os_user: aklajnert
+    pr_ids:
+    - '34'
+    timestamp: 1616257599
+  other:
+  - git_email: github@aklajnert.pl
+    git_user: Andrzej Klajnert
+    message: Make the ``Command`` class iterable.
+    os_user: aklajnert
+    pr_ids:
+    - '32'
+    timestamp: 1599744085
+previous_release: 1.0.0
+release_date: '2021-03-20'
+release_description: ''
+release_version: 1.0.1

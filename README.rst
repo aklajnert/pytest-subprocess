@@ -58,13 +58,12 @@ allows defining the fake processes behavior.
         )
 
         process = subprocess.Popen(
-            ["echo", "-ne", "\x00"],
-            stdout=subprocess.PIPE,
+            ["echo", "-ne", "\x00"], stdout=subprocess.PIPE,
         )
         out, _ = process.communicate()
 
         assert process.returncode == 0
-        assert out == b'\x00'
+        assert out == b"\x00"
 
 Optionally, the ``stdout`` and ``stderr`` parameters can be a list (or tuple)
 of lines to be joined together with a trailing ``os.linesep`` on each line.

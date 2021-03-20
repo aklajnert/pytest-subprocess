@@ -1,6 +1,17 @@
 History
 =======
 
+1.0.1 (2021-03-20)  
+------------------
+
+Bug fixes  
+~~~~~~~~~
+* `#34 <https://github.com/aklajnert/pytest-subprocess/pull/34>`_: Prevent appending newlines to outputs unless defined as list/tuple.
+
+Other changes  
+~~~~~~~~~~~~~
+* `#32 <https://github.com/aklajnert/pytest-subprocess/pull/32>`_: Make the ``Command`` class iterable.
+
 1.0.0 (2020-08-22)  
 ------------------
 
