@@ -293,6 +293,7 @@ class ProcessDispatcher:
 
         cls._pid += 1
         if isinstance(process, bool):
+            # real process will be called
             return cls.built_in_popen(command, **kwargs)  # type: ignore
 
         result = FakePopen(**process)
