@@ -162,6 +162,20 @@ def test_invalid_instantiation():
         Command(dict(command="ls"))
 
 
+def test_str_conversions():
+    no_arguments = Any()
+    assert str(no_arguments) == "Any (min=None, max=None)"
+
+    min_max = Any(min=1, max=3)
+    assert str(min_max) == "Any (min=1, max=3)"
+
+    simple_command = Command(["ls", "-lah"])
+    assert str(simple_command) == "('ls', '-lah')"
+
+    command_with_any = Command(["ls", Any()])
+    assert str(command_with_any) == "('ls', Any (min=None, max=None))"
+
+
 def test_command_iter():
     """Make sure Command supports iteration"""
     command = Command(["a", "a", "a"])

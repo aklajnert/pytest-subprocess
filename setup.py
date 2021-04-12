@@ -14,8 +14,6 @@ def read(fname):
 
 
 requirements = ["pytest>=4.0.0"]
-if sys.version_info <= (3, 5):
-    requirements.append("typing")
 
 setup(
     name="pytest-subprocess",
@@ -52,7 +50,7 @@ setup(
         ],
     },
     packages=find_packages(exclude=["docs", "tests"]),
-    package_data={"pytest_subprocess": ["py.typed", "core.pyi", "fixtures.pyi",]},
+    package_data={"pytest_subprocess": ["py.typed"]},
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Framework :: Pytest",
@@ -60,8 +58,6 @@ setup(
         "Topic :: Software Development :: Testing",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.4",
-        "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",

@@ -14,14 +14,6 @@ strategy:
       python.version: 'pypy3'
       nox.session: 'tests-pypy3'
       publish: 'true'
-    Python34:
-      python.version: '3.4'
-      nox.session: 'tests-3.4'
-      publish: 'true'
-    Python35:
-      python.version: '3.5'
-      nox.session: 'tests-3.5'
-      publish: 'true'
     Python36:
       python.version: '3.6'
       nox.session: 'tests-3.6'
@@ -66,10 +58,10 @@ steps:
       sudo apt-get install -y --no-install-recommends python$(python.version)-dev
       sudo apt-get install -y --no-install-recommends python$(python.version)-venv
       sudo apt-get install -y --no-install-recommends python$(python.version)-distutils
-      wget https://bootstrap.pypa.io/3.4/get-pip.py -O /tmp/get-pip.py
+      wget https://bootstrap.pypa.io/get-pip.py -O /tmp/get-pip.py
       sudo python$(python.version) /tmp/get-pip.py
       sudo chmod -R 777 /usr/local
-    condition: or(in(variables['python.version'], '3.4'), in(variables['python.version'], '3.9'))
+    condition: in(variables['python.version'], '3.9')
     displayName: Install Python $(python.version) from the deadsnakes PPA for tests.
 
   - script: |

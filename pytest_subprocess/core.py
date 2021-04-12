@@ -4,65 +4,78 @@ import os
 import subprocess
 import sys
 import time
-import typing
 from collections import defaultdict
 from collections import deque
 from copy import deepcopy
+from typing import Any as AnyType
+from typing import Callable
+from typing import DefaultDict
+from typing import Deque
+from typing import Dict
+from typing import List
+from typing import Optional
+from typing import Tuple
+from typing import Type
+from typing import Union
 
 from .utils import Any
 from .utils import Command
 from .utils import Thread
 
-OPTIONAL_TEXT_OR_ITERABLE = typing.Union[
-    str,
-    bytes,
-    None,
-    typing.List[typing.Union[str, bytes]],
-    typing.Tuple[typing.Union[str, bytes], ...],
+OPTIONAL_TEXT = Union[str, bytes, None]
+OPTIONAL_TEXT_OR_ITERABLE = Union[
+    str, bytes, None, List[Union[str, bytes]], Tuple[Union[str, bytes], ...],
 ]
-ARGUMENT = typing.Union[str, Any]
-COMMAND = typing.Union[typing.List[ARGUMENT], typing.Tuple[ARGUMENT, ...], str]
+BUFFER = Union[None, io.BytesIO, io.StringIO]
+ARGUMENT = Union[str, Any]
+COMMAND = Union[List[ARGUMENT], Tuple[ARGUMENT, ...], str, Command]
+
+
+class PluginInternalError(Exception):
+    """Raised in case of an internal error in the plugin"""
 
 
 class FakePopen:
     """Base class that fakes the real subprocess.Popen()"""
 
-    stdout = None
-    stderr = None
-    returncode = None
-    text_mode = False
-    pid = 0
+    stdout: BUFFER = None
+    stderr: BUFFER = None
+    returncode: Optional[int] = None
+    text_mode: bool = False
+    pid: int = 0
 
     def __init__(
         self,
-        command,
-        stdout=None,
-        stderr=None,
-        returncode=0,
-        wait=None,
-        callback=None,
-        callback_kwargs=None,
-        stdin_callable=None,
-        **_
-    ):
-        self.args = command
-        self.__stdout = stdout
-        self.__stderr = stderr
-        self.__returncode = returncode
-        self.__wait = wait
-        self.__thread = None
-        self.__callback = callback
-        self.__callback_kwargs = callback_kwargs
-        self.__stdin_callable = stdin_callable
+        command: Union[Tuple[str, ...], str],
+        stdout: OPTIONAL_TEXT_OR_ITERABLE = None,
+        stderr: OPTIONAL_TEXT_OR_ITERABLE = None,
+        returncode: int = 0,
+        wait: Optional[float] = None,
+        callback: Optional[Callable] = None,
+        callback_kwargs: Optional[Dict[str, AnyType]] = None,
+        stdin_callable: Optional[Callable] = None,
+        **_: Dict[str, AnyType]
+    ) -> None:
+        self.args: Union[List[str], Tuple[str, ...], str] = command
+        self.__stdout: OPTIONAL_TEXT_OR_ITERABLE = stdout
+        self.__stderr: OPTIONAL_TEXT_OR_ITERABLE = stderr
+        self.__returncode: Optional[int] = returncode
+        self.__wait: Optional[float] = wait
+        self.__thread: Optional[Thread] = None
+        self.__callback: Optional[Optional[Callable]] = callback
+        self.__callback_kwargs: Optional[Dict[str, AnyType]] = callback_kwargs
+        self.__stdin_callable: Optional[Optional[Callable]] = stdin_callable
 
-    def __enter__(self):
+    def __enter__(self) -> "FakePopen":
         return self
 
-    def __exit__(self, *args, **kwargs):
+    def __exit__(self, *args: List, **kwargs: Dict) -> None:
         if self.__thread and self.__thread.exception:
             raise self.__thread.exception
 
-    def communicate(self, input=None, timeout=None):
+    def communicate(
+        self, input: OPTIONAL_TEXT = None, timeout: Optional[float] = None
+    ) -> Tuple[AnyType, AnyType]:
         if input and self.__stdin_callable:
             callable_output = self.__stdin_callable(input)
             if isinstance(callable_output, dict):
@@ -78,16 +91,19 @@ class FakePopen:
             self.stderr.getvalue() if self.stderr else None,
         )
 
-    def _extend_stream_from_dict(self, dictionary, key, stream):
+    def _extend_stream_from_dict(
+        self, dictionary: Dict[str, AnyType], key: str, stream: BUFFER
+    ) -> BUFFER:
         data = dictionary.get(key)
         if data:
             return self._prepare_buffer(input=data, io_base=stream)
+        return None
 
-    def poll(self):
+    def poll(self) -> Optional[int]:
         return self.returncode
 
-    def wait(self, timeout=None):
-        if timeout and timeout < self.__wait:
+    def wait(self, timeout: Optional[float] = None) -> int:
+        if timeout and self.__wait and timeout < self.__wait:
             self.__wait -= timeout
             raise subprocess.TimeoutExpired(self.args, timeout)
         if self.__thread is not None:
@@ -96,9 +112,11 @@ class FakePopen:
                 self.returncode = self.__returncode
             if self.__thread.exception:
                 raise self.__thread.exception
+        if self.returncode is None:
+            raise PluginInternalError
         return self.returncode
 
-    def configure(self, **kwargs):
+    def configure(self, **kwargs: Optional[Dict]) -> None:
         """Setup the FakePopen instance based on a real Popen arguments."""
         self.__universal_newlines = kwargs.get("universal_newlines", None)
         text = kwargs.get("text", None)
@@ -130,15 +148,21 @@ class FakePopen:
         elif stderr == subprocess.PIPE:
             self.stderr = self._prepare_buffer(self.__stderr)
 
-    def _prepare_buffer(self, input, io_base=None):
+    def _prepare_buffer(
+        self, input: OPTIONAL_TEXT_OR_ITERABLE, io_base: BUFFER = None,
+    ) -> Union[io.BytesIO, io.StringIO]:
         linesep = self._convert(os.linesep)
 
         if isinstance(input, (list, tuple)):
-            input = linesep.join(map(self._convert, input))
+            # need to disable mypy, as input and linesep are unions,
+            # mypy thinks that the types might be incompatible, but
+            # the _convert() function handles that
+            input = linesep.join(map(self._convert, input))  # type: ignore
 
             # Add trailing newline if data is present.
             if input:
-                input += linesep
+                # same reason to disable mypy as above
+                input += linesep  # type: ignore
 
         if isinstance(input, str) and not self.text_mode:
             input = input.encode()
@@ -146,33 +170,36 @@ class FakePopen:
         if isinstance(input, bytes) and self.text_mode:
             input = input.decode()
 
-        if input and self.__universal_newlines:
+        if input and self.__universal_newlines and isinstance(input, str):
             input = input.replace("\r\n", "\n")
 
         if io_base is not None:
-            input = io_base.getvalue() + (input)
+            # same reason for disabling mypy as in `input = linesep.join...`:
+            # both are union so could be incompatible if not _convert()
+            input = io_base.getvalue() + (input)  # type: ignore
 
         io_base = io.StringIO() if self.text_mode else io.BytesIO()
 
         if input is None:
             return io_base
 
-        io_base.write(input)
+        # similar as above - mypy has to be disabled because unions
+        io_base.write(input)  # type: ignore
         return io_base
 
-    def _convert(self, input):
+    def _convert(self, input: Union[str, bytes]) -> Union[str, bytes]:
         if isinstance(input, bytes) and self.text_mode:
             return input.decode()
         if isinstance(input, str) and not self.text_mode:
             return input.encode()
         return input
 
-    def _wait(self, wait_period):
+    def _wait(self, wait_period: float) -> None:
         time.sleep(wait_period)
         if self.returncode is None:
             self._finish_process()
 
-    def run_thread(self):
+    def run_thread(self) -> None:
         """Run the user-defined callback or wait in a thread."""
         if self.__wait is None and self.__callback is None:
             self._finish_process()
@@ -187,7 +214,7 @@ class FakePopen:
                 self.__thread = Thread(target=self._wait, args=(self.__wait,))
             self.__thread.start()
 
-    def _finish_process(self):
+    def _finish_process(self) -> None:
         self.returncode = self.__returncode
 
         if self.stdout:
@@ -207,35 +234,35 @@ class ProcessNotRegisteredError(Exception):
 class ProcessDispatcher:
     """Main class for handling processes."""
 
-    process_list = []
-    built_in_popen = None
-    _allow_unregistered = False
-    _cache = dict()
-    _keep_last_process = False
-    _pid = 0
+    process_list: List["FakeProcess"] = []
+    built_in_popen: Optional[Optional[Callable]] = None
+    _allow_unregistered: bool = False
+    _cache: Dict["FakeProcess", Dict["FakeProcess", AnyType]] = dict()
+    _keep_last_process: bool = False
+    _pid: int = 0
 
     @classmethod
-    def register(cls, process):
+    def register(cls, process: "FakeProcess") -> None:
         if not cls.process_list:
             cls.built_in_popen = subprocess.Popen
-            subprocess.Popen = cls.dispatch
+            subprocess.Popen = cls.dispatch  # type: ignore
         cls._cache[process] = {
             proc: deepcopy(proc.definitions) for proc in cls.process_list
         }
         cls.process_list.append(process)
 
     @classmethod
-    def deregister(cls, process):
+    def deregister(cls, process: "FakeProcess") -> None:
         cls.process_list.remove(process)
         cache = cls._cache.pop(process)
         for proc, processes in cache.items():
             proc.definitions = processes
         if not cls.process_list:
-            subprocess.Popen = cls.built_in_popen
+            subprocess.Popen = cls.built_in_popen  # type: ignore
             cls.built_in_popen = None
 
     @classmethod
-    def dispatch(cls, command, **kwargs):
+    def dispatch(cls, command: COMMAND, **kwargs: Optional[Dict]) -> FakePopen:
         """This method will be used instead of the subprocess.Popen()"""
         command_instance, processes, process_instance = cls._get_process(command)
 
@@ -246,21 +273,27 @@ class ProcessDispatcher:
             if not cls._allow_unregistered:
                 raise ProcessNotRegisteredError(
                     "The process '%s' was not registered."
-                    % (command if isinstance(command, str) else " ".join(command),)
+                    % (
+                        command
+                        if isinstance(command, str)
+                        else " ".join(str(item) for item in command),
+                    )
                 )
             else:
-                return cls.built_in_popen(command, **kwargs)
+                if cls.built_in_popen is None:
+                    raise PluginInternalError
+                return cls.built_in_popen(command, **kwargs)  # type: ignore
 
         process = processes.popleft()
-        if not processes and process_instance:
+        if not processes and process_instance is not None:
             if cls._keep_last_process:
                 processes.append(process)
-            else:
+            elif command_instance:
                 del process_instance.definitions[command_instance]
 
         cls._pid += 1
-        if process is True:
-            return cls.built_in_popen(command, **kwargs)
+        if isinstance(process, bool):
+            return cls.built_in_popen(command, **kwargs)  # type: ignore
 
         result = FakePopen(**process)
         result.pid = cls._pid
@@ -269,7 +302,11 @@ class ProcessDispatcher:
         return result
 
     @classmethod
-    def _get_process(cls, command):
+    def _get_process(
+        cls, command: COMMAND
+    ) -> Tuple[
+        Optional[Command], Optional[Deque[Union[dict, bool]]], Optional["FakeProcess"]
+    ]:
         for proc in reversed(cls.process_list):
             command_instance, processes = next(
                 (
@@ -280,16 +317,16 @@ class ProcessDispatcher:
                 (None, None),
             )
             process_instance = proc
-            if processes:
+            if processes and isinstance(processes, deque):
                 return command_instance, processes, process_instance
         return None, None, None
 
     @classmethod
-    def allow_unregistered(cls, allow):
+    def allow_unregistered(cls, allow: bool) -> None:
         cls._allow_unregistered = allow
 
     @classmethod
-    def keep_last_process(cls, keep):
+    def keep_last_process(cls, keep: bool) -> None:
         cls._keep_last_process = keep
 
 
@@ -300,23 +337,25 @@ class IncorrectProcessDefinition(Exception):
 class FakeProcess:
     """Main class responsible for process operations"""
 
-    any = Any
+    any: Type[Any] = Any
 
-    def __init__(self):
-        self.definitions = defaultdict(deque)
-        self.calls = deque()
+    def __init__(self) -> None:
+        self.definitions: DefaultDict[Command, Deque[Union[Dict, bool]]] = defaultdict(
+            deque
+        )
+        self.calls: Deque[COMMAND] = deque()
 
     def register_subprocess(
         self,
-        command: typing.Union[typing.List[str], typing.Tuple[str, ...], str],
+        command: COMMAND,
         stdout: OPTIONAL_TEXT_OR_ITERABLE = None,
         stderr: OPTIONAL_TEXT_OR_ITERABLE = None,
         returncode: int = 0,
-        wait: typing.Optional[float] = None,
-        callback: typing.Optional[typing.Callable] = None,
-        callback_kwargs: typing.Optional[typing.Dict[str, typing.Any]] = None,
+        wait: Optional[float] = None,
+        callback: Optional[Callable] = None,
+        callback_kwargs: Optional[Dict[str, AnyType]] = None,
         occurrences: int = 1,
-        stdin_callable: typing.Optional[typing.Callable] = None,
+        stdin_callable: Optional[Callable] = None,
     ) -> None:
         """
         Main method for registering the subprocess instances.
@@ -337,7 +376,8 @@ class FakeProcess:
                 "The 'callback' and 'wait' arguments cannot be used "
                 "together. Add sleep() to your callback instead."
             )
-        command = Command(command)
+        if not isinstance(command, Command):
+            command = Command(command)
         self.definitions[command].extend(
             [
                 {
@@ -354,11 +394,7 @@ class FakeProcess:
             * occurrences
         )
 
-    def pass_command(
-        self,
-        command: typing.Union[typing.List[str], typing.Tuple[str, ...], str],
-        occurrences: int = 1,
-    ) -> None:
+    def pass_command(self, command: COMMAND, occurrences: int = 1,) -> None:
         """
         Allow to use a real subprocess together with faked ones.
 
@@ -366,14 +402,16 @@ class FakeProcess:
             command: allow to execute the supplied command
             occurrences: allow multiple usages of the same command
         """
-        command = Command(command)
+
+        if not isinstance(command, Command):
+            command = Command(command)
         self.definitions[command].extend([True] * occurrences)
 
     def __enter__(self) -> "FakeProcess":
         ProcessDispatcher.register(self)
         return self
 
-    def __exit__(self, *args: typing.List, **kwargs: typing.Dict) -> None:
+    def __exit__(self, *args: List, **kwargs: Dict) -> None:
         ProcessDispatcher.deregister(self)
 
     def allow_unregistered(cls, allow: bool) -> None:
@@ -397,8 +435,9 @@ class FakeProcess:
         Returns:
             number of times a command was called
         """
-        command = Command(command)
-        return len(tuple(filter(lambda elem: elem == command, self.calls)))
+        if not isinstance(command, Command):
+            command_instance = Command(command)
+        return len(tuple(filter(lambda elem: elem == command_instance, self.calls)))
 
     @classmethod
     def keep_last_process(cls, keep: bool) -> None:
