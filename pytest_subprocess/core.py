@@ -14,6 +14,7 @@ from typing import Deque
 from typing import Dict
 from typing import List
 from typing import Optional
+from typing import Sequence
 from typing import Tuple
 from typing import Type
 from typing import Union
@@ -46,7 +47,12 @@ class FakePopen:
 
     def __init__(
         self,
-        command: Union[Tuple[str, ...], str],
+        command: Union[
+            Union[bytes, str],
+            Sequence[
+                Union[str, bytes, "os.PathLike[str]", "os.PathLike[bytes]"]
+            ]
+        ],
         stdout: OPTIONAL_TEXT_OR_ITERABLE = None,
         stderr: OPTIONAL_TEXT_OR_ITERABLE = None,
         returncode: int = 0,
@@ -56,7 +62,7 @@ class FakePopen:
         stdin_callable: Optional[Callable] = None,
         **_: Dict[str, AnyType]
     ) -> None:
-        self.args: Union[List[str], Tuple[str, ...], str] = command
+        self.args = command
         self.__stdout: OPTIONAL_TEXT_OR_ITERABLE = stdout
         self.__stderr: OPTIONAL_TEXT_OR_ITERABLE = stderr
         self.__returncode: Optional[int] = returncode
@@ -296,7 +302,15 @@ class ProcessDispatcher:
             # real process will be called
             return cls.built_in_popen(command, **kwargs)  # type: ignore
 
-        result = FakePopen(**process)
+        # Update the command with the actual command specified by the caller.
+        # This will ensure that Command objects do not end up unexpectedly in
+        # caller's objects (e.g. proc.args, CalledProcessError.cmd). Take care
+        # to preserve the dict that may still be referenced when using
+        # keep_last_process.
+        fake_popen_kwargs = process.copy()
+        fake_popen_kwargs["command"] = command
+
+        result = FakePopen(**fake_popen_kwargs)
         result.pid = cls._pid
         result.configure(**kwargs)
         result.run_thread()
