@@ -26,6 +26,49 @@ def setup():
     os.chdir(os.path.dirname(__file__))
 
 
+@pytest.mark.parametrize("cmd", [("cmd"), ["cmd"]])
+def test_completedprocess_args(fake_process, cmd):
+    fake_process.register_subprocess(cmd)
+
+    proc = subprocess.run(cmd, check=True)
+
+    assert proc.args == cmd
+    assert isinstance(proc.args, type(cmd))
+
+
+@pytest.mark.parametrize("cmd", [("cmd"), ["cmd"]])
+def test_called_process_error(fake_process, cmd):
+    fake_process.register_subprocess(cmd, returncode=1)
+
+    with pytest.raises(subprocess.CalledProcessError) as exc_info:
+        subprocess.run(cmd, check=True)
+
+    assert exc_info.value.cmd == cmd
+    assert isinstance(exc_info.value.cmd, type(cmd))
+
+
+@pytest.mark.parametrize("cmd", [("cmd"), ["cmd"]])
+def test_called_process_error_with_any(fake_process, cmd):
+    fake_process.register_subprocess([fake_process.any()], returncode=1)
+
+    with pytest.raises(subprocess.CalledProcessError) as exc_info:
+        subprocess.run(cmd, check=True)
+
+    assert exc_info.value.cmd == cmd
+    assert isinstance(exc_info.value.cmd, type(cmd))
+
+
+def test_keep_last_process_error_with_any(fake_process):
+    fake_process.register_subprocess([fake_process.any()], returncode=1)
+    fake_process.keep_last_process(True)
+
+    with pytest.raises(subprocess.CalledProcessError):
+        subprocess.run(["cmd"], check=True)
+
+    with pytest.raises(subprocess.CalledProcessError):
+        subprocess.run(["cmd2"], check=True)
+
+
 def test_multiple_levels(fake_process):
     """Register fake process on different levels and check the behavior"""
 
