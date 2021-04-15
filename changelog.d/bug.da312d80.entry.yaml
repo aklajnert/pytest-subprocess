@@ -1,0 +1,9 @@
+git_email: github@aklajnert.pl
+git_user: Andrzej Klajnert
+message: Preserve original command in `proc.args` to prevent leaking internal `Command`
+  type.
+os_user: andrzejk
+pr_ids:
+- '37'
+timestamp: 1618473214
+type: bug
