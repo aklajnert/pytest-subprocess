@@ -96,8 +96,7 @@ def test_multiple_levels(fake_process):
     # first command definition shall be back at top-level definition, and the second
     # command is no longer defined so it shall raise an exception
     assert (
-        subprocess.check_output("first_command")
-        == ("first command top-level").encode()
+        subprocess.check_output("first_command") == ("first command top-level").encode()
     )
     with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
         subprocess.check_call("second_command")
@@ -191,7 +190,7 @@ def test_basic_process_merge_streams(fake_process, fake):
     out, err = process.communicate()
 
     if fake or platform.python_implementation() != "CPython":
-        # if the streams are merged form two different sources, there's no way to
+        # if the streams are merged from two different sources, there's no way to
         # preserve the original order, stdout content will be first - followed by stderr
         # this seems to be a default behavior on pypy
         assert out.splitlines() == [
@@ -199,8 +198,8 @@ def test_basic_process_merge_streams(fake_process, fake):
             b"Stdout line 2",
             b"Stderr line 1",
         ]
-    elif platform.system().lower() == "linux":
-        # CPython on linux seems to put the stderr first
+    elif platform.system().lower() in ("linux", "darwin"):
+        # CPython on linux and macos seems to put the stderr first
         assert out.splitlines() == [
             b"Stderr line 1",
             b"Stdout line 1",
@@ -349,13 +348,10 @@ def test_text(fake_process, fake):
 
 def test_binary(fake_process):
     fake_process.register_subprocess(
-        ["some-cmd"],
-        stdout=bytes.fromhex("aabbcc"),
+        ["some-cmd"], stdout=bytes.fromhex("aabbcc"),
     )
 
-    process = subprocess.Popen(
-        ["some-cmd"], stdout=subprocess.PIPE
-    )
+    process = subprocess.Popen(["some-cmd"], stdout=subprocess.PIPE)
     process.wait()
 
     assert process.stdout.read() == b"\xaa\xbb\xcc"
@@ -604,12 +600,8 @@ def test_different_output_with_context_multilevel(fake_process):
         with fake_process.context() as second_level:
             second_level.register_subprocess("test", stdout="second-level")
 
-            assert (
-                subprocess.check_output("test") == b"second-level"
-            )
-            assert (
-                subprocess.check_output("test") == b"first-level"
-            )
+            assert subprocess.check_output("test") == b"second-level"
+            assert subprocess.check_output("test") == b"first-level"
             assert subprocess.check_output("test") == b"top-level"
 
             with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
