@@ -20,7 +20,7 @@ jobs:
         uses: excitedleigh/setup-nox@v2.0.0
       - name: Run tests
         run: |
-          nox -s ${{ matrix.python-version }}
+          nox -s tests-${{ matrix.python-version }}
         env:
           PLATFORM: ${{ matrix.platform }}
 
