@@ -420,31 +420,33 @@ def test_ambiguous_input(fake_process, fake):
     )
 
 
+@pytest.mark.flaky(reruns=2, condition=platform.python_implementation() == "PyPy")
 @pytest.mark.parametrize("fake", [False, True])
 def test_multiple_wait(fake_process, fake):
     """
-    Wait multiple times for 0.4 seconds with process lasting for 1s.
-    Third wait shall not raise an exception.
+    Wait multiple times for 0.2 seconds with process lasting for 0.5.
+    Third wait shall is a bit longer and will not raise an exception,
+    due to exceeding the subprocess runtime.
     """
     fake_process.allow_unregistered(not fake)
     if fake:
         fake_process.register_subprocess(
-            ["python", "example_script.py", "wait"], wait=1.0,
+            ["python", "example_script.py", "wait"], wait=0.5,
         )
 
     process = subprocess.Popen(("python", "example_script.py", "wait"),)
     with pytest.raises(subprocess.TimeoutExpired):
-        process.wait(timeout=0.4)
+        process.wait(timeout=0.2)
 
     with pytest.raises(subprocess.TimeoutExpired):
-        process.wait(timeout=0.4)
+        process.wait(timeout=0.2)
 
-    process.wait(0.4)
+    process.wait(0.5)
 
     assert process.returncode == 0
 
     # one more wait shall do no harm
-    process.wait(0.4)
+    process.wait(0.2)
 
 
 def test_wrong_arguments(fake_process):

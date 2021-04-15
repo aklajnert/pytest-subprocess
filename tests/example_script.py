@@ -8,7 +8,7 @@ if "stderr" in sys.argv:
     print("Stderr line 1", file=sys.stderr)
 
 if "wait" in sys.argv:
-    time.sleep(1)
+    time.sleep(0.5)
 
 if "non-zero" in sys.argv:
     sys.exit(1)
