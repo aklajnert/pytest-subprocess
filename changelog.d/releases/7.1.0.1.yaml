@@ -1,9 +1,9 @@
 entries:
   bug:
-  - git_email: github@aklajnert.pl
-    git_user: Andrzej Klajnert
+  - git_email: chris.patterson@canonical.com
+    git_user: Chris Patterson
     message: Prevent appending newlines to outputs unless defined as list/tuple.
-    os_user: aklajnert
+    os_user: cjp256
     pr_ids:
     - '34'
     timestamp: 1616257599
