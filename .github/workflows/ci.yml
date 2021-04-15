@@ -3,7 +3,7 @@
 
 name: pytest-subprocess-ci
 
-on: [push, pull_request]
+on: push
 
 jobs:
   test:
@@ -25,7 +25,7 @@ jobs:
         uses: excitedleigh/setup-nox@v2.0.0
       - name: Run tests
         run: |
-          nox -s tests-${{ matrix.platform }} --error-on-missing-interpreters
+          nox -s tests-${{ matrix.python-version }} --error-on-missing-interpreters
         env:
           PLATFORM: ${{ matrix.platform }}
 
