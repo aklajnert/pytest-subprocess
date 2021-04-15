@@ -441,7 +441,7 @@ def test_multiple_wait(fake_process, fake):
     with pytest.raises(subprocess.TimeoutExpired):
         process.wait(timeout=0.2)
 
-    process.wait(0.5)
+    process.wait(0.4)
 
     assert process.returncode == 0
 
