@@ -189,28 +189,11 @@ def test_basic_process_merge_streams(fake_process, fake):
     )
     out, err = process.communicate()
 
-    if fake or platform.python_implementation() != "CPython":
-        # if the streams are merged from two different sources, there's no way to
-        # preserve the original order, stdout content will be first - followed by stderr
-        # this seems to be a default behavior on pypy
-        assert out.splitlines() == [
-            b"Stdout line 1",
-            b"Stdout line 2",
-            b"Stderr line 1",
-        ]
-    elif platform.system().lower() in ("linux", "darwin"):
-        # CPython on linux and macos seems to put the stderr first
-        assert out.splitlines() == [
-            b"Stderr line 1",
-            b"Stdout line 1",
-            b"Stdout line 2",
-        ]
-    else:
-        assert out.splitlines() == [
-            b"Stdout line 1",
-            b"Stderr line 1",
-            b"Stdout line 2",
-        ]
+    assert out.splitlines() == [
+        b"Stdout line 1",
+        b"Stdout line 2",
+        b"Stderr line 1",
+    ]
     assert err is None
 
 
