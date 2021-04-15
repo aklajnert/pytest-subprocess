@@ -3,7 +3,7 @@
 
 name: pytest-subprocess-ci
 
-on: push
+on: pull_request
 
 jobs:
   test:
@@ -30,8 +30,6 @@ jobs:
           PLATFORM: ${{ matrix.platform }}
       - name: Update coverage
         uses: codecov/codecov-action@v1
-        with:
-          fail_ci_if_error: true
 
   test-pypy:
     runs-on: ${{ matrix.platform }}
