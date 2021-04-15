@@ -27,7 +27,7 @@ jobs:
         id: split
         with:
           msg: ${{ matrix.python-version }}
-          separator: "-"
+          seperator: "-"
       - name: Run tests
         run: |
           nox -s tests-${{ steps.split.outputs._0 }} --error-on-missing-interpreters
