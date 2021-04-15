@@ -9,10 +9,6 @@ pytest-subprocess
     :target: https://pypi.org/project/pytest-subprocess
     :alt: Python versions
 
-.. image:: https://dev.azure.com/aklajnert/pytest-subprocess/_apis/build/status/aklajnert.pytest-subprocess?branchName=master
-    :target: https://dev.azure.com/aklajnert/pytest-subprocess/_build/latest?definitionId=6&branchName=master
-    :alt: See Build Status on Azure Pipelines
-
 .. image:: https://codecov.io/gh/aklajnert/pytest-subprocess/branch/master/graph/badge.svg?token=JAU1cGoYL8
   :target: https://codecov.io/gh/aklajnert/pytest-subprocess
 
