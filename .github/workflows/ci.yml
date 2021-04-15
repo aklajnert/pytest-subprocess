@@ -12,7 +12,7 @@ jobs:
       max-parallel: 4
       matrix:
         platform: [ ubuntu-latest, macos-latest, windows-latest ]
-        python-version: [ 3.6, 3.7, 3.8, 3.9, pypy-3.6, pypy-3.7 ]
+        python-version: [ 3.6, 3.7, 3.8, 3.9 ]
 
     steps:
       - uses: actions/checkout@v2
@@ -25,8 +25,30 @@ jobs:
         uses: excitedleigh/setup-nox@v2.0.0
       - name: Run tests
         run: |
-          python --version
           nox -s tests-${{ matrix.python-version }} --error-on-missing-interpreters
+        env:
+          PLATFORM: ${{ matrix.platform }}
+
+  test-pypy:
+    runs-on: ${{ matrix.platform }}
+    strategy:
+      max-parallel: 4
+      matrix:
+        platform: [ ubuntu-latest, macos-latest, windows-latest ]
+        python-version: [ pypy-3.6, pypy-3.7 ]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+          architecture: x64
+      - name: Setup Nox
+        uses: excitedleigh/setup-nox@v2.0.0
+      - name: Run tests
+        run: |
+          nox -s tests-pypy --error-on-missing-interpreters
         env:
           PLATFORM: ${{ matrix.platform }}
 
