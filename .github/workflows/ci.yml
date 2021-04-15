@@ -28,6 +28,10 @@ jobs:
           nox -s tests-${{ matrix.python-version }} --error-on-missing-interpreters
         env:
           PLATFORM: ${{ matrix.platform }}
+      - name: Update coverage
+        uses: codecov/codecov-action@v1
+        with:
+          fail_ci_if_error: true
 
   test-pypy:
     runs-on: ${{ matrix.platform }}
