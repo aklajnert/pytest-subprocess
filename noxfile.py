@@ -22,12 +22,6 @@ def mypy(session):
 
 
 @nox.session
-def retype(session):
-    session.install("retype")
-    session.run("retype", "pytest_subprocess", "-p", "pytest_subprocess")
-
-
-@nox.session
 def docs(session):
     session.install(".[docs]")
     session.run("sphinx-build", "-b", "html", "docs", "docs/_build", "-v", "-W")
