@@ -23,9 +23,14 @@ jobs:
           architecture: x64
       - name: Setup Nox
         uses: excitedleigh/setup-nox@v2.0.0
+      - uses: jungwinter/split@v1
+        id: split
+        with:
+          msg: ${{ matrix.python-version }}
+          separator: "-"
       - name: Run tests
         run: |
-          nox -s tests-${{ matrix.python-version }} --error-on-missing-interpreters
+          nox -s tests-${{ steps.split.outputs._0 }} --error-on-missing-interpreters
         env:
           PLATFORM: ${{ matrix.platform }}
 
