@@ -176,13 +176,13 @@ def test_basic_process_merge_streams(fake_process, fake):
     fake_process.allow_unregistered(not fake)
     if fake:
         fake_process.register_subprocess(
-            ["python", "example_script.py", "stderr"],
+            ["python", "-u", "example_script.py", "stderr"],
             stdout=["Stdout line 1", "Stdout line 2"],
             stderr=["Stderr line 1"],
         )
 
     process = subprocess.Popen(
-        ["python", "example_script.py", "stderr"],
+        ["python", "-u", "example_script.py", "stderr"],
         cwd=os.path.dirname(__file__),
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
