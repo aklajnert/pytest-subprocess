@@ -798,11 +798,14 @@ def test_different_command_type_complex_command(fake_process, command):
     assert subprocess.check_call(["test", "with", "arguments"]) == 0
 
 
+@pytest.mark.flaky(reruns=2, condition=platform.python_implementation() == "PyPy")
 def test_raise_exception_check_output(fake_process):
     """
     From GitHub#16 - the check_output raises the CalledProcessError exception
     when the exit code is not zero. The exception should not shadow the exception
     from the callback, if any.
+
+    For some reason, this test is flaky on PyPy. Further investigation required.
     """
 
     def callback_function(_):

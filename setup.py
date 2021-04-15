@@ -31,7 +31,7 @@ setup(
     description="A plugin to fake subprocess for pytest",
     long_description=read("README.rst") + "\n" + read("HISTORY.rst"),
     py_modules=["pytest_subprocess"],
-    python_requires=">=3.4",
+    python_requires=">=3.6",
     install_requires=requirements,
     extras_require={
         "test": [
@@ -39,7 +39,7 @@ setup(
             "coverage",
             "docutils>=0.12",
             "Pygments>=2.0",
-            "pytest-azurepipelines",
+            "pytest-rerunfailures",
         ],
         "dev": ["nox", "changelogd"],
         "docs": [
