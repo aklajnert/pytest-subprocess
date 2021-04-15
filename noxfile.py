@@ -1,5 +1,3 @@
-import sys
-
 import nox
 
 
@@ -19,12 +17,6 @@ def flake8(session):
 def mypy(session):
     session.install("mypy")
     session.run("mypy", "pytest_subprocess", "--config-file=setup.cfg")
-
-
-@nox.session
-def retype(session):
-    session.install("retype")
-    session.run("retype", "pytest_subprocess", "-p", "pytest_subprocess")
 
 
 @nox.session

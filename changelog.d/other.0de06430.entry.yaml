@@ -1,0 +1,8 @@
+git_email: github@aklajnert.pl
+git_user: Andrzej Klajnert
+message: Switched CI from Azure Pipelines to GitHub Actions.
+os_user: andrzejk
+pr_ids:
+- '38'
+timestamp: 1618475848
+type: other

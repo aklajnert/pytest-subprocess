@@ -96,8 +96,7 @@ def test_multiple_levels(fake_process):
     # first command definition shall be back at top-level definition, and the second
     # command is no longer defined so it shall raise an exception
     assert (
-        subprocess.check_output("first_command")
-        == ("first command top-level").encode()
+        subprocess.check_output("first_command") == ("first command top-level").encode()
     )
     with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
         subprocess.check_call("second_command")
@@ -177,41 +176,24 @@ def test_basic_process_merge_streams(fake_process, fake):
     fake_process.allow_unregistered(not fake)
     if fake:
         fake_process.register_subprocess(
-            ["python", "example_script.py", "stderr"],
+            ["python", "-u", "example_script.py", "stderr"],
             stdout=["Stdout line 1", "Stdout line 2"],
             stderr=["Stderr line 1"],
         )
 
     process = subprocess.Popen(
-        ["python", "example_script.py", "stderr"],
+        ["python", "-u", "example_script.py", "stderr"],
         cwd=os.path.dirname(__file__),
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
     )
     out, err = process.communicate()
 
-    if fake or platform.python_implementation() != "CPython":
-        # if the streams are merged form two different sources, there's no way to
-        # preserve the original order, stdout content will be first - followed by stderr
-        # this seems to be a default behavior on pypy
-        assert out.splitlines() == [
-            b"Stdout line 1",
-            b"Stdout line 2",
-            b"Stderr line 1",
-        ]
-    elif platform.system().lower() == "linux":
-        # CPython on linux seems to put the stderr first
-        assert out.splitlines() == [
-            b"Stderr line 1",
-            b"Stdout line 1",
-            b"Stdout line 2",
-        ]
-    else:
-        assert out.splitlines() == [
-            b"Stdout line 1",
-            b"Stderr line 1",
-            b"Stdout line 2",
-        ]
+    assert out.splitlines() == [
+        b"Stdout line 1",
+        b"Stdout line 2",
+        b"Stderr line 1",
+    ]
     assert err is None
 
 
@@ -349,13 +331,10 @@ def test_text(fake_process, fake):
 
 def test_binary(fake_process):
     fake_process.register_subprocess(
-        ["some-cmd"],
-        stdout=bytes.fromhex("aabbcc"),
+        ["some-cmd"], stdout=bytes.fromhex("aabbcc"),
     )
 
-    process = subprocess.Popen(
-        ["some-cmd"], stdout=subprocess.PIPE
-    )
+    process = subprocess.Popen(["some-cmd"], stdout=subprocess.PIPE)
     process.wait()
 
     assert process.stdout.read() == b"\xaa\xbb\xcc"
@@ -441,11 +420,13 @@ def test_ambiguous_input(fake_process, fake):
     )
 
 
+@pytest.mark.flaky(reruns=2, condition=platform.python_implementation() == "PyPy")
 @pytest.mark.parametrize("fake", [False, True])
 def test_multiple_wait(fake_process, fake):
     """
     Wait multiple times for 0.2 seconds with process lasting for 0.5.
-    Third wait shall not raise an exception.
+    Third wait shall is a bit longer and will not raise an exception,
+    due to exceeding the subprocess runtime.
     """
     fake_process.allow_unregistered(not fake)
     if fake:
@@ -460,7 +441,7 @@ def test_multiple_wait(fake_process, fake):
     with pytest.raises(subprocess.TimeoutExpired):
         process.wait(timeout=0.2)
 
-    process.wait(0.2)
+    process.wait(0.4)
 
     assert process.returncode == 0
 
@@ -604,12 +585,8 @@ def test_different_output_with_context_multilevel(fake_process):
         with fake_process.context() as second_level:
             second_level.register_subprocess("test", stdout="second-level")
 
-            assert (
-                subprocess.check_output("test") == b"second-level"
-            )
-            assert (
-                subprocess.check_output("test") == b"first-level"
-            )
+            assert subprocess.check_output("test") == b"second-level"
+            assert subprocess.check_output("test") == b"first-level"
             assert subprocess.check_output("test") == b"top-level"
 
             with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
@@ -824,11 +801,14 @@ def test_different_command_type_complex_command(fake_process, command):
     assert subprocess.check_call(["test", "with", "arguments"]) == 0
 
 
+@pytest.mark.flaky(reruns=2, condition=platform.python_implementation() == "PyPy")
 def test_raise_exception_check_output(fake_process):
     """
     From GitHub#16 - the check_output raises the CalledProcessError exception
     when the exit code is not zero. The exception should not shadow the exception
     from the callback, if any.
+
+    For some reason, this test is flaky on PyPy. Further investigation required.
     """
 
     def callback_function(_):
