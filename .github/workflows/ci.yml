@@ -48,7 +48,7 @@ jobs:
         uses: excitedleigh/setup-nox@v2.0.0
       - name: Run tests
         run: |
-          nox -s tests-pypy --error-on-missing-interpreters
+          nox -s tests-pypy3 --error-on-missing-interpreters
         env:
           PLATFORM: ${{ matrix.platform }}
 
