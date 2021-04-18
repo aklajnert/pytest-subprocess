@@ -1,6 +1,18 @@
 History
 =======
 
+1.1.0 (2021-04-18)  
+------------------
+
+Bug fixes  
+~~~~~~~~~
+* `#37 <https://github.com/aklajnert/pytest-subprocess/pull/37>`_: Preserve original command in `proc.args` to prevent leaking the internal `Command` type.
+
+Other changes  
+~~~~~~~~~~~~~
+* `#38 <https://github.com/aklajnert/pytest-subprocess/pull/38>`_: Switched CI from Azure Pipelines to GitHub Actions.
+* `#35 <https://github.com/aklajnert/pytest-subprocess/pull/35>`_: Drop support for python 3.4 and 3.5. Move type annotations from `.pyi` files into sources.
+
 1.0.1 (2021-03-20)  
 ------------------
 
