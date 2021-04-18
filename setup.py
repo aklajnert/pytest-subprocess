@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import os
-import sys
 
 from setuptools import find_packages
 from setuptools import setup
@@ -17,7 +16,7 @@ requirements = ["pytest>=4.0.0"]
 
 setup(
     name="pytest-subprocess",
-    version="1.0.1",
+    version="1.1.0",
     author="Andrzej Klajnert",
     author_email="python@aklajnert.pl",
     maintainer="Andrzej Klajnert",

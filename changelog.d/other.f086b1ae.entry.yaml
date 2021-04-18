@@ -1,9 +1,0 @@
-git_email: github@aklajnert.pl
-git_user: Andrzej Klajnert
-message: Drop support for python 3.4 and 3.5. Move type annotations from `.pyi` files
-  into sources.
-os_user: andrzejk
-pr_ids:
-- '35'
-timestamp: 1618203821
-type: other
