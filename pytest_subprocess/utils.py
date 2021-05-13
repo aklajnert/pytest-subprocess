@@ -3,6 +3,7 @@ from typing import Any as AnyType
 from typing import Iterator
 from typing import List
 from typing import Optional
+from typing import Sequence
 from typing import Tuple
 from typing import Union
 
@@ -27,7 +28,7 @@ class Command:
     __slots__ = "command"
 
     def __init__(
-        self, command: Union[Tuple[ARGUMENT, ...], List[ARGUMENT], str],
+        self, command: Union[Tuple[ARGUMENT, ...], Sequence[ARGUMENT], str],
     ):
         if isinstance(command, str):
             command = tuple(command.split(" "))
