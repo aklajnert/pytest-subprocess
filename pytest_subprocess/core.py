@@ -25,11 +25,11 @@ from .utils import Thread
 
 OPTIONAL_TEXT = Union[str, bytes, None]
 OPTIONAL_TEXT_OR_ITERABLE = Union[
-    str, bytes, None, List[Union[str, bytes]], Tuple[Union[str, bytes], ...],
+    str, bytes, None, Sequence[Union[str, bytes]], Tuple[Union[str, bytes], ...],
 ]
 BUFFER = Union[None, io.BytesIO, io.StringIO]
 ARGUMENT = Union[str, Any]
-COMMAND = Union[List[ARGUMENT], Tuple[ARGUMENT, ...], str, Command]
+COMMAND = Union[Sequence[ARGUMENT], Tuple[ARGUMENT, ...], str, Command]
 
 
 class PluginInternalError(Exception):
@@ -49,9 +49,7 @@ class FakePopen:
         self,
         command: Union[
             Union[bytes, str],
-            Sequence[
-                Union[str, bytes, "os.PathLike[str]", "os.PathLike[bytes]"]
-            ]
+            Sequence[Union[str, bytes, "os.PathLike[str]", "os.PathLike[bytes]"]],
         ],
         stdout: OPTIONAL_TEXT_OR_ITERABLE = None,
         stderr: OPTIONAL_TEXT_OR_ITERABLE = None,
