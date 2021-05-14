@@ -25,11 +25,11 @@ from .utils import Thread
 
 OPTIONAL_TEXT = Union[str, bytes, None]
 OPTIONAL_TEXT_OR_ITERABLE = Union[
-    str, bytes, None, Sequence[Union[str, bytes]], Tuple[Union[str, bytes], ...],
+    str, bytes, None, Sequence[Union[str, bytes]],
 ]
 BUFFER = Union[None, io.BytesIO, io.StringIO]
 ARGUMENT = Union[str, Any]
-COMMAND = Union[Sequence[ARGUMENT], Tuple[ARGUMENT, ...], str, Command]
+COMMAND = Union[Sequence[ARGUMENT], str, Command]
 
 
 class PluginInternalError(Exception):

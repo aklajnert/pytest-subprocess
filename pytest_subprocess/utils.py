@@ -28,7 +28,7 @@ class Command:
     __slots__ = "command"
 
     def __init__(
-        self, command: Union[Tuple[ARGUMENT, ...], Sequence[ARGUMENT], str],
+        self, command: Union[Sequence[ARGUMENT], str],
     ):
         if isinstance(command, str):
             command = tuple(command.split(" "))
