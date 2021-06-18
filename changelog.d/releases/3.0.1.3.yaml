@@ -1,25 +1,16 @@
 entries:
   bug:
-  - git_email: github@aklajnert.pl
-    git_user: Andrzej Klajnert
-    message: Properly raise exceptions from callback functions.
-    os_user: andrzejk
+  - message: Properly raise exceptions from callback functions.
     pr_ids:
     - '12'
     timestamp: 1583143353
   doc:
-  - git_email: github@aklajnert.pl
-    git_user: Andrzej Klajnert
-    message: Add documentation chapter about the callback functions.
-    os_user: andrzejk
+  - message: Add documentation chapter about the callback functions.
     pr_ids:
     - '15'
     timestamp: 1583308593
   feature:
-  - git_email: github@aklajnert.pl
-    git_user: Andrzej Klajnert
-    message: Allow passing keyword arguments into callbacks.
-    os_user: aklajnert
+  - message: Allow passing keyword arguments into callbacks.
     pr_ids:
     - '13'
     timestamp: 1583158583

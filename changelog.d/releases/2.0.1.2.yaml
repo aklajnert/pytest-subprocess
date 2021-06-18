@@ -1,40 +1,25 @@
 entries:
   bug:
-  - git_email: github@aklajnert.pl
-    git_user: Andrzej Klajnert
-    message: Make ``wait()`` method to raise ``TimeoutError`` after the desired time
+  - message: Make ``wait()`` method to raise ``TimeoutError`` after the desired time
       will elapse.
-    os_user: aklajnert
     pr_ids:
     - '5'
   doc:
-  - git_email: github@aklajnert.pl
-    git_user: Andrzej Klajnert
-    message: Create Sphinx documentation.
-    os_user: aklajnert
+  - message: Create Sphinx documentation.
     pr_ids:
     - '7'
     - '8'
     - '9'
   feature:
-  - git_email: github@aklajnert.pl
-    git_user: Andrzej Klajnert
-    message: Add basic support for process input.
-    os_user: aklajnert
+  - message: Add basic support for process input.
     pr_ids:
     - '3'
   other:
-  - git_email: github@aklajnert.pl
-    git_user: Andrzej Klajnert
-    message: ' Switch from ``tox`` to ``nox`` for running tests and tasks.'
-    os_user: aklajnert
+  - message: ' Switch from ``tox`` to ``nox`` for running tests and tasks.'
     pr_ids:
     - '10'
-  - git_email: github@aklajnert.pl
-    git_user: Andrzej Klajnert
-    message: Add classifier for Python 3.9. Update CI config to test also on that
+  - message: Add classifier for Python 3.9. Update CI config to test also on that
       interpreter version.
-    os_user: aklajnert
     pr_ids:
     - '4'
 previous_release: 0.1.1

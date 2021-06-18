@@ -1,16 +1,10 @@
 entries:
   feature:
-  - git_email: github@aklajnert.pl
-    git_user: Andrzej Klajnert
-    message: Remember subprocess calls to check if expected commands were executed.
-    os_user: aklajnert
+  - message: Remember subprocess calls to check if expected commands were executed.
     pr_ids:
     - '29'
     timestamp: 1598091262
-  - git_email: github@aklajnert.pl
-    git_user: Andrzej Klajnert
-    message: Allow to match a command with variable arguments (non-exact matching).
-    os_user: aklajnert
+  - message: Allow to match a command with variable arguments (non-exact matching).
     pr_ids:
     - '28'
     timestamp: 1598077558

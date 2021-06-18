@@ -23,3 +23,4 @@ entry_fields:
   required: true
 output_file: ../HISTORY.rst
 partial_release_name: unreleased
+user_data: []

@@ -1,26 +1,17 @@
 entries:
   bug:
-  - git_email: chris.patterson@canonical.com
-    git_user: Chris Patterson
-    message: Preserve original command in `proc.args` to prevent leaking the internal
+  - message: Preserve original command in `proc.args` to prevent leaking the internal
       `Command` type.
-    os_user: cjp256
     pr_ids:
     - '37'
     timestamp: 1618473214
   other:
-  - git_email: github@aklajnert.pl
-    git_user: Andrzej Klajnert
-    message: Switched CI from Azure Pipelines to GitHub Actions.
-    os_user: andrzejk
+  - message: Switched CI from Azure Pipelines to GitHub Actions.
     pr_ids:
     - '38'
     timestamp: 1618475848
-  - git_email: github@aklajnert.pl
-    git_user: Andrzej Klajnert
-    message: Drop support for python 3.4 and 3.5. Move type annotations from `.pyi`
+  - message: Drop support for python 3.4 and 3.5. Move type annotations from `.pyi`
       files into sources.
-    os_user: andrzejk
     pr_ids:
     - '35'
     timestamp: 1618203821

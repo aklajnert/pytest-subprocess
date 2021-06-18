@@ -1,32 +1,20 @@
 entries:
   bug:
-  - git_email: github@aklajnert.pl
-    git_user: Andrzej Klajnert
-    message: The `returncode` will not be ignored when `callback` is used.
-    os_user: andrzejk
+  - message: The `returncode` will not be ignored when `callback` is used.
     pr_ids:
     - '22'
     timestamp: 1588058646
-  - git_email: github@aklajnert.pl
-    git_user: Andrzej Klajnert
-    message: The exception raised from callback will take precedence over those from
+  - message: The exception raised from callback will take precedence over those from
       subprocess.
-    os_user: andrzejk
     pr_ids:
     - '21'
     timestamp: 1588052678
-  - git_email: github@aklajnert.pl
-    git_user: Andrzej Klajnert
-    message: Registering process will be now consistent regardless of the command
+  - message: Registering process will be now consistent regardless of the command
       type.
-    os_user: andrzejk
     pr_ids:
     - '20'
     timestamp: 1587995575
-  - git_email: github@aklajnert.pl
-    git_user: Andrzej Klajnert
-    message: Fixed crash for stderr redirect with an empty stream definition.
-    os_user: andrzejk
+  - message: Fixed crash for stderr redirect with an empty stream definition.
     pr_ids:
     - '19'
     timestamp: 1587964114
