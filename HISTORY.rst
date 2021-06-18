@@ -1,6 +1,17 @@
 History
 =======
 
+1.1.1 (2021-06-18)  
+------------------
+
+Bug fixes  
+~~~~~~~~~
+* `#43 <https://github.com/aklajnert/pytest-subprocess/pull/43>`_: Wait for callback thread to finish when calling ``communicate()``.
+
+Other changes  
+~~~~~~~~~~~~~
+* `#42 <https://github.com/aklajnert/pytest-subprocess/pull/42>`_: Fix type annotations for `register_subprocess()`.
+
 1.1.0 (2021-04-18)  
 ------------------
 
