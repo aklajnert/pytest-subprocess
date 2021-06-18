@@ -4,6 +4,7 @@ import os
 import platform
 import subprocess
 import sys
+import time
 
 import pytest
 
@@ -927,3 +928,17 @@ def test_call_count(fake_process):
     assert fake_process.call_count(["cp", "/source", fake_process.any()]) == 2
     assert fake_process.call_count(["cp", fake_process.any()]) == 3
     assert fake_process.call_count(["ls", "-lah"]) == 1
+
+
+def test_called_process_waits_for_the_callback_to_finish(fake_process, tmp_path):
+    output_file_path = tmp_path / "output"
+
+    def callback(process):
+        # simulate a long-running process that creates an output file at the very end
+        time.sleep(1)
+        output_file_path.touch()
+
+    fake_process.register_subprocess([fake_process.any()], callback=callback)
+    subprocess.run(["ls", "-al"], stdin="abc")
+
+    assert output_file_path.exists()

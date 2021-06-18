@@ -90,6 +90,9 @@ class FakePopen:
                     callable_output, "stderr", self.stderr
                 )
 
+        if self.__thread is not None:
+            self.__thread.join(timeout)
+
         return (
             self.stdout.getvalue() if self.stdout else None,
             self.stderr.getvalue() if self.stderr else None,
