@@ -1,9 +1,6 @@
 entries:
   bug:
-  - git_email: github@aklajnert.pl
-    git_user: Andrzej Klajnert
-    message: '`encoding` and `errors` arguments will properly trigger `text` mode.'
-    os_user: andrzejk
+  - message: '`encoding` and `errors` arguments will properly trigger `text` mode.'
     pr_ids:
     - '26'
     timestamp: 1592481300
