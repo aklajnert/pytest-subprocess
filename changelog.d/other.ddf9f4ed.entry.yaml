@@ -1,7 +1,0 @@
-git_email: github@aklajnert.pl
-git_user: Andrzej Klajnert
-message: Fix type annotations for `register_subprocess()`.
-pr_ids:
-- '42'
-timestamp: 1620915915
-type: other

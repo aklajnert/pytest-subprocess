@@ -1,0 +1,15 @@
+entries:
+  bug:
+  - message: Wait for callback thread to finish when calling ``communicate()``.
+    pr_ids:
+    - '43'
+    timestamp: 1624031059
+  other:
+  - message: Fix type annotations for `register_subprocess()`.
+    pr_ids:
+    - '42'
+    timestamp: 1620915915
+previous_release: 1.1.0
+release_date: '2021-06-18'
+release_description: ''
+release_version: 1.1.1
