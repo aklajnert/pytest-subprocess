@@ -1,6 +1,13 @@
 History
 =======
 
+1.1.2 (2021-07-17)  
+------------------
+
+Bug fixes  
+~~~~~~~~~
+* `#47 <https://github.com/aklajnert/pytest-subprocess/pull/47>`_: Prevent `allow_unregistered()` and `keep_last_process()` from affecting other tests.
+
 1.1.1 (2021-06-18)  
 ------------------
 
