@@ -23,8 +23,6 @@ def setup_fake_popen(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def setup():
-    pytest_subprocess.core.ProcessDispatcher.allow_unregistered(False)
-    pytest_subprocess.core.ProcessDispatcher.keep_last_process(False)
     os.chdir(os.path.dirname(__file__))
 
 

@@ -277,7 +277,7 @@ class ProcessDispatcher:
             process_instance.calls.append(command)
 
         if not processes:
-            if not cls._allow_unregistered:
+            if not cls.process_list[-1]._allow_unregistered:
                 raise ProcessNotRegisteredError(
                     "The process '%s' was not registered."
                     % (
@@ -293,7 +293,7 @@ class ProcessDispatcher:
 
         process = processes.popleft()
         if not processes and process_instance is not None:
-            if cls._keep_last_process:
+            if cls.process_list[-1]._keep_last_process:
                 processes.append(process)
             elif command_instance:
                 del process_instance.definitions[command_instance]
@@ -337,14 +337,6 @@ class ProcessDispatcher:
                 return command_instance, processes, process_instance
         return None, None, None
 
-    @classmethod
-    def allow_unregistered(cls, allow: bool) -> None:
-        cls._allow_unregistered = allow
-
-    @classmethod
-    def keep_last_process(cls, keep: bool) -> None:
-        cls._keep_last_process = keep
-
 
 class IncorrectProcessDefinition(Exception):
     """Raised when the register_subprocess() has been called with wrong arguments"""
@@ -360,6 +352,8 @@ class FakeProcess:
             deque
         )
         self.calls: Deque[COMMAND] = deque()
+        self._allow_unregistered: bool = False
+        self._keep_last_process: bool = False
 
     def register_subprocess(
         self,
@@ -430,7 +424,7 @@ class FakeProcess:
     def __exit__(self, *args: List, **kwargs: Dict) -> None:
         ProcessDispatcher.deregister(self)
 
-    def allow_unregistered(cls, allow: bool) -> None:
+    def allow_unregistered(self, allow: bool) -> None:
         """
         Allow / block unregistered processes execution. When allowed, the real
         subprocesses will be called. Blocking will raise the exception.
@@ -438,7 +432,7 @@ class FakeProcess:
         Args:
             allow: decide whether the unregistered process shall be allowed
         """
-        ProcessDispatcher.allow_unregistered(allow)
+        self._allow_unregistered = allow
 
     def call_count(self, command: COMMAND) -> int:
         """
@@ -455,8 +449,7 @@ class FakeProcess:
             command_instance = Command(command)
         return len(tuple(filter(lambda elem: elem == command_instance, self.calls)))
 
-    @classmethod
-    def keep_last_process(cls, keep: bool) -> None:
+    def keep_last_process(self, keep: bool) -> None:
         """
         Keep last process definition from being removed. That can allow / block
         multiple execution of the same command.
@@ -464,7 +457,7 @@ class FakeProcess:
         Args:
             keep: decide whether last process shall be kept
         """
-        ProcessDispatcher.keep_last_process(keep)
+        self._keep_last_process = keep
 
     @classmethod
     def context(cls) -> "FakeProcess":

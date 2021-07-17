@@ -38,8 +38,6 @@ def test_documentation(testdir, rst_file):
         "\n\n"
         "@pytest.fixture(autouse=True)\n"
         "def setup():\n"
-        "    pytest_subprocess.core.ProcessDispatcher.allow_unregistered(False)\n"
-        "    pytest_subprocess.core.ProcessDispatcher.keep_last_process(False)\n"
         "    os.chdir(os.path.dirname(__file__))\n\n"
     )
 
