@@ -1,4 +1,3 @@
-import sys
 from pathlib import Path
 
 import pytest
@@ -19,9 +18,6 @@ def get_code_blocks(file_path):
     return [block.astext() for block in code_blocks]
 
 
-@pytest.mark.skipif(
-    sys.version_info <= (3, 5), reason="Examples are for supported Python versions",
-)
 @pytest.mark.parametrize("rst_file", ("docs/index.rst", "README.rst"))
 def test_documentation(testdir, rst_file):
     imports = "\n".join(
@@ -38,8 +34,6 @@ def test_documentation(testdir, rst_file):
         "\n\n"
         "@pytest.fixture(autouse=True)\n"
         "def setup():\n"
-        "    pytest_subprocess.core.ProcessDispatcher.allow_unregistered(False)\n"
-        "    pytest_subprocess.core.ProcessDispatcher.keep_last_process(False)\n"
         "    os.chdir(os.path.dirname(__file__))\n\n"
     )
 

@@ -1,0 +1,6 @@
+message: Prevent `allow_unregistered()` and `keep_last_process()` from affecting other
+  tests.
+pr_ids:
+- '47'
+timestamp: 1626522235
+type: bug
