@@ -9,6 +9,7 @@ import time
 import pytest
 
 import pytest_subprocess
+from pytest_subprocess import ProcessNotRegisteredError
 
 
 def setup_fake_popen(monkeypatch):
@@ -942,3 +943,52 @@ def test_called_process_waits_for_the_callback_to_finish(fake_process, tmp_path)
     subprocess.run(["ls", "-al"], stdin="abc")
 
     assert output_file_path.exists()
+
+
+def test_allow_unregistered_cleaning(fake_process):
+    """
+    GitHub: #46.
+    The `allow_unregistered()` function should affect only the level where it was applied
+    The setting shouldn't leak to a higher levels or other tests.
+    """
+    fake_process.allow_unregistered(False)
+
+    with fake_process.context() as context:
+        context.allow_unregistered(True)
+
+        subprocess.run(["python", "example_script.py"])
+        subprocess.run(["python", "example_script.py"])
+        subprocess.run(["python", "example_script.py"])
+
+    with fake_process.context():
+        with pytest.raises(ProcessNotRegisteredError):
+            subprocess.run(["python", "example_script.py"])
+
+    with pytest.raises(ProcessNotRegisteredError):
+        subprocess.run(["test"])
+
+
+def test_keep_last_process_cleaning(fake_process):
+    """
+    GitHub: #46.
+    The `keep_last_process()` function should affect only the level where it was applied
+    The setting shouldn't leak to a higher levels or other tests.
+    """
+    fake_process.keep_last_process(False)
+
+    with fake_process.context() as context:
+        context.keep_last_process(True)
+        context.register_subprocess(["test"])
+
+        subprocess.run(["test"])
+        subprocess.run(["test"])
+        subprocess.run(["test"])
+
+    with fake_process.context():
+        with pytest.raises(ProcessNotRegisteredError):
+            subprocess.run(["test"])
+
+    fake_process.register_subprocess(["test"])
+    subprocess.run(["test"])
+    with pytest.raises(ProcessNotRegisteredError):
+        subprocess.run(["test"])
