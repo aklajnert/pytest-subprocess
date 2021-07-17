@@ -1,0 +1,11 @@
+entries:
+  bug:
+  - message: Prevent `allow_unregistered()` and `keep_last_process()` from affecting
+      other tests.
+    pr_ids:
+    - '47'
+    timestamp: 1626522235
+previous_release: 1.1.1
+release_date: '2021-07-17'
+release_description: ''
+release_version: 1.1.2
