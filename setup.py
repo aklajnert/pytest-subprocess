@@ -39,6 +39,7 @@ setup(
             "docutils>=0.12",
             "Pygments>=2.0",
             "pytest-rerunfailures",
+            "pytest-asyncio>=0.15.1",
         ],
         "dev": ["nox", "changelogd"],
         "docs": [
