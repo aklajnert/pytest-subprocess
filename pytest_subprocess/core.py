@@ -9,6 +9,7 @@ from collections import defaultdict
 from collections import deque
 from copy import deepcopy
 from typing import Any as AnyType
+from typing import Awaitable
 from typing import Callable
 from typing import DefaultDict
 from typing import Deque
@@ -236,11 +237,13 @@ class FakePopen:
 class AsyncFakePopen(FakePopen):
     """Class to handle async processes"""
 
-    async def communicate(self, *args, **kwargs) -> Tuple[AnyType, AnyType]:
-        return super().communicate(*args, **kwargs)
+    async def communicate(  # type: ignore
+        self, input: OPTIONAL_TEXT = None, timeout: Optional[float] = None
+    ) -> Tuple[AnyType, AnyType]:
+        return super().communicate(input, timeout)
 
-    async def wait(self, *args, **kwargs) -> int:
-        return super().wait(*args, **kwargs)
+    async def wait(self, timeout: Optional[float] = None) -> int:  # type: ignore
+        return super().wait(timeout)
 
 
 class ProcessNotRegisteredError(Exception):
@@ -255,7 +258,7 @@ class ProcessDispatcher:
 
     process_list: List["FakeProcess"] = []
     built_in_popen: Optional[Callable] = None
-    built_in_async_subprocess: [Optional[Callable]] = None
+    built_in_async_subprocess: Optional[AnyType] = None
     _allow_unregistered: bool = False
     _cache: Dict["FakeProcess", Dict["FakeProcess", AnyType]] = dict()
     _keep_last_process: bool = False
@@ -268,8 +271,8 @@ class ProcessDispatcher:
             subprocess.Popen = cls.dispatch  # type: ignore
 
             cls.built_in_async_subprocess = asyncio.subprocess
-            asyncio.create_subprocess_shell = cls.async_shell
-            asyncio.create_subprocess_exec = cls.async_shell
+            asyncio.create_subprocess_shell = cls.async_shell  # type: ignore
+            asyncio.create_subprocess_exec = cls.async_shell  # type: ignore
             asyncio.subprocess = asyncio_subprocess
 
         cls._cache[process] = {
@@ -287,6 +290,9 @@ class ProcessDispatcher:
             subprocess.Popen = cls.built_in_popen  # type: ignore
             cls.built_in_popen = None
 
+            if cls.built_in_async_subprocess is None:
+                raise PluginInternalError
+
             asyncio.subprocess = cls.built_in_async_subprocess
             asyncio.create_subprocess_shell = (
                 cls.built_in_async_subprocess.create_subprocess_shell
@@ -297,41 +303,59 @@ class ProcessDispatcher:
             cls.built_in_async_subprocess = None
 
     @classmethod
-    def dispatch(cls, command: COMMAND, **kwargs: Optional[Dict]) -> FakePopen:
+    def dispatch(
+        cls, command: COMMAND, **kwargs: Optional[Dict]
+    ) -> Union[FakePopen, subprocess.Popen]:
         """This method will be used instead of the subprocess.Popen()"""
-        process = cls.__dispatch(cls.built_in_popen, command)
+        process = cls.__dispatch(command)
 
         if process is None:
-            return cls.built_in_popen(command, **kwargs)
+            if cls.built_in_popen is None:
+                raise PluginInternalError
+
+            popen: subprocess.Popen = cls.built_in_popen(command, **kwargs)
+            return popen
 
         result = cls._prepare_instance(FakePopen, command, kwargs, process)
+        if not isinstance(result, FakePopen):
+            raise PluginInternalError
         result.run_thread()
         return result
 
     @classmethod
     async def async_shell(
         cls, command: COMMAND, **kwargs: Optional[Dict]
-    ) -> AsyncFakePopen:
+    ) -> Union[AsyncFakePopen, asyncio.subprocess.Process]:
         """
         This method will replace both  asyncio.create_subprocess_shell() and
         asyncio.create_subprocess_exec() as they don't seem to have different
         behavior.
         """
-        process = cls.__dispatch(
-            cls.built_in_async_subprocess.create_subprocess_shell, command
-        )
+        process = cls.__dispatch(command)
 
         if process is None:
-            return await cls.built_in_async_subprocess.create_subprocess_shell(
-                command, **kwargs
-            )
+            if cls.built_in_async_subprocess is None:
+                raise PluginInternalError
+
+            async_shell: Awaitable[
+                asyncio.subprocess.Process
+            ] = cls.built_in_async_subprocess.create_subprocess_shell(command, **kwargs)
+            return await async_shell
 
         result = cls._prepare_instance(AsyncFakePopen, command, kwargs, process)
+        if not isinstance(result, AsyncFakePopen):
+            raise PluginInternalError
         result.run_thread()
         return result
 
     @classmethod
-    def _prepare_instance(cls, klass, command, kwargs, process):
+    def _prepare_instance(
+        cls,
+        klass: Union[Type[FakePopen], Type[AsyncFakePopen]],
+        command: COMMAND,
+        kwargs: dict,
+        process: dict,
+    ) -> Union[FakePopen, AsyncFakePopen]:
         # Update the command with the actual command specified by the caller.
         # This will ensure that Command objects do not end up unexpectedly in
         # caller's objects (e.g. proc.args, CalledProcessError.cmd). Take care
@@ -346,7 +370,7 @@ class ProcessDispatcher:
         return result
 
     @classmethod
-    def __dispatch(cls, built_in_function, command):
+    def __dispatch(cls, command: COMMAND) -> Optional[dict]:
         command_instance, processes, process_instance = cls._get_process(command)
         if process_instance:
             process_instance.calls.append(command)
@@ -361,8 +385,6 @@ class ProcessDispatcher:
                     )
                 )
             else:
-                if built_in_function is None:
-                    raise PluginInternalError
                 return None
         process = processes.popleft()
         if not processes and process_instance is not None:
