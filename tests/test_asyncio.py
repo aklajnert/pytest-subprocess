@@ -45,6 +45,6 @@ async def test_basic_usage_with_real(fake_process, fake, shell):
     )
     out, err = await process.communicate()
 
-    assert out == os.linesep.encode().join([b"Stdout line 1", b"Stdout line 2", b""])
     assert err == os.linesep.encode().join([b"Stderr line 1", b""])
+    assert out == os.linesep.encode().join([b"Stdout line 1", b"Stdout line 2", b""])
     assert process.returncode == 0
