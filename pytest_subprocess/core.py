@@ -342,6 +342,13 @@ class ProcessDispatcher:
             ] = cls.built_in_async_subprocess.create_subprocess_shell(command, **kwargs)
             return await async_shell
 
+        if sys.platform == "win32" and isinstance(
+            asyncio.get_event_loop_policy().get_event_loop(), asyncio.SelectorEventLoop
+        ):
+            raise NotImplementedError(
+                "The SelectorEventLoop doesn't support subprocess"
+            )
+
         result = cls._prepare_instance(AsyncFakePopen, command, kwargs, process)
         if not isinstance(result, AsyncFakePopen):
             raise PluginInternalError

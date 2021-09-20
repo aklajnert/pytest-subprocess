@@ -9,7 +9,10 @@ import pytest
 def event_loop(request):
     policy = asyncio.get_event_loop_policy()
     if sys.platform == "win32":
-        loop = asyncio.ProactorEventLoop()
+        if request.node.name.startswith("test_invalid_event_loop"):
+            loop = asyncio.SelectorEventLoop()
+        else:
+            loop = asyncio.ProactorEventLoop()
     else:
         loop = policy.get_event_loop()
     yield loop
@@ -49,7 +52,7 @@ async def test_basic_usage_with_real(fake_process, fake, shell):
     )
 
     process = await method(
-        f"python example_script.py stderr",
+        "python example_script.py stderr",
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
@@ -58,3 +61,20 @@ async def test_basic_usage_with_real(fake_process, fake, shell):
     assert err == os.linesep.encode().join([b"Stderr line 1", b""])
     assert out == os.linesep.encode().join([b"Stdout line 1", b"Stdout line 2", b""])
     assert process.returncode == 0
+
+
+@pytest.mark.asyncio
+@pytest.mark.skipif('sys.platform!="win32"')
+@pytest.mark.parametrize("fake", [True, False])
+@pytest.mark.parametrize("shell", [True, False])
+async def test_invalid_event_loop(fake_process, fake, shell):
+    fake_process.allow_unregistered(not fake)
+    if fake:
+        fake_process.register_subprocess(["python", "example_script.py"])
+
+    method = (
+        asyncio.create_subprocess_shell if shell else asyncio.create_subprocess_exec
+    )
+
+    with pytest.raises(NotImplementedError):
+        await method("python example_script.py")
