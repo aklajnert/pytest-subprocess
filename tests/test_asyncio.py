@@ -4,7 +4,19 @@ import sys
 
 import pytest
 
-PYTHON = sys.executable
+loop = asyncio.ProactorEventLoop()
+asyncio.set_event_loop(loop)
+
+
+@pytest.fixture(autouse=True)
+def event_loop(request):
+    policy = asyncio.get_event_loop_policy()
+    if sys.platform == "win32":
+        loop = asyncio.ProactorEventLoop()
+    else:
+        loop = policy.get_event_loop()
+    yield loop
+    loop.close()
 
 
 @pytest.mark.asyncio
@@ -30,7 +42,7 @@ async def test_basic_usage_with_real(fake_process, fake, shell):
     fake_process.allow_unregistered(not fake)
     if fake:
         fake_process.register_subprocess(
-            [PYTHON, "example_script.py", "stderr"],
+            ["python", "example_script.py", "stderr"],
             stdout=["Stdout line 1", "Stdout line 2"],
             stderr=["Stderr line 1"],
         )
@@ -38,8 +50,9 @@ async def test_basic_usage_with_real(fake_process, fake, shell):
     method = (
         asyncio.create_subprocess_shell if shell else asyncio.create_subprocess_exec
     )
+
     process = await method(
-        f"{PYTHON} example_script.py stderr",
+        f"python example_script.py stderr",
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
