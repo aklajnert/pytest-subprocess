@@ -68,6 +68,10 @@ async def test_basic_usage_with_real(fake_process, fake, shell):
 @pytest.mark.parametrize("fake", [True, False])
 @pytest.mark.parametrize("shell", [True, False])
 async def test_invalid_event_loop(fake_process, fake, shell):
+    """
+    The event_loop is changed by the `event_loop` fixture based on
+    the test name (hack).
+    """
     fake_process.allow_unregistered(not fake)
     if fake:
         fake_process.register_subprocess(["python", "example_script.py"])
