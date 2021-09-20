@@ -1,7 +1,10 @@
 import asyncio
 import os
+import sys
 
 import pytest
+
+PYTHON = sys.executable
 
 
 @pytest.mark.asyncio
@@ -27,7 +30,7 @@ async def test_basic_usage_with_real(fake_process, fake, shell):
     fake_process.allow_unregistered(not fake)
     if fake:
         fake_process.register_subprocess(
-            ["python", "example_script.py", "stderr"],
+            [PYTHON, "example_script.py", "stderr"],
             stdout=["Stdout line 1", "Stdout line 2"],
             stderr=["Stderr line 1"],
         )
@@ -36,7 +39,7 @@ async def test_basic_usage_with_real(fake_process, fake, shell):
         asyncio.create_subprocess_shell if shell else asyncio.create_subprocess_exec
     )
     process = await method(
-        "python example_script.py stderr",
+        f"{PYTHON} example_script.py stderr",
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
