@@ -44,7 +44,7 @@ async def test_basic_usage_with_real(fake_process, fake, shell):
         stderr=asyncio.subprocess.PIPE,
     )
     out, err = await process.communicate()
-    assert process.returncode == 0
 
     assert out == os.linesep.encode().join([b"Stdout line 1", b"Stdout line 2", b""])
     assert err == os.linesep.encode().join([b"Stderr line 1", b""])
+    assert process.returncode == 0
