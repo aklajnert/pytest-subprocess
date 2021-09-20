@@ -91,6 +91,7 @@ def skip_on_pypy():
         try:
             import __pypy__
 
+            _ = __pypy__
             pytest.skip()
-        except:
+        except ImportError:
             pass
