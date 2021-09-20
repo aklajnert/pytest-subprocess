@@ -4,9 +4,6 @@ import sys
 
 import pytest
 
-loop = asyncio.ProactorEventLoop()
-asyncio.set_event_loop(loop)
-
 
 @pytest.fixture(autouse=True)
 def event_loop(request):
