@@ -87,7 +87,7 @@ async def test_invalid_event_loop(fake_process, fake, shell):
 @pytest.fixture(autouse=True)
 def skip_on_pypy():
     """Async test for some reason crash on pypy 3.6 on Windows"""
-    if sys.platform == "win32" and sys.version_info == (3, 6):
+    if sys.platform == "win32" and sys.version.startswith("3.6"):
         try:
             import __pypy__
 
