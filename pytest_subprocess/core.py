@@ -342,6 +342,9 @@ class ProcessDispatcher:
             ] = cls.built_in_async_subprocess.create_subprocess_shell(command, **kwargs)
             return await async_shell
 
+        if not isinstance(command, str):
+            raise ValueError("cmd must be a string")
+
         if sys.platform == "win32" and isinstance(
             asyncio.get_event_loop_policy().get_event_loop(), asyncio.SelectorEventLoop
         ):

@@ -64,6 +64,23 @@ async def test_basic_usage_with_real(fake_process, fake, shell):
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("fake", [True, False])
+@pytest.mark.parametrize("shell", [True, False])
+async def test_incorrect_call(fake_process, fake, shell):
+    """Asyncio doesn't support command as a list"""
+    fake_process.allow_unregistered(not fake)
+    if fake:
+        fake_process.register_subprocess(["test"])
+
+    method = (
+        asyncio.create_subprocess_shell if shell else asyncio.create_subprocess_exec
+    )
+
+    with pytest.raises(ValueError, match="cmd must be a string"):
+        await method(["test"])
+
+
+@pytest.mark.asyncio
 @pytest.mark.skipif('sys.platform!="win32"')
 @pytest.mark.parametrize("fake", [True, False])
 @pytest.mark.parametrize("shell", [True, False])
