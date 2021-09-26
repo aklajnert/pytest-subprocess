@@ -1,6 +1,7 @@
 import asyncio
 import os
 import sys
+import time
 
 import pytest
 
@@ -99,6 +100,42 @@ async def test_invalid_event_loop(fake_process, fake, shell):
 
     with pytest.raises(NotImplementedError):
         await method("python example_script.py")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("fake", [False, True])
+@pytest.mark.parametrize("shell", [True, False])
+async def test_wait(fake_process, fake, shell):
+    """
+    Check that wait argument still works. Unfortunately asyncio doesn't have
+    the timeout functionality.
+    """
+    fake_process.allow_unregistered(not fake)
+    if fake:
+        fake_process.register_subprocess(
+            ["python", "example_script.py", "wait", "stderr"],
+            stdout="Stdout line 1\nStdout line 2",
+            stderr="Stderr line 1",
+            wait=0.5,
+        )
+    method = (
+        asyncio.create_subprocess_shell if shell else asyncio.create_subprocess_exec
+    )
+
+    process = await method(
+        ("python example_script.py wait stderr"),
+        cwd=os.path.dirname(__file__),
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+
+    assert process.returncode is None
+
+    start_time = time.time()
+    returncode = await process.wait()
+
+    assert time.time() - start_time >= 0.5
+    assert returncode == 0
 
 
 @pytest.fixture(autouse=True)
