@@ -134,7 +134,7 @@ async def test_wait(fake_process, fake, shell):
     start_time = time.time()
     returncode = await process.wait()
 
-    assert time.time() - start_time >= 0.5
+    assert time.time() - start_time >= 0.45
     assert returncode == 0
 
 
