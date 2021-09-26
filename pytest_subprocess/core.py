@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import asyncio
 import io
 import os
 import subprocess
@@ -8,6 +9,7 @@ from collections import defaultdict
 from collections import deque
 from copy import deepcopy
 from typing import Any as AnyType
+from typing import Awaitable
 from typing import Callable
 from typing import DefaultDict
 from typing import Deque
@@ -19,6 +21,7 @@ from typing import Tuple
 from typing import Type
 from typing import Union
 
+from . import asyncio_subprocess
 from .utils import Any
 from .utils import Command
 from .utils import Thread
@@ -231,6 +234,18 @@ class FakePopen:
             self.stderr.seek(0)
 
 
+class AsyncFakePopen(FakePopen):
+    """Class to handle async processes"""
+
+    async def communicate(  # type: ignore
+        self, input: OPTIONAL_TEXT = None, timeout: Optional[float] = None
+    ) -> Tuple[AnyType, AnyType]:
+        return super().communicate(input, timeout)
+
+    async def wait(self, timeout: Optional[float] = None) -> int:  # type: ignore
+        return super().wait(timeout)
+
+
 class ProcessNotRegisteredError(Exception):
     """
     Raised when the attempted command wasn't registered before.
@@ -242,7 +257,8 @@ class ProcessDispatcher:
     """Main class for handling processes."""
 
     process_list: List["FakeProcess"] = []
-    built_in_popen: Optional[Optional[Callable]] = None
+    built_in_popen: Optional[Callable] = None
+    built_in_async_subprocess: Optional[AnyType] = None
     _allow_unregistered: bool = False
     _cache: Dict["FakeProcess", Dict["FakeProcess", AnyType]] = dict()
     _keep_last_process: bool = False
@@ -253,6 +269,12 @@ class ProcessDispatcher:
         if not cls.process_list:
             cls.built_in_popen = subprocess.Popen
             subprocess.Popen = cls.dispatch  # type: ignore
+
+            cls.built_in_async_subprocess = asyncio.subprocess
+            asyncio.create_subprocess_shell = cls.async_shell  # type: ignore
+            asyncio.create_subprocess_exec = cls.async_shell  # type: ignore
+            asyncio.subprocess = asyncio_subprocess
+
         cls._cache[process] = {
             proc: deepcopy(proc.definitions) for proc in cls.process_list
         }
@@ -268,14 +290,100 @@ class ProcessDispatcher:
             subprocess.Popen = cls.built_in_popen  # type: ignore
             cls.built_in_popen = None
 
-    @classmethod
-    def dispatch(cls, command: COMMAND, **kwargs: Optional[Dict]) -> FakePopen:
-        """This method will be used instead of the subprocess.Popen()"""
-        command_instance, processes, process_instance = cls._get_process(command)
+            if cls.built_in_async_subprocess is None:
+                raise PluginInternalError
 
+            asyncio.subprocess = cls.built_in_async_subprocess
+            asyncio.create_subprocess_shell = (
+                cls.built_in_async_subprocess.create_subprocess_shell
+            )
+            asyncio.create_subprocess_exec = (
+                cls.built_in_async_subprocess.create_subprocess_exec
+            )
+            cls.built_in_async_subprocess = None
+
+    @classmethod
+    def dispatch(
+        cls, command: COMMAND, **kwargs: Optional[Dict]
+    ) -> Union[FakePopen, subprocess.Popen]:
+        """This method will be used instead of the subprocess.Popen()"""
+        process = cls.__dispatch(command)
+
+        if process is None:
+            if cls.built_in_popen is None:
+                raise PluginInternalError
+
+            popen: subprocess.Popen = cls.built_in_popen(command, **kwargs)
+            return popen
+
+        result = cls._prepare_instance(FakePopen, command, kwargs, process)
+        if not isinstance(result, FakePopen):
+            raise PluginInternalError
+        result.run_thread()
+        return result
+
+    @classmethod
+    async def async_shell(
+        cls, command: COMMAND, **kwargs: Optional[Dict]
+    ) -> Union[AsyncFakePopen, asyncio.subprocess.Process]:
+        """
+        This method will replace both  asyncio.create_subprocess_shell() and
+        asyncio.create_subprocess_exec() as they don't seem to have different
+        behavior.
+        """
+        process = cls.__dispatch(command)
+
+        if process is None:
+            if cls.built_in_async_subprocess is None:
+                raise PluginInternalError
+
+            async_shell: Awaitable[
+                asyncio.subprocess.Process
+            ] = cls.built_in_async_subprocess.create_subprocess_shell(command, **kwargs)
+            return await async_shell
+
+        if not isinstance(command, str):
+            raise ValueError("cmd must be a string")
+
+        if sys.platform == "win32" and isinstance(
+            asyncio.get_event_loop_policy().get_event_loop(), asyncio.SelectorEventLoop
+        ):
+            raise NotImplementedError(
+                "The SelectorEventLoop doesn't support subprocess"
+            )
+
+        result = cls._prepare_instance(AsyncFakePopen, command, kwargs, process)
+        if not isinstance(result, AsyncFakePopen):
+            raise PluginInternalError
+        result.run_thread()
+        return result
+
+    @classmethod
+    def _prepare_instance(
+        cls,
+        klass: Union[Type[FakePopen], Type[AsyncFakePopen]],
+        command: COMMAND,
+        kwargs: dict,
+        process: dict,
+    ) -> Union[FakePopen, AsyncFakePopen]:
+        # Update the command with the actual command specified by the caller.
+        # This will ensure that Command objects do not end up unexpectedly in
+        # caller's objects (e.g. proc.args, CalledProcessError.cmd). Take care
+        # to preserve the dict that may still be referenced when using
+        # keep_last_process.
+        fake_popen_kwargs = process.copy()
+        fake_popen_kwargs["command"] = command
+
+        result = klass(**fake_popen_kwargs)
+        result.pid = cls._pid
+        result.configure(**kwargs)
+        return result
+
+    @classmethod
+    def __dispatch(cls, command: COMMAND) -> Optional[dict]:
+        command_instance, processes, process_instance = cls._get_process(command)
         if process_instance:
             process_instance.calls.append(command)
-
         if not processes:
             if not cls.process_list[-1]._allow_unregistered:
                 raise ProcessNotRegisteredError(
@@ -287,35 +395,18 @@ class ProcessDispatcher:
                     )
                 )
             else:
-                if cls.built_in_popen is None:
-                    raise PluginInternalError
-                return cls.built_in_popen(command, **kwargs)  # type: ignore
-
+                return None
         process = processes.popleft()
         if not processes and process_instance is not None:
             if cls.process_list[-1]._keep_last_process:
                 processes.append(process)
             elif command_instance:
                 del process_instance.definitions[command_instance]
-
         cls._pid += 1
         if isinstance(process, bool):
             # real process will be called
-            return cls.built_in_popen(command, **kwargs)  # type: ignore
-
-        # Update the command with the actual command specified by the caller.
-        # This will ensure that Command objects do not end up unexpectedly in
-        # caller's objects (e.g. proc.args, CalledProcessError.cmd). Take care
-        # to preserve the dict that may still be referenced when using
-        # keep_last_process.
-        fake_popen_kwargs = process.copy()
-        fake_popen_kwargs["command"] = command
-
-        result = FakePopen(**fake_popen_kwargs)
-        result.pid = cls._pid
-        result.configure(**kwargs)
-        result.run_thread()
-        return result
+            return None
+        return process
 
     @classmethod
     def _get_process(

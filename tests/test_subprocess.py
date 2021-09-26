@@ -21,11 +21,6 @@ def setup_fake_popen(monkeypatch):
     )
 
 
-@pytest.fixture(autouse=True)
-def setup():
-    os.chdir(os.path.dirname(__file__))
-
-
 @pytest.mark.parametrize("cmd", [("cmd"), ["cmd"]])
 def test_completedprocess_args(fake_process, cmd):
     fake_process.register_subprocess(cmd)
