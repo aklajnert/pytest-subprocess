@@ -22,6 +22,7 @@ def get_code_blocks(file_path):
 def test_documentation(testdir, rst_file):
     imports = "\n".join(
         [
+            "import asyncio",
             "import os",
             "",
             "import pytest",
