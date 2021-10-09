@@ -44,6 +44,7 @@ setup(
         "dev": ["nox", "changelogd"],
         "docs": [
             "sphinx",
+            "furo",
             "sphinxcontrib-napoleon",
             "sphinx-autodoc-typehints",
             "changelogd",
