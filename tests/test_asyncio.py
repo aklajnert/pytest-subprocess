@@ -6,6 +6,20 @@ import time
 import pytest
 
 
+@pytest.fixture(autouse=True)
+def event_loop(request):
+    policy = asyncio.get_event_loop_policy()
+    if sys.platform == "win32":
+        if request.node.name.startswith("test_invalid_event_loop"):
+            loop = asyncio.SelectorEventLoop()
+        else:
+            loop = asyncio.ProactorEventLoop()
+    else:
+        loop = policy.get_event_loop()
+    yield loop
+    loop.close()
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize("shell", [True, False])
 async def test_basic_usage(fake_process, shell):
