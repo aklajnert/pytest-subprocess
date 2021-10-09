@@ -1,6 +1,17 @@
 History
 =======
 
+1.2.0 (2021-10-09)  
+------------------
+
+Features  
+~~~~~~~~
+* `#49 <https://github.com/aklajnert/pytest-subprocess/pull/49>`_, `#52 <https://github.com/aklajnert/pytest-subprocess/pull/52>`_: Add support for ``asyncio``.
+
+Other changes  
+~~~~~~~~~~~~~
+* `#50 <https://github.com/aklajnert/pytest-subprocess/pull/50>`_: Change docs theme.
+
 1.1.2 (2021-07-17)  
 ------------------
 

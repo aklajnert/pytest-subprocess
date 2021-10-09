@@ -1,0 +1,16 @@
+entries:
+  feature:
+  - message: Add support for ``asyncio``.
+    pr_ids:
+    - '49'
+    - '52'
+    timestamp: 1632653299
+  other:
+  - message: Change docs theme.
+    pr_ids:
+    - '50'
+    timestamp: 1633768022
+previous_release: 1.1.2
+release_date: '2021-10-09'
+release_description: ''
+release_version: 1.2.0
