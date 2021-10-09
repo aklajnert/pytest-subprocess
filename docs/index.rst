@@ -24,9 +24,11 @@ execution.
         assert process.returncode == 0
 
 
+Table of contents
+-----------------
+
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
 
    usage
    api
