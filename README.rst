@@ -343,6 +343,27 @@ how many a command has been called. The latter supports ``fake_process.any()``.
         assert fake_process.call_count(["cp", fake_process.any()]) == 3
 
 
+Asyncio support
+---------------
+
+The plugin now supports asyncio and works for ``asyncio.create_subprocess_shell``
+and ``asyncio.create_subprocess_exec``:
+
+.. code-block:: python
+
+    @pytest.mark.asyncio
+    async def test_basic_usage(fake_process,):
+        fake_process.register_subprocess(
+            ["some-command-that-is-definitely-unavailable"], returncode=500
+        )
+
+        process = await asyncio.create_subprocess_shell(
+            "some-command-that-is-definitely-unavailable"
+        )
+        returncode = await process.wait()
+
+        assert process.returncode == returncode
+        assert process.returncode == 500
 
 .. _`pip`: https://pypi.org/project/pip/
 .. _`PyPI`: https://pypi.org/project
