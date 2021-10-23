@@ -61,6 +61,7 @@ class FakePopen:
         wait: Optional[float] = None,
         callback: Optional[Callable] = None,
         callback_kwargs: Optional[Dict[str, AnyType]] = None,
+        signal_callback: Optional[Callable] = None,
         stdin_callable: Optional[Callable] = None,
         **_: Dict[str, AnyType]
     ) -> None:
@@ -72,6 +73,7 @@ class FakePopen:
         self.__thread: Optional[Thread] = None
         self.__callback: Optional[Optional[Callable]] = callback
         self.__callback_kwargs: Optional[Dict[str, AnyType]] = callback_kwargs
+        self.__signal_callback: Optional[Callable] = signal_callback
         self.__stdin_callable: Optional[Optional[Callable]] = stdin_callable
         self._signals: List[int] = []
 
@@ -130,6 +132,8 @@ class FakePopen:
 
     def send_signal(self, sig: int):
         self._signals.append(sig)
+        if self.__signal_callback:
+            self.__signal_callback(self, sig)
 
     def terminate(self):
         self.send_signal(signal.SIGTERM)
@@ -473,6 +477,7 @@ class FakeProcess:
         wait: Optional[float] = None,
         callback: Optional[Callable] = None,
         callback_kwargs: Optional[Dict[str, AnyType]] = None,
+        signal_callback: Optional[Callable] = None,
         occurrences: int = 1,
         stdin_callable: Optional[Callable] = None,
     ) -> None:
@@ -507,6 +512,7 @@ class FakeProcess:
                     "wait": wait,
                     "callback": callback,
                     "callback_kwargs": callback_kwargs,
+                    "signal_callback": signal_callback,
                     "stdin_callable": stdin_callable,
                 }
             ]

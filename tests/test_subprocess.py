@@ -1004,3 +1004,33 @@ def test_signals(fake_process):
         expected_signals = (signal.SIGKILL, signal.SIGTERM, signal.SIGSEGV)
 
     assert process.received_signals() == expected_signals
+
+
+def test_signal_callback(fake_process):
+    """Test that signal callbacks work."""
+
+    def callback(process, sig):
+        if sig == signal.SIGTERM:
+            process.returncode = -1
+
+    fake_process.register_subprocess("test", signal_callback=callback, occurrences=3)
+
+    # no signal
+    process = subprocess.Popen("test")
+    process.wait()
+
+    assert process.returncode == 0
+
+    # other signal
+    process = subprocess.Popen("test")
+    process.send_signal(signal.SIGSEGV)
+    process.wait()
+
+    assert process.returncode == 0
+
+    # sigterm
+    process = subprocess.Popen("test")
+    process.send_signal(signal.SIGTERM)
+    process.wait()
+
+    assert process.returncode == -1
