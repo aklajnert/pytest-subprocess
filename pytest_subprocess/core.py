@@ -2,6 +2,7 @@
 import asyncio
 import io
 import os
+import signal
 import subprocess
 import sys
 import time
@@ -72,6 +73,7 @@ class FakePopen:
         self.__callback: Optional[Optional[Callable]] = callback
         self.__callback_kwargs: Optional[Dict[str, AnyType]] = callback_kwargs
         self.__stdin_callable: Optional[Optional[Callable]] = stdin_callable
+        self._signals: List[int] = []
 
     def __enter__(self) -> "FakePopen":
         return self
@@ -125,6 +127,18 @@ class FakePopen:
         if self.returncode is None:
             raise PluginInternalError
         return self.returncode
+
+    def send_signal(self, sig: int):
+        self._signals.append(sig)
+
+    def terminate(self):
+        self.send_signal(signal.SIGTERM)
+
+    def kill(self):
+        if sys.platform == "win32":
+            self.terminate()
+        else:
+            self.send_signal(signal.SIGKILL)
 
     def configure(self, **kwargs: Optional[Dict]) -> None:
         """Setup the FakePopen instance based on a real Popen arguments."""
@@ -232,6 +246,10 @@ class FakePopen:
 
         if self.stderr:
             self.stderr.seek(0)
+
+    def received_signals(self) -> Tuple[int, ...]:
+        """Get a tuple of signals received by the process."""
+        return tuple(self._signals)
 
 
 class AsyncFakePopen(FakePopen):

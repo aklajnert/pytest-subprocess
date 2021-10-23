@@ -2,6 +2,7 @@
 import getpass
 import os
 import platform
+import signal
 import subprocess
 import sys
 import time
@@ -985,3 +986,21 @@ def test_keep_last_process_cleaning(fake_process):
     subprocess.run(["test"])
     with pytest.raises(ProcessNotRegisteredError):
         subprocess.run(["test"])
+
+
+def test_signals(fake_process):
+    """Test signal receiving functionality"""
+    fake_process.register_subprocess("test")
+
+    process = subprocess.Popen("test")
+
+    process.kill()
+    process.terminate()
+    process.send_signal(signal.SIGSEGV)
+
+    if sys.platform == "win32":
+        expected_signals = (signal.SIGTERM, signal.SIGTERM, signal.SIGSEGV)
+    else:
+        expected_signals = (signal.SIGKILL, signal.SIGTERM, signal.SIGSEGV)
+
+    assert process.received_signals() == expected_signals
