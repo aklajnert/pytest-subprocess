@@ -353,6 +353,9 @@ set up an optional callback function for signals.
 
 .. code-block:: python
 
+    import signal
+
+
     def test_signal_callback(fake_process):
         """Test that signal callbacks work."""
 
