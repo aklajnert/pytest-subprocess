@@ -130,15 +130,15 @@ class FakePopen:
             raise PluginInternalError
         return self.returncode
 
-    def send_signal(self, sig: int):
+    def send_signal(self, sig: int) -> None:
         self._signals.append(sig)
         if self.__signal_callback:
             self.__signal_callback(self, sig)
 
-    def terminate(self):
+    def terminate(self) -> None:
         self.send_signal(signal.SIGTERM)
 
-    def kill(self):
+    def kill(self) -> None:
         if sys.platform == "win32":
             self.terminate()
         else:
