@@ -1,0 +1,5 @@
+message: Add support for ``terminate()``, ``kill()``, ``send_signal()``.
+pr_ids:
+- '55'
+timestamp: 1635002553
+type: feature

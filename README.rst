@@ -343,6 +343,36 @@ how many a command has been called. The latter supports ``fake_process.any()``.
         assert fake_process.call_count(["cp", fake_process.any()]) == 3
 
 
+Handling signals
+----------------
+
+You can use standard ``kill()``, ``terminate()`` or ``send_signal()`` methods
+in ``Popen`` instances. There is an additional ``received_signals()`` method
+to get a tuple of all signals received by the process. It is also possible to
+set up an optional callback function for signals.
+
+.. code-block:: python
+
+    import signal
+
+
+    def test_signal_callback(fake_process):
+        """Test that signal callbacks work."""
+
+        def callback(process, sig):
+            if sig == signal.SIGTERM:
+                process.returncode = -1
+
+        fake_process.register_subprocess("test", signal_callback=callback)
+
+        process = subprocess.Popen("test")
+        process.send_signal(signal.SIGTERM)
+        process.wait()
+
+        assert process.returncode == -1
+        assert process.received_signals() == (signal.SIGTERM,)
+
+
 Asyncio support
 ---------------
 
