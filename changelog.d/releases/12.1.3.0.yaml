@@ -1,0 +1,10 @@
+entries:
+  feature:
+  - message: Add support for ``terminate()``, ``kill()``, ``send_signal()``.
+    pr_ids:
+    - '55'
+    timestamp: 1635002553
+previous_release: 1.2.0
+release_date: '2021-10-24'
+release_description: ''
+release_version: 1.3.0
