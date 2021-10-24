@@ -1,6 +1,13 @@
 History
 =======
 
+1.3.0 (2021-10-24)  
+------------------
+
+Features  
+~~~~~~~~
+* `#55 <https://github.com/aklajnert/pytest-subprocess/pull/55>`_: Add support for ``terminate()``, ``kill()``, ``send_signal()``.
+
 1.2.0 (2021-10-09)  
 ------------------
 
