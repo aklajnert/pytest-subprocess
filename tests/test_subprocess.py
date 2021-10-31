@@ -1038,7 +1038,8 @@ def test_signal_callback(fake_process):
 
 
 @pytest.mark.parametrize("fake", [False, True])
-def test_non_piped_streams(tmpdir, fake_process, fake):
+@pytest.mark.parametrize("bytes", [True, False])
+def test_non_piped_streams(tmpdir, fake_process, fake, bytes):
     fake_process.allow_unregistered(not fake)
     if fake:
         fake_process.register_subprocess(
@@ -1050,7 +1051,9 @@ def test_non_piped_streams(tmpdir, fake_process, fake):
     stdout_path = tmpdir.join("stdout")
     stderr_path = tmpdir.join("stderr")
 
-    with open(stdout_path, "w") as stdout, open(stderr_path, "w") as stderr:
+    mode = "wb" if bytes else "w"
+
+    with open(stdout_path, mode) as stdout, open(stderr_path, mode) as stderr:
         process = subprocess.Popen(
             ["python", "-u", "example_script.py", "stderr"],
             stdout=stdout,
@@ -1068,3 +1071,36 @@ def test_non_piped_streams(tmpdir, fake_process, fake):
 
     assert out == ["Stdout line 1\n", "Stdout line 2\n"]
     assert err == [f"Stderr line 1\n"]
+
+
+@pytest.mark.parametrize("fake", [False, True])
+@pytest.mark.parametrize("bytes", [True, False])
+def test_non_piped_same_file(tmpdir, fake_process, fake, bytes):
+    fake_process.allow_unregistered(not fake)
+    if fake:
+        fake_process.register_subprocess(
+            ["python", "-u", "example_script.py", "stderr"],
+            stdout=["Stdout line 1", "Stdout line 2"],
+            stderr="Stderr line 1\n",
+        )
+
+    output_path = tmpdir.join("output")
+
+    mode = "wb" if bytes else "w"
+
+    with open(output_path, mode) as out_file:
+        process = subprocess.Popen(
+            ["python", "-u", "example_script.py", "stderr"],
+            stdout=out_file,
+            stderr=out_file,
+        )
+
+        err, out = process.communicate()
+
+    assert out is None
+    assert err is None
+
+    with open(output_path, "r") as out_file:
+        output = out_file.readlines()
+
+    assert output == ["Stdout line 1\n", "Stdout line 2\n", "Stderr line 1\n"]

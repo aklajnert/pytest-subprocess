@@ -9,12 +9,14 @@ import time
 from collections import defaultdict
 from collections import deque
 from copy import deepcopy
+from functools import partial
 from typing import Any as AnyType
 from typing import Awaitable
 from typing import Callable
 from typing import DefaultDict
 from typing import Deque
 from typing import Dict
+from typing import IO
 from typing import List
 from typing import Optional
 from typing import Sequence
@@ -168,13 +170,18 @@ class FakePopen:
                 "different. Pass one or the other."
             )
 
-        if kwargs.get("stdout") == subprocess.PIPE:
+        stdout = kwargs.get("stdout")
+        if stdout == subprocess.PIPE:
             self.stdout = self._prepare_buffer(self.__stdout)
+        elif isinstance(stdout, (io.BufferedWriter, io.TextIOWrapper)):
+            self._write_to_buffer(self.__stdout, stdout)
         stderr = kwargs.get("stderr")
         if stderr == subprocess.STDOUT and self.__stderr:
             self.stdout = self._prepare_buffer(self.__stderr, self.stdout)
         elif stderr == subprocess.PIPE:
             self.stderr = self._prepare_buffer(self.__stderr)
+        elif isinstance(stderr, (io.BufferedWriter, io.TextIOWrapper)):
+            self._write_to_buffer(self.__stderr, stderr)
 
     def _prepare_buffer(
         self, input: OPTIONAL_TEXT_OR_ITERABLE, io_base: BUFFER = None,
@@ -214,6 +221,18 @@ class FakePopen:
         # similar as above - mypy has to be disabled because unions
         io_base.write(input)  # type: ignore
         return io_base
+
+    def _write_to_buffer(self, data: OPTIONAL_TEXT_OR_ITERABLE, buffer: IO) -> None:
+        data_type: Callable = (
+            # mypy doesn't seem to recognize `partial` as a function
+            partial(bytes, encoding=sys.getfilesystemencoding())  # type: ignore
+            if "b" in buffer.mode
+            else str
+        )
+        if isinstance(data, (list, tuple)):
+            buffer.writelines([data_type(line + "\n") for line in data])
+        else:
+            buffer.write(data_type(data))
 
     def _convert(self, input: Union[str, bytes]) -> Union[str, bytes]:
         if isinstance(input, bytes) and self.text_mode:
