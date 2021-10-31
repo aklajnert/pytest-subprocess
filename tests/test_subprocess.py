@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import getpass
-import io
 import os
 import platform
 import signal
@@ -1070,7 +1069,7 @@ def test_non_piped_streams(tmpdir, fake_process, fake, bytes):
         err = stderr.readlines()
 
     assert out == ["Stdout line 1\n", "Stdout line 2\n"]
-    assert err == [f"Stderr line 1\n"]
+    assert err == ["Stderr line 1\n"]
 
 
 @pytest.mark.parametrize("fake", [False, True])
