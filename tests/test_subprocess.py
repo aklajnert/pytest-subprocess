@@ -435,7 +435,7 @@ def test_multiple_wait(fake_process, fake):
         process.wait(timeout=0.2)
 
     with pytest.raises(subprocess.TimeoutExpired):
-        process.wait(timeout=0.2)
+        process.wait(timeout=0.1)
 
     process.wait(0.4)
 
@@ -1034,3 +1034,72 @@ def test_signal_callback(fake_process):
     process.wait()
 
     assert process.returncode == -1
+
+
+@pytest.mark.parametrize("fake", [False, True])
+@pytest.mark.parametrize("bytes", [True, False])
+def test_non_piped_streams(tmpdir, fake_process, fake, bytes):
+    fake_process.allow_unregistered(not fake)
+    if fake:
+        fake_process.register_subprocess(
+            ["python", "-u", "example_script.py", "stderr"],
+            stdout=["Stdout line 1", "Stdout line 2"],
+            stderr=["Stderr line 1"],
+        )
+
+    stdout_path = tmpdir.join("stdout")
+    stderr_path = tmpdir.join("stderr")
+
+    mode = "wb" if bytes else "w"
+
+    with open(stdout_path, mode) as stdout, open(stderr_path, mode) as stderr:
+        process = subprocess.Popen(
+            ["python", "-u", "example_script.py", "stderr"],
+            stdout=stdout,
+            stderr=stderr,
+        )
+
+        err, out = process.communicate()
+
+    assert out is None
+    assert err is None
+
+    with open(stdout_path, "r") as stdout, open(stderr_path, "r") as stderr:
+        out = stdout.readlines()
+        err = stderr.readlines()
+
+    assert out == ["Stdout line 1\n", "Stdout line 2\n"]
+    assert err == ["Stderr line 1\n"]
+
+
+@pytest.mark.parametrize("fake", [False, True])
+@pytest.mark.parametrize("bytes", [True, False])
+def test_non_piped_same_file(tmpdir, fake_process, fake, bytes):
+    fake_process.allow_unregistered(not fake)
+    if fake:
+        fake_process.register_subprocess(
+            ["python", "-u", "example_script.py", "stderr"],
+            stdout=["Stdout line 1", "Stdout line 2"],
+            stderr="Stderr line 1\n",
+        )
+
+    output_path = tmpdir.join("output")
+
+    mode = "wb" if bytes else "w"
+
+    with open(output_path, mode) as out_file:
+        process = subprocess.Popen(
+            ["python", "-u", "example_script.py", "stderr"],
+            stdout=out_file,
+            stderr=out_file,
+        )
+
+        err, out = process.communicate()
+
+    assert out is None
+    assert err is None
+
+    with open(output_path, "r") as out_file:
+        output = out_file.readlines()
+
+    assert output == ["Stdout line 1\n", "Stdout line 2\n", "Stderr line 1\n"]
