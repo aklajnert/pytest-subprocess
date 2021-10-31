@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import getpass
+import io
 import os
 import platform
 import signal
@@ -1034,3 +1035,36 @@ def test_signal_callback(fake_process):
     process.wait()
 
     assert process.returncode == -1
+
+
+@pytest.mark.parametrize("fake", [False, True])
+def test_non_piped_streams(tmpdir, fake_process, fake):
+    fake_process.allow_unregistered(not fake)
+    if fake:
+        fake_process.register_subprocess(
+            ["python", "-u", "example_script.py", "stderr"],
+            stdout=["Stdout line 1", "Stdout line 2"],
+            stderr=["Stderr line 1"],
+        )
+
+    stdout_path = tmpdir.join("stdout")
+    stderr_path = tmpdir.join("stderr")
+
+    with open(stdout_path, "w") as stdout, open(stderr_path, "w") as stderr:
+        process = subprocess.Popen(
+            ["python", "-u", "example_script.py", "stderr"],
+            stdout=stdout,
+            stderr=stderr,
+        )
+
+        err, out = process.communicate()
+
+    assert out is None
+    assert err is None
+
+    with open(stdout_path, "r") as stdout, open(stderr_path, "r") as stderr:
+        out = stdout.readlines()
+        err = stderr.readlines()
+
+    assert out == ["Stdout line 1\n", "Stdout line 2\n"]
+    assert err == [f"Stderr line 1\n"]
