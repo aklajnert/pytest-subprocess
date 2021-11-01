@@ -1,6 +1,13 @@
 History
 =======
 
+1.3.1 (2021-11-01)  
+------------------
+
+Bug fixes  
+~~~~~~~~~
+* `#58 <https://github.com/aklajnert/pytest-subprocess/pull/58>`_: Correctly handle file stream output.
+
 1.3.0 (2021-10-24)  
 ------------------
 
