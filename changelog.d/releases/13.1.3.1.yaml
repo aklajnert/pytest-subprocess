@@ -1,0 +1,10 @@
+entries:
+  bug:
+  - message: Correctly handle file stream output.
+    pr_ids:
+    - '58'
+    timestamp: 1635705281
+previous_release: 1.3.0
+release_date: '2021-11-01'
+release_description: ''
+release_version: 1.3.1
