@@ -138,6 +138,34 @@ async def test_wait(fake_process, fake, shell):
     assert returncode == 0
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("fake", [False, True])
+async def test_async_exec(fake_process, fake):
+    """Async exec should accept args as a list."""
+    fake_process.allow_unregistered(not fake)
+    if fake:
+        fake_process.register_subprocess(
+            ["python", "example_script.py", "stderr"],
+            stdout="Stdout line 1\nStdout line 2",
+            stderr="Stderr line 1",
+        )
+
+    process = await asyncio.create_subprocess_exec(
+        "python",
+        "example_script.py",
+        "stderr",
+        cwd=os.path.dirname(__file__),
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+
+    out, err = await process.communicate()
+
+    assert err == os.linesep.encode().join([b"Stderr line 1", b""])
+    assert out == os.linesep.encode().join([b"Stdout line 1", b"Stdout line 2", b""])
+    assert process.returncode == 0
+
+
 @pytest.fixture(autouse=True)
 def skip_on_pypy():
     """Async test for some reason crash on pypy 3.6 on Windows"""
