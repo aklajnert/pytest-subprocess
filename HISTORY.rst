@@ -1,6 +1,13 @@
 History
 =======
 
+1.3.2 (2021-11-07)  
+------------------
+
+Bug fixes  
+~~~~~~~~~
+* `#61 <https://github.com/aklajnert/pytest-subprocess/pull/61>`_: Fixed behavior of ``asyncio.create_subproess_exec()``.
+
 1.3.1 (2021-11-01)  
 ------------------
 
