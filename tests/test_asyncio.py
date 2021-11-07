@@ -21,8 +21,9 @@ def event_loop(request):
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("shell", [True, False])
-async def test_basic_usage(fake_process, shell):
+@pytest.mark.parametrize("mode", ["shell", "exec"])
+async def test_basic_usage(fake_process, mode):
+    shell = mode == "shell"
     fake_process.register_subprocess(
         ["some-command-that-is-definitely-unavailable"], returncode=500
     )
@@ -38,8 +39,7 @@ async def test_basic_usage(fake_process, shell):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("fake", [True, False])
-@pytest.mark.parametrize("shell", [True, False])
-async def test_basic_usage_with_real(fake_process, fake, shell):
+async def test_with_arguments_shell(fake_process, fake):
     fake_process.allow_unregistered(not fake)
     if fake:
         fake_process.register_subprocess(
@@ -48,11 +48,7 @@ async def test_basic_usage_with_real(fake_process, fake, shell):
             stderr=["Stderr line 1"],
         )
 
-    method = (
-        asyncio.create_subprocess_shell if shell else asyncio.create_subprocess_exec
-    )
-
-    process = await method(
+    process = await asyncio.create_subprocess_shell(
         "python example_script.py stderr",
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
@@ -66,9 +62,35 @@ async def test_basic_usage_with_real(fake_process, fake, shell):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("fake", [True, False])
-@pytest.mark.parametrize("shell", [True, False])
-async def test_incorrect_call(fake_process, fake, shell):
+async def test_with_arguments_exec(fake_process, fake):
+    fake_process.allow_unregistered(not fake)
+    if fake:
+        fake_process.register_subprocess(
+            ["python", "example_script.py", "stderr"],
+            stdout=["Stdout line 1", "Stdout line 2"],
+            stderr=["Stderr line 1"],
+        )
+
+    process = await asyncio.create_subprocess_exec(
+        "python",
+        "example_script.py",
+        "stderr",
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    out, err = await process.communicate()
+
+    assert err == os.linesep.encode().join([b"Stderr line 1", b""])
+    assert out == os.linesep.encode().join([b"Stdout line 1", b"Stdout line 2", b""])
+    assert process.returncode == 0
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("fake", [True, False])
+@pytest.mark.parametrize("mode", ["shell", "exec"])
+async def test_incorrect_call(fake_process, fake, mode):
     """Asyncio doesn't support command as a list"""
+    shell = mode == "shell"
     fake_process.allow_unregistered(not fake)
     if fake:
         fake_process.register_subprocess(["test"])
@@ -77,39 +99,42 @@ async def test_incorrect_call(fake_process, fake, shell):
         asyncio.create_subprocess_shell if shell else asyncio.create_subprocess_exec
     )
 
-    with pytest.raises(ValueError, match="cmd must be a string"):
+    name = "cmd" if shell else "program"
+    with pytest.raises(ValueError, match=f"{name} must be a string"):
         await method(["test"])
 
 
 @pytest.mark.asyncio
 @pytest.mark.skipif('sys.platform!="win32"')
 @pytest.mark.parametrize("fake", [True, False])
-@pytest.mark.parametrize("shell", [True, False])
-async def test_invalid_event_loop(fake_process, fake, shell):
+@pytest.mark.parametrize("mode", ["shell", "exec"])
+async def test_invalid_event_loop(fake_process, fake, mode):
     """
     The event_loop is changed by the `event_loop` fixture based on
     the test name (hack).
     """
+    shell = mode == "shell"
     fake_process.allow_unregistered(not fake)
     if fake:
         fake_process.register_subprocess(["python", "example_script.py"])
 
-    method = (
-        asyncio.create_subprocess_shell if shell else asyncio.create_subprocess_exec
-    )
-
     with pytest.raises(NotImplementedError):
-        await method("python example_script.py")
+        if shell:
+            await asyncio.create_subprocess_shell("python example_script.py")
+        else:
+            await asyncio.create_subprocess_exec("python", "example_script.py")
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("fake", [False, True])
-@pytest.mark.parametrize("shell", [True, False])
-async def test_wait(fake_process, fake, shell):
+@pytest.mark.parametrize("mode", ["shell", "exec"])
+async def test_wait(fake_process, fake, mode):
     """
     Check that wait argument still works. Unfortunately asyncio doesn't have
     the timeout functionality.
     """
+    shell = mode == "shell"
+
     fake_process.allow_unregistered(not fake)
     if fake:
         fake_process.register_subprocess(
@@ -122,8 +147,14 @@ async def test_wait(fake_process, fake, shell):
         asyncio.create_subprocess_shell if shell else asyncio.create_subprocess_exec
     )
 
+    command = "python example_script.py wait stderr"
+    if not shell:
+        command = command.split()
+    else:
+        command = [command]
+
     process = await method(
-        ("python example_script.py wait stderr"),
+        *command,
         cwd=os.path.dirname(__file__),
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
@@ -136,34 +167,6 @@ async def test_wait(fake_process, fake, shell):
 
     assert time.time() - start_time >= 0.45
     assert returncode == 0
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize("fake", [False, True])
-async def test_async_exec(fake_process, fake):
-    """Async exec should accept args as a list."""
-    fake_process.allow_unregistered(not fake)
-    if fake:
-        fake_process.register_subprocess(
-            ["python", "example_script.py", "stderr"],
-            stdout="Stdout line 1\nStdout line 2",
-            stderr="Stderr line 1",
-        )
-
-    process = await asyncio.create_subprocess_exec(
-        "python",
-        "example_script.py",
-        "stderr",
-        cwd=os.path.dirname(__file__),
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-    )
-
-    out, err = await process.communicate()
-
-    assert err == os.linesep.encode().join([b"Stderr line 1", b""])
-    assert out == os.linesep.encode().join([b"Stdout line 1", b"Stdout line 2", b""])
-    assert process.returncode == 0
 
 
 @pytest.fixture(autouse=True)

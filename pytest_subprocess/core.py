@@ -313,7 +313,7 @@ class ProcessDispatcher:
 
             cls.built_in_async_subprocess = asyncio.subprocess
             asyncio.create_subprocess_shell = cls.async_shell  # type: ignore
-            asyncio.create_subprocess_exec = cls.async_shell  # type: ignore
+            asyncio.create_subprocess_exec = cls.async_exec  # type: ignore
             asyncio.subprocess = asyncio_subprocess
 
         cls._cache[process] = {
@@ -365,26 +365,46 @@ class ProcessDispatcher:
 
     @classmethod
     async def async_shell(
-        cls, command: COMMAND, **kwargs: Optional[Dict]
+        cls, cmd: Union[str, bytes], **kwargs: Optional[Dict]
     ) -> Union[AsyncFakePopen, asyncio.subprocess.Process]:
-        """
-        This method will replace both  asyncio.create_subprocess_shell() and
-        asyncio.create_subprocess_exec() as they don't seem to have different
-        behavior.
-        """
+        """Replacement of  asyncio.create_subprocess_shell()"""
+        if not isinstance(cmd, (str, bytes)):
+            raise ValueError("cmd must be a string")
+        method = partial(
+            cls.built_in_async_subprocess.create_subprocess_shell, cmd, **kwargs
+        )
+        return await cls._call_async(cmd, method, kwargs)
+
+    @classmethod
+    async def async_exec(
+        cls,
+        program: Union[str, bytes],
+        *args: Union[str, bytes],
+        **kwargs: Optional[Dict]
+    ) -> Union[AsyncFakePopen, asyncio.subprocess.Process]:
+        """Replacement of asyncio.create_subprocess_exec()"""
+        if not isinstance(program, (str, bytes)):
+            raise ValueError("program must be a string")
+
+        method = partial(
+            cls.built_in_async_subprocess.create_subprocess_exec,
+            program,
+            *args,
+            **kwargs
+        )
+        command = [program, *args]
+        return await cls._call_async(command, method, kwargs)
+
+    @classmethod
+    async def _call_async(cls, command, async_method, kwargs):
         process = cls.__dispatch(command)
 
         if process is None:
             if cls.built_in_async_subprocess is None:
                 raise PluginInternalError
 
-            async_shell: Awaitable[
-                asyncio.subprocess.Process
-            ] = cls.built_in_async_subprocess.create_subprocess_shell(command, **kwargs)
+            async_shell: Awaitable[asyncio.subprocess.Process] = async_method()
             return await async_shell
-
-        if not isinstance(command, str):
-            raise ValueError("cmd must be a string")
 
         if sys.platform == "win32" and isinstance(
             asyncio.get_event_loop_policy().get_event_loop(), asyncio.SelectorEventLoop
