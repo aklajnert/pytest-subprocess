@@ -365,38 +365,46 @@ class ProcessDispatcher:
 
     @classmethod
     async def async_shell(
-        cls, cmd: Union[str, bytes], **kwargs: Optional[Dict]
+        cls, cmd: Union[str, bytes], **kwargs: Dict
     ) -> Union[AsyncFakePopen, asyncio.subprocess.Process]:
         """Replacement of  asyncio.create_subprocess_shell()"""
         if not isinstance(cmd, (str, bytes)):
             raise ValueError("cmd must be a string")
         method = partial(
-            cls.built_in_async_subprocess.create_subprocess_shell, cmd, **kwargs
+            cls.built_in_async_subprocess.create_subprocess_shell,  # type: ignore
+            cmd,
+            **kwargs
         )
+        if isinstance(cmd, bytes):
+            cmd = cmd.decode()
         return await cls._call_async(cmd, method, kwargs)
 
     @classmethod
     async def async_exec(
-        cls,
-        program: Union[str, bytes],
-        *args: Union[str, bytes],
-        **kwargs: Optional[Dict]
+        cls, program: Union[str, bytes], *args: Union[str, bytes], **kwargs: Dict
     ) -> Union[AsyncFakePopen, asyncio.subprocess.Process]:
         """Replacement of asyncio.create_subprocess_exec()"""
         if not isinstance(program, (str, bytes)):
             raise ValueError("program must be a string")
 
         method = partial(
-            cls.built_in_async_subprocess.create_subprocess_exec,
+            cls.built_in_async_subprocess.create_subprocess_exec,  # type: ignore
             program,
             *args,
             **kwargs
         )
-        command = [program, *args]
+        if isinstance(program, bytes):
+            program = program.decode()
+        command = [
+            program,
+            *[arg.decode() if isinstance(arg, bytes) else arg for arg in args],
+        ]
         return await cls._call_async(command, method, kwargs)
 
     @classmethod
-    async def _call_async(cls, command, async_method, kwargs):
+    async def _call_async(
+        cls, command: COMMAND, async_method: Callable, kwargs: Dict,
+    ) -> Union[AsyncFakePopen, asyncio.subprocess.Process]:
         process = cls.__dispatch(command)
 
         if process is None:
