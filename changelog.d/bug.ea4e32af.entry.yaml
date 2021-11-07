@@ -1,0 +1,5 @@
+message: Fixed behavior of ``asyncio.create_subproess_exec()``.
+pr_ids:
+- '104'
+timestamp: 1636289056
+type: bug
