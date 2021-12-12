@@ -1,0 +1,5 @@
+message: Add missing consts to `asyncio.subprocess`.
+pr_ids:
+- '63'
+timestamp: 1639330523
+type: bug

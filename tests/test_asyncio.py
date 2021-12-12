@@ -169,6 +169,23 @@ async def test_wait(fake_process, fake, mode):
     assert returncode == 0
 
 
+@pytest.mark.asyncio
+async def test_devnull_stdout(fake_process):
+    """From GitHub #63 - make sure all the `asyncio.subprocess` consts are available."""
+
+    async def impl():
+        await asyncio.create_subprocess_exec(
+            "cat",
+            stdin=asyncio.subprocess.DEVNULL,
+            stdout=asyncio.subprocess.STDOUT,
+            stderr=asyncio.subprocess.PIPE,
+        )
+
+    fake_process.register_subprocess("cat")
+
+    await impl()
+
+
 @pytest.fixture(autouse=True)
 def skip_on_pypy():
     """Async test for some reason crash on pypy 3.6 on Windows"""
