@@ -3,6 +3,7 @@ import os
 import sys
 import time
 
+import anyio
 import pytest
 
 
@@ -184,6 +185,11 @@ async def test_devnull_stdout(fake_process):
     fake_process.register_subprocess("cat")
 
     await impl()
+
+
+@pytest.mark.asyncio
+async def test_anyio(fake_process):
+    await anyio.sleep(0.01)
 
 
 @pytest.fixture(autouse=True)
