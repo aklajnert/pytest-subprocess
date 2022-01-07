@@ -218,10 +218,12 @@ async def test_stdio_and_stderr(fake_process, fake):
 
     stdout_list = []
     stderr_list = []
+
+    loop = asyncio.get_event_loop()
     await asyncio.gather(
-        asyncio.create_task(_read_stream(process.stdout, stdout_list)),
-        asyncio.create_task(_read_stream(process.stderr, stderr_list)),
-        asyncio.create_task(process.wait()),
+        loop.create_task(_read_stream(process.stdout, stdout_list)),
+        loop.create_task(_read_stream(process.stderr, stderr_list)),
+        loop.create_task(process.wait()),
     )
 
     assert len(stdout_list) == 2
