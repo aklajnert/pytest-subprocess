@@ -188,6 +188,37 @@ async def test_anyio(fake_process):
     await anyio.sleep(0.01)
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("fake", [False, True])
+async def test_stdio_and_stderr(fake_process, fake):
+    async def _read_stream(stream: asyncio.StreamReader, output_list):
+        while True:
+            line = await stream.readline()
+            if not line:
+                break
+            else:
+                output_list.append(line)
+
+    if fake:
+        fake_process.register_subprocess(
+            ["python", "example_script.py"], stdout="Stdout line 1\nStdout line 2",
+        )
+    else:
+        fake_process.allow_unregistered(True)
+
+    process = await asyncio.create_subprocess_exec(
+        "python", "example_script.py", stdout=asyncio.subprocess.PIPE
+    )
+
+    stdout_list = []
+    await asyncio.gather(
+        asyncio.create_task(_read_stream(process.stdout, stdout_list)),
+        asyncio.create_task(process.wait()),
+    )
+
+    assert len(stdout_list) == 2
+
+
 @pytest.fixture(autouse=True)
 def skip_on_pypy():
     """Async test for some reason crash on pypy 3.6 on Windows"""
