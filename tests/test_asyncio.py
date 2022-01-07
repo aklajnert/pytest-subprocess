@@ -201,22 +201,31 @@ async def test_stdio_and_stderr(fake_process, fake):
 
     if fake:
         fake_process.register_subprocess(
-            ["python", "example_script.py"], stdout="Stdout line 1\nStdout line 2",
+            ["python", "example_script.py", "stderr"],
+            stdout="Stdout line 1\nStdout line 2",
+            stderr="Stderr line 1",
         )
     else:
         fake_process.allow_unregistered(True)
 
     process = await asyncio.create_subprocess_exec(
-        "python", "example_script.py", stdout=asyncio.subprocess.PIPE
+        "python",
+        "example_script.py",
+        "stderr",
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
     )
 
     stdout_list = []
+    stderr_list = []
     await asyncio.gather(
         asyncio.create_task(_read_stream(process.stdout, stdout_list)),
+        asyncio.create_task(_read_stream(process.stderr, stderr_list)),
         asyncio.create_task(process.wait()),
     )
 
     assert len(stdout_list) == 2
+    assert len(stderr_list) == 1
 
 
 @pytest.fixture(autouse=True)

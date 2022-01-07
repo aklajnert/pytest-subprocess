@@ -90,6 +90,14 @@ class FakePopen:
     def communicate(
         self, input: OPTIONAL_TEXT = None, timeout: Optional[float] = None
     ) -> Tuple[AnyType, AnyType]:
+        self._finalize(input, timeout)
+
+        return (
+            self.stdout.getvalue() if self.stdout else None,
+            self.stderr.getvalue() if self.stderr else None,
+        )
+
+    def _finalize(self, input, timeout):
         if input and self.__stdin_callable:
             callable_output = self.__stdin_callable(input)
             if isinstance(callable_output, dict):
@@ -99,14 +107,8 @@ class FakePopen:
                 self.stderr = self._extend_stream_from_dict(
                     callable_output, "stderr", self.stderr
                 )
-
         if self.__thread is not None:
             self.__thread.join(timeout)
-
-        return (
-            self.stdout.getvalue() if self.stdout else None,
-            self.stderr.getvalue() if self.stderr else None,
-        )
 
     def _extend_stream_from_dict(
         self, dictionary: Dict[str, AnyType], key: str, stream: BUFFER
@@ -277,9 +279,9 @@ class FakePopen:
 
         if self.stderr:
             if self.__async__:
-                self.stderr.seek(0)
-            else:
                 self.stderr.feed_eof()
+            else:
+                self.stderr.seek(0)
 
     def received_signals(self) -> Tuple[int, ...]:
         """Get a tuple of signals received by the process."""
@@ -294,7 +296,13 @@ class AsyncFakePopen(FakePopen):
     async def communicate(  # type: ignore
         self, input: OPTIONAL_TEXT = None, timeout: Optional[float] = None
     ) -> Tuple[AnyType, AnyType]:
-        return super().communicate(input, timeout)
+
+        self._finalize(input, timeout)
+
+        return (
+            await self.stdout.read() if self.stdout else None,
+            await self.stderr.read() if self.stderr else None,
+        )
 
     async def wait(self, timeout: Optional[float] = None) -> int:  # type: ignore
         return super().wait(timeout)
