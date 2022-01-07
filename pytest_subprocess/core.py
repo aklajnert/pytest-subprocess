@@ -33,7 +33,7 @@ OPTIONAL_TEXT = Union[str, bytes, None]
 OPTIONAL_TEXT_OR_ITERABLE = Union[
     str, bytes, None, Sequence[Union[str, bytes]],
 ]
-BUFFER = Union[None, io.BytesIO, io.StringIO]
+BUFFER = Union[None, io.BytesIO, io.StringIO, asyncio.StreamReader]
 ARGUMENT = Union[str, Any]
 COMMAND = Union[Sequence[ARGUMENT], str, Command]
 
@@ -50,6 +50,7 @@ class FakePopen:
     returncode: Optional[int] = None
     text_mode: bool = False
     pid: int = 0
+    __async__ = False
 
     def __init__(
         self,
@@ -185,7 +186,7 @@ class FakePopen:
 
     def _prepare_buffer(
         self, input: OPTIONAL_TEXT_OR_ITERABLE, io_base: BUFFER = None,
-    ) -> Union[io.BytesIO, io.StringIO]:
+    ) -> Union[io.BytesIO, io.StringIO, asyncio.StreamReader]:
         linesep = self._convert(os.linesep)
 
         if isinstance(input, (list, tuple)):
@@ -213,7 +214,11 @@ class FakePopen:
             # both are union so could be incompatible if not _convert()
             input = io_base.getvalue() + (input)  # type: ignore
 
-        io_base = io.StringIO() if self.text_mode else io.BytesIO()
+        if self.__async__:
+            io_base = asyncio.StreamReader()
+            io_base.write = io_base.feed_data
+        else:
+            io_base = io.StringIO() if self.text_mode else io.BytesIO()
 
         if input is None:
             return io_base
@@ -265,10 +270,16 @@ class FakePopen:
         self.returncode = self.__returncode
 
         if self.stdout:
-            self.stdout.seek(0)
+            if self.__async__:
+                self.stdout.feed_eof()
+            else:
+                self.stdout.seek(0)
 
         if self.stderr:
-            self.stderr.seek(0)
+            if self.__async__:
+                self.stderr.seek(0)
+            else:
+                self.stderr.feed_eof()
 
     def received_signals(self) -> Tuple[int, ...]:
         """Get a tuple of signals received by the process."""
@@ -277,6 +288,8 @@ class FakePopen:
 
 class AsyncFakePopen(FakePopen):
     """Class to handle async processes"""
+
+    __async__ = True
 
     async def communicate(  # type: ignore
         self, input: OPTIONAL_TEXT = None, timeout: Optional[float] = None
