@@ -188,6 +188,93 @@ async def test_anyio(fake_process):
     await anyio.sleep(0.01)
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("fake", [False, True])
+async def test_stdout_and_stderr(fake_process, fake):
+    if fake:
+        fake_process.register_subprocess(
+            ["python", "example_script.py", "stderr"],
+            stdout=["Stdout line 1", "Stdout line 2"],
+            stderr=["Stderr line 1"],
+        )
+    else:
+        fake_process.allow_unregistered(True)
+
+    process = await asyncio.create_subprocess_exec(
+        "python",
+        "example_script.py",
+        "stderr",
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+
+    stdout_list = []
+    stderr_list = []
+
+    loop = asyncio.get_event_loop()
+    await asyncio.gather(
+        loop.create_task(_read_stream(process.stdout, stdout_list)),
+        loop.create_task(_read_stream(process.stderr, stderr_list)),
+        loop.create_task(process.wait()),
+    )
+
+    assert stdout_list == [f"Stdout line 1{os.linesep}", f"Stdout line 2{os.linesep}"]
+    assert stderr_list == [f"Stderr line 1{os.linesep}"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("fake", [False, True])
+async def test_combined_stdout_and_stderr(fake_process, fake):
+    if fake:
+        fake_process.register_subprocess(
+            ["python", "example_script.py", "stderr"],
+            stdout=["Stdout line 1", "Stdout line 2"],
+            stderr=["Stderr line 1"],
+        )
+    else:
+        fake_process.allow_unregistered(True)
+
+    process = await asyncio.create_subprocess_exec(
+        "python",
+        "example_script.py",
+        "stderr",
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.STDOUT,
+    )
+
+    stdout_list = []
+    stderr_list = []
+
+    loop = asyncio.get_event_loop()
+    await asyncio.gather(
+        loop.create_task(_read_stream(process.stdout, stdout_list)),
+        loop.create_task(_read_stream(process.stderr, stderr_list)),
+        loop.create_task(process.wait()),
+    )
+
+    # sorted() is necessary here, as the order here may be not deterministic,
+    # and sometimes stderr comes before stdout or the opposite
+    assert sorted(stdout_list) == [
+        f"Stderr line 1{os.linesep}",
+        f"Stdout line 1{os.linesep}",
+        f"Stdout line 2{os.linesep}",
+    ]
+    assert stderr_list == ["empty"]
+
+
+async def _read_stream(stream: asyncio.StreamReader, output_list):
+    if stream is None:
+        output_list.append("empty")
+        return None
+
+    while True:
+        line = await stream.readline()
+        if not line:
+            break
+        else:
+            output_list.append(line.decode())
+
+
 @pytest.fixture(autouse=True)
 def skip_on_pypy():
     """Async test for some reason crash on pypy 3.6 on Windows"""
