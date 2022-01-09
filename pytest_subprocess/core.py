@@ -90,7 +90,8 @@ class FakePopen:
     def communicate(
         self, input: OPTIONAL_TEXT = None, timeout: Optional[float] = None
     ) -> Tuple[AnyType, AnyType]:
-        self._finalize(input, timeout)
+        self._handle_stdin(input)
+        self._finalize_thread(timeout)
 
         if isinstance(self.stdout, asyncio.StreamReader) or isinstance(
             self.stderr, asyncio.StreamReader
@@ -102,7 +103,7 @@ class FakePopen:
             self.stderr.getvalue() if self.stderr else None,
         )
 
-    def _finalize(self, input: OPTIONAL_TEXT, timeout: Optional[float]) -> None:
+    def _handle_stdin(self, input: OPTIONAL_TEXT) -> None:
         if input and self.__stdin_callable:
             callable_output = self.__stdin_callable(input)
             if isinstance(callable_output, dict):
@@ -112,6 +113,8 @@ class FakePopen:
                 self.stderr = self._extend_stream_from_dict(
                     callable_output, "stderr", self.stderr
                 )
+
+    def _finalize_thread(self, timeout: Optional[float]) -> None:
         if self.__thread is not None:
             self.__thread.join(timeout)
 
@@ -216,12 +219,17 @@ class FakePopen:
         if input and self.__universal_newlines and isinstance(input, str):
             input = input.replace("\r\n", "\n")
 
-        if io_base is not None:
+        if (
+            io_base
+            and not isinstance(io_base, asyncio.StreamReader)
+            and io_base.tell() == 0
+        ):
             # same reason for disabling mypy as in `input = linesep.join...`:
             # both are union so could be incompatible if not _convert()
             input = io_base.getvalue() + (input)  # type: ignore
 
-        io_base = self._get_empty_buffer(self.text_mode)
+        if io_base is None:
+            io_base = self._get_empty_buffer(self.text_mode)
 
         if input is None:
             return io_base
@@ -316,7 +324,8 @@ class AsyncFakePopen(FakePopen):
         self, input: OPTIONAL_TEXT = None, timeout: Optional[float] = None
     ) -> Tuple[AnyType, AnyType]:
 
-        self._finalize(input, timeout)
+        self._handle_stdin(input)
+        self._finalize_thread(timeout)
 
         return (
             await self.stdout.read() if self.stdout else None,

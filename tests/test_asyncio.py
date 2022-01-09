@@ -190,20 +190,12 @@ async def test_anyio(fake_process):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("fake", [False, True])
-async def test_stdio_and_stderr(fake_process, fake):
-    async def _read_stream(stream: asyncio.StreamReader, output_list):
-        while True:
-            line = await stream.readline()
-            if not line:
-                break
-            else:
-                output_list.append(line)
-
+async def test_stdout_and_stderr(fake_process, fake):
     if fake:
         fake_process.register_subprocess(
             ["python", "example_script.py", "stderr"],
-            stdout="Stdout line 1\nStdout line 2",
-            stderr="Stderr line 1",
+            stdout=["Stdout line 1", "Stdout line 2"],
+            stderr=["Stderr line 1"],
         )
     else:
         fake_process.allow_unregistered(True)
@@ -226,8 +218,58 @@ async def test_stdio_and_stderr(fake_process, fake):
         loop.create_task(process.wait()),
     )
 
-    assert len(stdout_list) == 2
-    assert len(stderr_list) == 1
+    assert stdout_list == [f"Stdout line 1{os.linesep}", f"Stdout line 2{os.linesep}"]
+    assert stderr_list == [f"Stderr line 1{os.linesep}"]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("fake", [False, True])
+async def test_combined_stdout_and_stderr(fake_process, fake):
+    if fake:
+        fake_process.register_subprocess(
+            ["python", "example_script.py", "stderr"],
+            stdout=["Stdout line 1", "Stdout line 2"],
+            stderr=["Stderr line 1"],
+        )
+    else:
+        fake_process.allow_unregistered(True)
+
+    process = await asyncio.create_subprocess_exec(
+        "python",
+        "example_script.py",
+        "stderr",
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.STDOUT,
+    )
+
+    stdout_list = []
+    stderr_list = []
+
+    loop = asyncio.get_event_loop()
+    await asyncio.gather(
+        loop.create_task(_read_stream(process.stdout, stdout_list)),
+        loop.create_task(_read_stream(process.stderr, stderr_list)),
+        loop.create_task(process.wait()),
+    )
+
+    assert stdout_list == [
+        f"Stdout line 1{os.linesep}",
+        f"Stdout line 2{os.linesep}",
+        f"Stderr line 1{os.linesep}",
+    ]
+    assert stderr_list == []
+
+
+async def _read_stream(stream: asyncio.StreamReader, output_list):
+    if stream is None:
+        return None
+
+    while True:
+        line = await stream.readline()
+        if not line:
+            break
+        else:
+            output_list.append(line.decode())
 
 
 @pytest.fixture(autouse=True)
