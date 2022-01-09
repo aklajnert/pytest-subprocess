@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import asyncio
-import collections
+import collections.abc
 import io
 import os
 import signal
@@ -240,7 +240,7 @@ class FakePopen:
         return [elem if isinstance(elem, bytes) else elem.encode() for elem in data]
 
     def _data_to_bytes(self, data: OPTIONAL_TEXT_OR_ITERABLE) -> bytes:
-        if isinstance(data, collections.Sequence) and not isinstance(data, bytes):
+        if isinstance(data, collections.abc.Sequence) and not isinstance(data, bytes):
             return b"\n".join(
                 (item if isinstance(item, bytes) else item.encode() for item in data)
             )
