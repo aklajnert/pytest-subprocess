@@ -1,0 +1,6 @@
+message: Make `stdout` and `stderr` an `asyncio.StreamReader` instance when using
+  asyncio functions.
+pr_ids:
+- '68'
+timestamp: 1641746962
+type: bug

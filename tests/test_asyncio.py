@@ -259,11 +259,12 @@ async def test_combined_stdout_and_stderr(fake_process, fake):
         f"Stdout line 1{os.linesep}",
         f"Stdout line 2{os.linesep}",
     ]
-    assert stderr_list == []
+    assert stderr_list == ["empty"]
 
 
 async def _read_stream(stream: asyncio.StreamReader, output_list):
     if stream is None:
+        output_list.append("empty")
         return None
 
     while True:
