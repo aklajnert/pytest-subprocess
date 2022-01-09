@@ -252,10 +252,12 @@ async def test_combined_stdout_and_stderr(fake_process, fake):
         loop.create_task(process.wait()),
     )
 
-    assert stdout_list == [
+    # sorted() is necessary here, as the order here may be not deterministic,
+    # and sometimes stderr comes before stdout or the opposite
+    assert sorted(stdout_list) == [
+        f"Stderr line 1{os.linesep}",
         f"Stdout line 1{os.linesep}",
         f"Stdout line 2{os.linesep}",
-        f"Stderr line 1{os.linesep}",
     ]
     assert stderr_list == []
 
