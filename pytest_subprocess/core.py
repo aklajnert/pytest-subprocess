@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import asyncio
+import collections
 import io
 import os
 import signal
@@ -33,7 +34,7 @@ OPTIONAL_TEXT = Union[str, bytes, None]
 OPTIONAL_TEXT_OR_ITERABLE = Union[
     str, bytes, None, Sequence[Union[str, bytes]],
 ]
-BUFFER = Union[None, io.BytesIO, io.StringIO, asyncio.StreamReader]
+BUFFER = Union[io.BytesIO, io.StringIO, asyncio.StreamReader]
 ARGUMENT = Union[str, Any]
 COMMAND = Union[Sequence[ARGUMENT], str, Command]
 
@@ -45,12 +46,11 @@ class PluginInternalError(Exception):
 class FakePopen:
     """Base class that fakes the real subprocess.Popen()"""
 
-    stdout: BUFFER = None
-    stderr: BUFFER = None
+    stdout: Optional[BUFFER] = None
+    stderr: Optional[BUFFER] = None
     returncode: Optional[int] = None
     text_mode: bool = False
     pid: int = 0
-    __async__ = False
 
     def __init__(
         self,
@@ -92,12 +92,17 @@ class FakePopen:
     ) -> Tuple[AnyType, AnyType]:
         self._finalize(input, timeout)
 
+        if isinstance(self.stdout, asyncio.StreamReader) or isinstance(
+            self.stderr, asyncio.StreamReader
+        ):
+            raise PluginInternalError
+
         return (
             self.stdout.getvalue() if self.stdout else None,
             self.stderr.getvalue() if self.stderr else None,
         )
 
-    def _finalize(self, input, timeout):
+    def _finalize(self, input: OPTIONAL_TEXT, timeout: Optional[float]) -> None:
         if input and self.__stdin_callable:
             callable_output = self.__stdin_callable(input)
             if isinstance(callable_output, dict):
@@ -111,8 +116,8 @@ class FakePopen:
             self.__thread.join(timeout)
 
     def _extend_stream_from_dict(
-        self, dictionary: Dict[str, AnyType], key: str, stream: BUFFER
-    ) -> BUFFER:
+        self, dictionary: Dict[str, AnyType], key: str, stream: Optional[BUFFER]
+    ) -> Optional[BUFFER]:
         data = dictionary.get(key)
         if data:
             return self._prepare_buffer(input=data, io_base=stream)
@@ -216,18 +221,34 @@ class FakePopen:
             # both are union so could be incompatible if not _convert()
             input = io_base.getvalue() + (input)  # type: ignore
 
-        if self.__async__:
-            io_base = asyncio.StreamReader()
-            io_base.write = io_base.feed_data
-        else:
-            io_base = io.StringIO() if self.text_mode else io.BytesIO()
+        io_base = self._get_empty_buffer(self.text_mode)
 
         if input is None:
             return io_base
 
         # similar as above - mypy has to be disabled because unions
-        io_base.write(input)  # type: ignore
+        if isinstance(io_base, asyncio.StreamReader):
+            io_base.feed_data(self._data_to_bytes(input))
+        else:
+            io_base.write(input)  # type: ignore
         return io_base
+
+    def _get_empty_buffer(self, text: bool) -> BUFFER:
+        return io.StringIO() if text else io.BytesIO()
+
+    def _to_bytes(self, data: Sequence[Union[str, bytes]]) -> Sequence[bytes]:
+        return [elem if isinstance(elem, bytes) else elem.encode() for elem in data]
+
+    def _data_to_bytes(self, data: OPTIONAL_TEXT_OR_ITERABLE) -> bytes:
+        if isinstance(data, collections.Sequence) and not isinstance(data, bytes):
+            return b"\n".join(
+                (item if isinstance(item, bytes) else item.encode() for item in data)
+            )
+        if isinstance(data, str):
+            return data.encode()
+        if not data:
+            return b""
+        return data
 
     def _write_to_buffer(self, data: OPTIONAL_TEXT_OR_ITERABLE, buffer: IO) -> None:
         data_type: Callable = (
@@ -271,17 +292,14 @@ class FakePopen:
     def _finish_process(self) -> None:
         self.returncode = self.__returncode
 
-        if self.stdout:
-            if self.__async__:
-                self.stdout.feed_eof()
-            else:
-                self.stdout.seek(0)
+        self._finalize_stream(self.stdout)
+        self._finalize_stream(self.stderr)
 
-        if self.stderr:
-            if self.__async__:
-                self.stderr.feed_eof()
-            else:
-                self.stderr.seek(0)
+    def _finalize_stream(self, stream: Optional[BUFFER]) -> None:
+        if isinstance(stream, asyncio.StreamReader):
+            stream.feed_eof()
+        elif stream:
+            stream.seek(0)
 
     def received_signals(self) -> Tuple[int, ...]:
         """Get a tuple of signals received by the process."""
@@ -291,7 +309,8 @@ class FakePopen:
 class AsyncFakePopen(FakePopen):
     """Class to handle async processes"""
 
-    __async__ = True
+    stdout: asyncio.StreamReader
+    stderr: asyncio.StreamReader
 
     async def communicate(  # type: ignore
         self, input: OPTIONAL_TEXT = None, timeout: Optional[float] = None
@@ -306,6 +325,9 @@ class AsyncFakePopen(FakePopen):
 
     async def wait(self, timeout: Optional[float] = None) -> int:  # type: ignore
         return super().wait(timeout)
+
+    def _get_empty_buffer(self, _: bool) -> asyncio.StreamReader:
+        return asyncio.StreamReader()
 
 
 class ProcessNotRegisteredError(Exception):
