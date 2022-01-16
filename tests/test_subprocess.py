@@ -586,7 +586,9 @@ def test_different_output_with_context_multilevel(fake_process):
             assert subprocess.check_output("test") == b"first-level"
             assert subprocess.check_output("test") == b"top-level"
 
-            with pytest.raises(fake_process.exceptions.ProcessNotRegisteredError) as exc:
+            with pytest.raises(
+                fake_process.exceptions.ProcessNotRegisteredError
+            ):
                 subprocess.check_call("test")
 
         assert subprocess.check_output("test") == b"first-level"

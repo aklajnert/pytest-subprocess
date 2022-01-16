@@ -7,7 +7,6 @@ import signal
 import subprocess
 import sys
 import time
-import types
 from collections import defaultdict
 from collections import deque
 from copy import deepcopy
@@ -26,18 +25,15 @@ from typing import Tuple
 from typing import Type
 from typing import Union
 
-from . import asyncio_subprocess, exceptions
+from . import asyncio_subprocess
+from . import exceptions
+from .types import BUFFER
+from .types import COMMAND
+from .types import OPTIONAL_TEXT
+from .types import OPTIONAL_TEXT_OR_ITERABLE
 from .utils import Any
 from .utils import Command
 from .utils import Thread
-
-OPTIONAL_TEXT = Union[str, bytes, None]
-OPTIONAL_TEXT_OR_ITERABLE = Union[
-    str, bytes, None, Sequence[Union[str, bytes]],
-]
-BUFFER = Union[io.BytesIO, io.StringIO, asyncio.StreamReader]
-ARGUMENT = Union[str, Any]
-COMMAND = Union[Sequence[ARGUMENT], str, Command]
 
 
 class FakePopen:
@@ -320,7 +316,6 @@ class AsyncFakePopen(FakePopen):
     async def communicate(  # type: ignore
         self, input: OPTIONAL_TEXT = None, timeout: Optional[float] = None
     ) -> Tuple[AnyType, AnyType]:
-
         self._handle_stdin(input)
         self._finalize_thread(timeout)
 
