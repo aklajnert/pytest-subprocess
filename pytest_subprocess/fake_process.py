@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+"""FakeProcess class declaration"""
 from collections import defaultdict
 from collections import deque
 from typing import Any as AnyType

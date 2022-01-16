@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+"""FakePopen class declaration"""
 import asyncio
 import collections.abc
 import io

@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+"""ProcessDispatcher class declaration"""
 import asyncio
 import subprocess
 import sys
