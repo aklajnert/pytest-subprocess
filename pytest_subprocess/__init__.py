@@ -1,6 +1,8 @@
+"""Main module"""
 
-from .core import FakeProcess
-from .core import IncorrectProcessDefinition
-from .core import ProcessNotRegisteredError
+from . import exceptions
+from .fake_process import FakeProcess
 
-__all__ = ["FakeProcess", "ProcessNotRegisteredError", "IncorrectProcessDefinition"]
+ProcessNotRegisteredError = exceptions.ProcessNotRegisteredError
+
+__all__ = ["FakeProcess", "exceptions", "ProcessNotRegisteredError"]

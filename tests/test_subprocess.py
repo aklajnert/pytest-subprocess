@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import getpass
 import os
 import platform
@@ -10,13 +9,12 @@ import time
 import pytest
 
 import pytest_subprocess
-from pytest_subprocess import ProcessNotRegisteredError
 
 
 def setup_fake_popen(monkeypatch):
     """Set the real Popen to a dummy function that just returns input arguments."""
     monkeypatch.setattr(
-        pytest_subprocess.core.ProcessDispatcher,
+        pytest_subprocess.process_dispatcher.ProcessDispatcher,
         "built_in_popen",
         lambda command, *args, **kwargs: (command, args, kwargs),
     )
@@ -94,7 +92,7 @@ def test_multiple_levels(fake_process):
     assert (
         subprocess.check_output("first_command") == ("first command top-level").encode()
     )
-    with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
+    with pytest.raises(fake_process.exceptions.ProcessNotRegisteredError) as exc:
         subprocess.check_call("second_command")
     assert str(exc.value) == "The process 'second_command' was not registered."
 
@@ -108,12 +106,14 @@ def test_not_registered(fake_process, monkeypatch):
     """
     assert fake_process
 
+    # this one will use exception from `pytest_subprocess.ProcessNotRegisteredError`
+    # to make sure it still works (for backwards compatibility)
     with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
         subprocess.Popen("test")
 
     assert str(exc.value) == "The process 'test' was not registered."
 
-    with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
+    with pytest.raises(fake_process.exceptions.ProcessNotRegisteredError) as exc:
         subprocess.Popen(("test", "with", "args"))
 
     assert str(exc.value) == "The process 'test with args' was not registered."
@@ -133,7 +133,7 @@ def test_context(fake_process, monkeypatch):
         nested.register_subprocess("test")
         subprocess.Popen("test")
 
-    with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
+    with pytest.raises(fake_process.exceptions.ProcessNotRegisteredError) as exc:
         subprocess.Popen("test")
 
     assert str(exc.value) == "The process 'test' was not registered."
@@ -446,7 +446,7 @@ def test_multiple_wait(fake_process, fake):
 
 
 def test_wrong_arguments(fake_process):
-    with pytest.raises(pytest_subprocess.IncorrectProcessDefinition) as exc:
+    with pytest.raises(fake_process.exceptions.IncorrectProcessDefinition) as exc:
         fake_process.register_subprocess("command", wait=1, callback=lambda _: True)
 
     assert str(exc.value) == (
@@ -492,7 +492,7 @@ def test_mutiple_occurrences(fake_process):
     assert process_3.returncode == 0
     assert process_3.pid == process_2.pid + 1
     # 4-th time shall raise an exception
-    with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
+    with pytest.raises(fake_process.exceptions.ProcessNotRegisteredError) as exc:
         subprocess.check_call("test")
 
     assert str(exc.value) == "The process 'test' was not registered."
@@ -512,7 +512,7 @@ def test_different_output(fake_process):
     assert third_process.returncode == 1
 
     # 4-th time shall raise an exception
-    with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
+    with pytest.raises(fake_process.exceptions.ProcessNotRegisteredError) as exc:
         subprocess.check_call("test")
 
     assert str(exc.value) == "The process 'test' was not registered."
@@ -544,7 +544,7 @@ def test_different_output_with_context(fake_process):
         assert subprocess.check_output("test") == b"nested"
         assert subprocess.check_output("test") == b"top-level"
 
-        with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
+        with pytest.raises(fake_process.exceptions.ProcessNotRegisteredError) as exc:
             subprocess.check_call("test")
 
         assert str(exc.value) == "The process 'test' was not registered."
@@ -556,14 +556,14 @@ def test_different_output_with_context(fake_process):
         assert subprocess.check_output("test") == b"nested2"
         assert subprocess.check_output("test") == b"top-level"
 
-        with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
+        with pytest.raises(fake_process.exceptions.ProcessNotRegisteredError) as exc:
             subprocess.check_call("test")
 
         assert str(exc.value) == "The process 'test' was not registered."
 
     assert subprocess.check_output("test") == b"top-level"
 
-    with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
+    with pytest.raises(fake_process.exceptions.ProcessNotRegisteredError) as exc:
         subprocess.check_call("test")
 
     assert str(exc.value) == "The process 'test' was not registered."
@@ -585,20 +585,20 @@ def test_different_output_with_context_multilevel(fake_process):
             assert subprocess.check_output("test") == b"first-level"
             assert subprocess.check_output("test") == b"top-level"
 
-            with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
+            with pytest.raises(fake_process.exceptions.ProcessNotRegisteredError):
                 subprocess.check_call("test")
 
         assert subprocess.check_output("test") == b"first-level"
         assert subprocess.check_output("test") == b"top-level"
 
-        with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
+        with pytest.raises(fake_process.exceptions.ProcessNotRegisteredError) as exc:
             subprocess.check_call("test")
 
         assert str(exc.value) == "The process 'test' was not registered."
 
     assert subprocess.check_output("test") == b"top-level"
 
-    with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
+    with pytest.raises(fake_process.exceptions.ProcessNotRegisteredError) as exc:
         subprocess.check_call("test")
 
 
@@ -613,14 +613,14 @@ def test_multiple_level_early_consuming(fake_process):
     with fake_process.context():
         assert subprocess.check_output("test") == b"top-level"
 
-        with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
+        with pytest.raises(fake_process.exceptions.ProcessNotRegisteredError) as exc:
             subprocess.check_call("test")
 
         assert str(exc.value) == "The process 'test' was not registered."
 
     assert subprocess.check_output("test") == b"top-level"
 
-    with pytest.raises(pytest_subprocess.ProcessNotRegisteredError) as exc:
+    with pytest.raises(fake_process.exceptions.ProcessNotRegisteredError) as exc:
         subprocess.check_call("test")
 
     assert str(exc.value) == "The process 'test' was not registered."
@@ -678,7 +678,7 @@ def test_use_real(fake_process):
 
 @pytest.mark.skipif(os.name == "nt", reason="Skip on windows")
 def test_real_process(fake_process):
-    with pytest.raises(pytest_subprocess.ProcessNotRegisteredError):
+    with pytest.raises(fake_process.exceptions.ProcessNotRegisteredError):
         # this will fail, as "ls" command is not registered
         subprocess.call("ls")
 
@@ -692,7 +692,7 @@ def test_real_process(fake_process):
 
 
 def test_context_manager(fake_process):
-    with pytest.raises(pytest_subprocess.ProcessNotRegisteredError):
+    with pytest.raises(fake_process.exceptions.ProcessNotRegisteredError):
         # command not registered, so will raise an exception
         subprocess.check_call("test")
 
@@ -704,7 +704,7 @@ def test_context_manager(fake_process):
 
     # the command was called 2 times, so one occurrence left, but since the
     # context manager has been left, it is not registered anymore
-    with pytest.raises(pytest_subprocess.ProcessNotRegisteredError):
+    with pytest.raises(fake_process.exceptions.ProcessNotRegisteredError):
         subprocess.check_call("test")
 
 
@@ -894,12 +894,12 @@ def test_with_wildcards(fake_process):
     assert subprocess.check_call(["ls"]) == 0
 
     fake_process.register_subprocess(["cp", fake_process.any(min=2)])
-    with pytest.raises(pytest_subprocess.ProcessNotRegisteredError):
+    with pytest.raises(fake_process.exceptions.ProcessNotRegisteredError):
         subprocess.check_call("cp /source/dir")
     assert subprocess.check_call("cp /source/dir /tmp/random-dir") == 0
 
     fake_process.register_subprocess(["cd", fake_process.any(max=1)])
-    with pytest.raises(pytest_subprocess.ProcessNotRegisteredError):
+    with pytest.raises(fake_process.exceptions.ProcessNotRegisteredError):
         subprocess.check_call(["cd ~/ /tmp"])
     assert subprocess.check_call("cd ~/") == 0
 
@@ -955,10 +955,10 @@ def test_allow_unregistered_cleaning(fake_process):
         subprocess.run(["python", "example_script.py"])
 
     with fake_process.context():
-        with pytest.raises(ProcessNotRegisteredError):
+        with pytest.raises(fake_process.exceptions.ProcessNotRegisteredError):
             subprocess.run(["python", "example_script.py"])
 
-    with pytest.raises(ProcessNotRegisteredError):
+    with pytest.raises(fake_process.exceptions.ProcessNotRegisteredError):
         subprocess.run(["test"])
 
 
@@ -979,12 +979,12 @@ def test_keep_last_process_cleaning(fake_process):
         subprocess.run(["test"])
 
     with fake_process.context():
-        with pytest.raises(ProcessNotRegisteredError):
+        with pytest.raises(fake_process.exceptions.ProcessNotRegisteredError):
             subprocess.run(["test"])
 
     fake_process.register_subprocess(["test"])
     subprocess.run(["test"])
-    with pytest.raises(ProcessNotRegisteredError):
+    with pytest.raises(fake_process.exceptions.ProcessNotRegisteredError):
         subprocess.run(["test"])
 
 

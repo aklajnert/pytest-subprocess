@@ -2,7 +2,7 @@ from typing import Generator
 
 import pytest
 
-from .core import FakeProcess
+from . import FakeProcess
 
 
 @pytest.fixture
