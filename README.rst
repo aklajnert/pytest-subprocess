@@ -132,7 +132,7 @@ processes with real ``subprocess``, or use
 .. code-block:: python
 
     def test_real_process(fake_process):
-        with pytest.raises(pytest_subprocess.ProcessNotRegisteredError):
+        with pytest.raises(fake_process.exceptions.ProcessNotRegisteredError):
             # this will fail, as "ls" command is not registered
             subprocess.call("ls")
 
@@ -170,7 +170,7 @@ which will keep the last registered process forever.
         assert second_process.returncode == 1
 
         # 3rd time shall raise an exception
-        with pytest.raises(pytest_subprocess.ProcessNotRegisteredError):
+        with pytest.raises(fake_process.exceptions.ProcessNotRegisteredError):
             subprocess.check_call("test")
 
         # now, register two processes once again,
@@ -248,7 +248,7 @@ it somewhere else.
 .. code-block:: python
 
     def test_context_manager(fake_process):
-        with pytest.raises(pytest_subprocess.ProcessNotRegisteredError):
+        with pytest.raises(fake_process.exceptions.ProcessNotRegisteredError):
             # command not registered, so will raise an exception
             subprocess.check_call("test")
 
@@ -260,7 +260,7 @@ it somewhere else.
 
         # the command was called 2 times, so one occurrence left, but since the
         # context manager has been left, it is not registered anymore
-        with pytest.raises(pytest_subprocess.ProcessNotRegisteredError):
+        with pytest.raises(fake_process.exceptions.ProcessNotRegisteredError):
             subprocess.check_call("test")
 
 Non-exact command matching
@@ -287,7 +287,7 @@ if the subprocess command will be called with a string argument.
         # but it can force a minimum amount of arguments
         fake_process.register_subprocess(["cp", fake_process.any(min=2)])
 
-        with pytest.raises(pytest_subprocess.ProcessNotRegisteredError):
+        with pytest.raises(fake_process.exceptions.ProcessNotRegisteredError):
             # only one argument is used, so registered command won't match
             subprocess.check_call("cp /source/dir")
         # but two arguments will be fine
@@ -296,7 +296,7 @@ if the subprocess command will be called with a string argument.
         # the `max` argument can be used to limit maximum amount of arguments
         fake_process.register_subprocess(["cd", fake_process.any(max=1)])
 
-        with pytest.raises(pytest_subprocess.ProcessNotRegisteredError):
+        with pytest.raises(fake_process.exceptions.ProcessNotRegisteredError):
             # cd with two arguments won't match with max=1
             subprocess.check_call("cd ~/ /tmp")
         # but any single argument is fine
