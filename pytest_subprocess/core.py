@@ -7,6 +7,7 @@ import signal
 import subprocess
 import sys
 import time
+import types
 from collections import defaultdict
 from collections import deque
 from copy import deepcopy
@@ -25,7 +26,7 @@ from typing import Tuple
 from typing import Type
 from typing import Union
 
-from . import asyncio_subprocess
+from . import asyncio_subprocess, exceptions
 from .utils import Any
 from .utils import Command
 from .utils import Thread
@@ -37,10 +38,6 @@ OPTIONAL_TEXT_OR_ITERABLE = Union[
 BUFFER = Union[io.BytesIO, io.StringIO, asyncio.StreamReader]
 ARGUMENT = Union[str, Any]
 COMMAND = Union[Sequence[ARGUMENT], str, Command]
-
-
-class PluginInternalError(Exception):
-    """Raised in case of an internal error in the plugin"""
 
 
 class FakePopen:
@@ -96,7 +93,7 @@ class FakePopen:
         if isinstance(self.stdout, asyncio.StreamReader) or isinstance(
             self.stderr, asyncio.StreamReader
         ):
-            raise PluginInternalError
+            raise exceptions.PluginInternalError
 
         return (
             self.stdout.getvalue() if self.stdout else None,
@@ -140,7 +137,7 @@ class FakePopen:
             if self.__thread.exception:
                 raise self.__thread.exception
         if self.returncode is None:
-            raise PluginInternalError
+            raise exceptions.PluginInternalError
         return self.returncode
 
     def send_signal(self, sig: int) -> None:
@@ -339,13 +336,6 @@ class AsyncFakePopen(FakePopen):
         return asyncio.StreamReader()
 
 
-class ProcessNotRegisteredError(Exception):
-    """
-    Raised when the attempted command wasn't registered before.
-    Use `fake_process.allow_unregistered(True)` if you want to use real subprocess.
-    """
-
-
 class ProcessDispatcher:
     """Main class for handling processes."""
 
@@ -384,7 +374,7 @@ class ProcessDispatcher:
             cls.built_in_popen = None
 
             if cls.built_in_async_subprocess is None:
-                raise PluginInternalError
+                raise exceptions.PluginInternalError
 
             asyncio.subprocess = cls.built_in_async_subprocess
             asyncio.create_subprocess_shell = (
@@ -404,14 +394,14 @@ class ProcessDispatcher:
 
         if process is None:
             if cls.built_in_popen is None:
-                raise PluginInternalError
+                raise exceptions.PluginInternalError
 
             popen: subprocess.Popen = cls.built_in_popen(command, **kwargs)
             return popen
 
         result = cls._prepare_instance(FakePopen, command, kwargs, process)
         if not isinstance(result, FakePopen):
-            raise PluginInternalError
+            raise exceptions.PluginInternalError
         result.run_thread()
         return result
 
@@ -461,7 +451,7 @@ class ProcessDispatcher:
 
         if process is None:
             if cls.built_in_async_subprocess is None:
-                raise PluginInternalError
+                raise exceptions.PluginInternalError
 
             async_shell: Awaitable[asyncio.subprocess.Process] = async_method()
             return await async_shell
@@ -475,7 +465,7 @@ class ProcessDispatcher:
 
         result = cls._prepare_instance(AsyncFakePopen, command, kwargs, process)
         if not isinstance(result, AsyncFakePopen):
-            raise PluginInternalError
+            raise exceptions.PluginInternalError
         result.run_thread()
         return result
 
@@ -507,7 +497,7 @@ class ProcessDispatcher:
             process_instance.calls.append(command)
         if not processes:
             if not cls.process_list[-1]._allow_unregistered:
-                raise ProcessNotRegisteredError(
+                raise exceptions.ProcessNotRegisteredError(
                     "The process '%s' was not registered."
                     % (
                         command
@@ -550,10 +540,6 @@ class ProcessDispatcher:
         return None, None, None
 
 
-class IncorrectProcessDefinition(Exception):
-    """Raised when the register_subprocess() has been called with wrong arguments"""
-
-
 class FakeProcess:
     """Main class responsible for process operations"""
 
@@ -566,6 +552,8 @@ class FakeProcess:
         self.calls: Deque[COMMAND] = deque()
         self._allow_unregistered: bool = False
         self._keep_last_process: bool = False
+
+        self.exceptions = exceptions
 
     def register_subprocess(
         self,
@@ -595,7 +583,7 @@ class FakeProcess:
             stdin_callable: function that will interact with stdin
         """
         if wait is not None and callback is not None:
-            raise IncorrectProcessDefinition(
+            raise exceptions.IncorrectProcessDefinition(
                 "The 'callback' and 'wait' arguments cannot be used "
                 "together. Add sleep() to your callback instead."
             )

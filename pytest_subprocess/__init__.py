@@ -1,6 +1,8 @@
 
 from .core import FakeProcess
-from .core import IncorrectProcessDefinition
-from .core import ProcessNotRegisteredError
+from .core import exceptions
 
-__all__ = ["FakeProcess", "ProcessNotRegisteredError", "IncorrectProcessDefinition"]
+ProcessNotRegisteredError = exceptions.ProcessNotRegisteredError
+
+__all__ = ["FakeProcess", "exceptions", "ProcessNotRegisteredError"]
+
