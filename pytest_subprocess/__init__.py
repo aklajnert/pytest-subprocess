@@ -1,6 +1,6 @@
 
-from .core import exceptions
-from .core import FakeProcess
+from . import exceptions
+from .fake_process import FakeProcess
 
 ProcessNotRegisteredError = exceptions.ProcessNotRegisteredError
 

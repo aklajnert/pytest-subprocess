@@ -15,7 +15,7 @@ import pytest_subprocess
 def setup_fake_popen(monkeypatch):
     """Set the real Popen to a dummy function that just returns input arguments."""
     monkeypatch.setattr(
-        pytest_subprocess.core.ProcessDispatcher,
+        pytest_subprocess.process_dispatcher.ProcessDispatcher,
         "built_in_popen",
         lambda command, *args, **kwargs: (command, args, kwargs),
     )
@@ -586,9 +586,7 @@ def test_different_output_with_context_multilevel(fake_process):
             assert subprocess.check_output("test") == b"first-level"
             assert subprocess.check_output("test") == b"top-level"
 
-            with pytest.raises(
-                fake_process.exceptions.ProcessNotRegisteredError
-            ):
+            with pytest.raises(fake_process.exceptions.ProcessNotRegisteredError):
                 subprocess.check_call("test")
 
         assert subprocess.check_output("test") == b"first-level"
