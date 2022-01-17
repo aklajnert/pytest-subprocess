@@ -85,7 +85,11 @@ class FakeProcess:
             * occurrences
         )
 
-    def pass_command(self, command: COMMAND, occurrences: int = 1,) -> None:
+    def pass_command(
+        self,
+        command: COMMAND,
+        occurrences: int = 1,
+    ) -> None:
         """
         Allow to use a real subprocess together with faked ones.
 

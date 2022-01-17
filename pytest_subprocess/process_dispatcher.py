@@ -137,7 +137,10 @@ class ProcessDispatcher:
 
     @classmethod
     async def _call_async(
-        cls, command: COMMAND, async_method: Callable, kwargs: Dict,
+        cls,
+        command: COMMAND,
+        async_method: Callable,
+        kwargs: Dict,
     ) -> Union[AsyncFakePopen, asyncio.subprocess.Process]:
         process = cls.__dispatch(command)
 
