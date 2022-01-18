@@ -177,7 +177,9 @@ class FakePopen:
             self._write_to_buffer(self.__stderr, stderr)
 
     def _prepare_buffer(
-        self, input: OPTIONAL_TEXT_OR_ITERABLE, io_base: BUFFER = None,
+        self,
+        input: OPTIONAL_TEXT_OR_ITERABLE,
+        io_base: BUFFER = None,
     ) -> Union[io.BytesIO, io.StringIO, asyncio.StreamReader]:
         linesep = self._convert(os.linesep)
 

@@ -70,5 +70,9 @@ setup(
         "Operating System :: OS Independent",
         "License :: OSI Approved :: MIT License",
     ],
-    entry_points={"pytest11": ["subprocess = pytest_subprocess.fixtures",],},
+    entry_points={
+        "pytest11": [
+            "subprocess = pytest_subprocess.fixtures",
+        ],
+    },
 )

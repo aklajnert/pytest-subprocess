@@ -227,7 +227,8 @@ def test_check_output(fake_process, fake):
     fake_process.allow_unregistered(not fake)
     if fake:
         fake_process.register_subprocess(
-            ["python", "example_script.py"], stdout="Stdout line 1\nStdout line 2",
+            ["python", "example_script.py"],
+            stdout="Stdout line 1\nStdout line 2",
         )
     process = subprocess.check_output(("python", "example_script.py"))
 
@@ -239,7 +240,8 @@ def test_check_call(fake_process, fake):
     fake_process.allow_unregistered(not fake)
     if fake:
         fake_process.register_subprocess(
-            ["python", "example_script.py"], stdout="Stdout line 1\nStdout line 2\n",
+            ["python", "example_script.py"],
+            stdout="Stdout line 1\nStdout line 2\n",
         )
         fake_process.register_subprocess(
             ["python", "example_script.py", "non-zero"], returncode=1
@@ -262,20 +264,23 @@ def test_call(fake_process, fake):
     fake_process.allow_unregistered(not fake)
     if fake:
         fake_process.register_subprocess(
-            ["python", "example_script.py"], stdout="Stdout line 1\nStdout line 2\n",
+            ["python", "example_script.py"],
+            stdout="Stdout line 1\nStdout line 2\n",
         )
     assert subprocess.call(("python", "example_script.py")) == 0
 
 
 @pytest.mark.parametrize("fake", [False, True])
 @pytest.mark.skipif(
-    sys.version_info <= (3, 5), reason="subprocess.run() was introduced in python3.4",
+    sys.version_info <= (3, 5),
+    reason="subprocess.run() was introduced in python3.4",
 )
 def test_run(fake_process, fake):
     fake_process.allow_unregistered(not fake)
     if fake:
         fake_process.register_subprocess(
-            ["python", "example_script.py"], stdout=["Stdout line 1", "Stdout line 2"],
+            ["python", "example_script.py"],
+            stdout=["Stdout line 1", "Stdout line 2"],
         )
     process = subprocess.run(("python", "example_script.py"), stdout=subprocess.PIPE)
 
@@ -327,7 +332,8 @@ def test_text(fake_process, fake):
 
 def test_binary(fake_process):
     fake_process.register_subprocess(
-        ["some-cmd"], stdout=bytes.fromhex("aabbcc"),
+        ["some-cmd"],
+        stdout=bytes.fromhex("aabbcc"),
     )
 
     process = subprocess.Popen(["some-cmd"], stdout=subprocess.PIPE)
@@ -427,10 +433,13 @@ def test_multiple_wait(fake_process, fake):
     fake_process.allow_unregistered(not fake)
     if fake:
         fake_process.register_subprocess(
-            ["python", "example_script.py", "wait"], wait=0.5,
+            ["python", "example_script.py", "wait"],
+            wait=0.5,
         )
 
-    process = subprocess.Popen(("python", "example_script.py", "wait"),)
+    process = subprocess.Popen(
+        ("python", "example_script.py", "wait"),
+    )
     with pytest.raises(subprocess.TimeoutExpired):
         process.wait(timeout=0.2)
 
@@ -747,12 +756,16 @@ def test_subprocess_pipe_without_stream_definition(fake_process):
     registration.
     """
     fake_process.register_subprocess(
-        ["test-no-stderr"], stdout="test",
+        ["test-no-stderr"],
+        stdout="test",
     )
     fake_process.register_subprocess(
-        ["test-no-stdout"], stderr="test",
+        ["test-no-stdout"],
+        stderr="test",
     )
-    fake_process.register_subprocess(["test-no-streams"],)
+    fake_process.register_subprocess(
+        ["test-no-streams"],
+    )
 
     assert (
         subprocess.check_output(["test-no-stderr"], stderr=subprocess.STDOUT).decode()
@@ -853,7 +866,8 @@ def test_callback_and_return_code(fake_process):
 
 
 @pytest.mark.skipif(
-    sys.version_info <= (3, 6), reason="encoding and errors has been introduced in 3.6",
+    sys.version_info <= (3, 6),
+    reason="encoding and errors has been introduced in 3.6",
 )
 @pytest.mark.parametrize("argument", ["encoding", "errors"])
 @pytest.mark.parametrize("fake", [False, True])

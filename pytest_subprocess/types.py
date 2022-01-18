@@ -8,7 +8,10 @@ from .utils import Command
 
 OPTIONAL_TEXT = Union[str, bytes, None]
 OPTIONAL_TEXT_OR_ITERABLE = Union[
-    str, bytes, None, Sequence[Union[str, bytes]],
+    str,
+    bytes,
+    None,
+    Sequence[Union[str, bytes]],
 ]
 BUFFER = Union[io.BytesIO, io.StringIO, asyncio.StreamReader]
 ARGUMENT = Union[str, Any]
