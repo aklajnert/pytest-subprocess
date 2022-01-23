@@ -302,19 +302,20 @@ class FakePopen:
 class AsyncFakePopen(FakePopen):
     """Class to handle async processes"""
 
-    stdout: asyncio.StreamReader
-    stderr: asyncio.StreamReader
+    stdout: Optional[asyncio.StreamReader]
+    stderr: Optional[asyncio.StreamReader]
 
     async def communicate(  # type: ignore
         self, input: OPTIONAL_TEXT = None, timeout: Optional[float] = None
     ) -> Tuple[AnyType, AnyType]:
-        # streams were fed with eof, need to be reopened
-        await self._reopen_streams()
+        if input:
+            # streams were fed with eof, need to be reopened
+            await self._reopen_streams()
 
-        self._handle_stdin(input)
+            self._handle_stdin(input)
 
-        # feed eof one more time as streams were opened
-        self._finalize_streams()
+            # feed eof one more time as streams were opened
+            self._finalize_streams()
 
         self._finalize_thread(timeout)
 
@@ -329,7 +330,7 @@ class AsyncFakePopen(FakePopen):
     def _get_empty_buffer(self, _: bool) -> asyncio.StreamReader:
         return asyncio.StreamReader()
 
-    async def _reopen_streams(self):
+    async def _reopen_streams(self) -> None:
         self.stdout = await self._reopen_stream(self.stdout)
         self.stderr = await self._reopen_stream(self.stderr)
 
