@@ -1,5 +1,0 @@
-message: Add support for stdin with asyncio.
-pr_ids:
-- '71'
-timestamp: 1642946529
-type: feature
