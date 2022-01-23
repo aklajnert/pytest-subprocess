@@ -333,11 +333,12 @@ class AsyncFakePopen(FakePopen):
         self.stdout = await self._reopen_stream(self.stdout)
         self.stderr = await self._reopen_stream(self.stderr)
 
-    async def _reopen_stream(self, stream: Optional[asyncio.StreamReader]) -> Optional[asyncio.StreamReader]:
+    async def _reopen_stream(
+        self, stream: Optional[asyncio.StreamReader]
+    ) -> Optional[asyncio.StreamReader]:
         if stream:
             data = await stream.read()
             fresh_stream = self._get_empty_buffer(False)
             fresh_stream.feed_data(data)
             return fresh_stream
         return None
-

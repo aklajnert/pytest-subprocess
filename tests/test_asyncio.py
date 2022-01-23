@@ -280,6 +280,7 @@ async def _read_stream(stream: asyncio.StreamReader, output_list):
 async def test_input(fake_process, fake):
     fake_process.allow_unregistered(not fake)
     if fake:
+
         def stdin_callable(input):
             return {
                 "stdout": "Provide an input: Provided: {data}".format(
@@ -294,7 +295,9 @@ async def test_input(fake_process, fake):
         )
 
     process = await asyncio.create_subprocess_exec(
-        "python", "example_script.py", "input",
+        "python",
+        "example_script.py",
+        "input",
         stdin=asyncio.subprocess.PIPE,
         stdout=asyncio.subprocess.PIPE,
     )
@@ -306,6 +309,7 @@ async def test_input(fake_process, fake):
         b"Provide an input: Provided: test",
     ]
     assert err is None
+
 
 @pytest.fixture(autouse=True)
 def skip_on_pypy():
