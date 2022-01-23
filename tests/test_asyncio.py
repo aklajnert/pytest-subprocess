@@ -275,6 +275,42 @@ async def _read_stream(stream: asyncio.StreamReader, output_list):
             output_list.append(line.decode())
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize("fake", [False, True])
+async def test_input(fake_process, fake):
+    fake_process.allow_unregistered(not fake)
+    if fake:
+
+        def stdin_callable(input):
+            return {
+                "stdout": "Provide an input: Provided: {data}".format(
+                    data=input.decode()
+                )
+            }
+
+        fake_process.register_subprocess(
+            ["python", "example_script.py", "input"],
+            stdout=[b"Stdout line 1", b"Stdout line 2"],
+            stdin_callable=stdin_callable,
+        )
+
+    process = await asyncio.create_subprocess_exec(
+        "python",
+        "example_script.py",
+        "input",
+        stdin=asyncio.subprocess.PIPE,
+        stdout=asyncio.subprocess.PIPE,
+    )
+    out, err = await process.communicate(input=b"test")
+
+    assert out.splitlines() == [
+        b"Stdout line 1",
+        b"Stdout line 2",
+        b"Provide an input: Provided: test",
+    ]
+    assert err is None
+
+
 @pytest.fixture(autouse=True)
 def skip_on_pypy():
     """Async test for some reason crash on pypy 3.6 on Windows"""
