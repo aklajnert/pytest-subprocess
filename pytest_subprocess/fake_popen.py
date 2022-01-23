@@ -282,6 +282,9 @@ class FakePopen:
     def _finish_process(self) -> None:
         self.returncode = self.__returncode
 
+        self._finalize_streams()
+
+    def _finalize_streams(self) -> None:
         self._finalize_stream(self.stdout)
         self._finalize_stream(self.stderr)
 
@@ -305,7 +308,14 @@ class AsyncFakePopen(FakePopen):
     async def communicate(  # type: ignore
         self, input: OPTIONAL_TEXT = None, timeout: Optional[float] = None
     ) -> Tuple[AnyType, AnyType]:
+        # streams were fed with eof, need to be reopened
+        await self._reopen_streams()
+
         self._handle_stdin(input)
+
+        # feed eof one more time as streams were opened
+        self._finalize_streams()
+
         self._finalize_thread(timeout)
 
         return (
@@ -318,3 +328,16 @@ class AsyncFakePopen(FakePopen):
 
     def _get_empty_buffer(self, _: bool) -> asyncio.StreamReader:
         return asyncio.StreamReader()
+
+    async def _reopen_streams(self):
+        self.stdout = await self._reopen_stream(self.stdout)
+        self.stderr = await self._reopen_stream(self.stderr)
+
+    async def _reopen_stream(self, stream: Optional[asyncio.StreamReader]) -> Optional[asyncio.StreamReader]:
+        if stream:
+            data = await stream.read()
+            fresh_stream = self._get_empty_buffer(False)
+            fresh_stream.feed_data(data)
+            return fresh_stream
+        return None
+
