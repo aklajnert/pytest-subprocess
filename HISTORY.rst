@@ -1,6 +1,22 @@
 History
 =======
 
+1.4.0 (2022-01-23)  
+------------------
+
+Features  
+~~~~~~~~
+* `#71 <https://github.com/aklajnert/pytest-subprocess/pull/71>`_: Add support for stdin with asyncio.
+
+Bug fixes  
+~~~~~~~~~
+* `#68 <https://github.com/aklajnert/pytest-subprocess/pull/68>`_: Make `stdout` and `stderr` an `asyncio.StreamReader` instance when using asyncio functions.
+* `#63 <https://github.com/aklajnert/pytest-subprocess/pull/63>`_, `#67 <https://github.com/aklajnert/pytest-subprocess/pull/67>`_: Add missing items to `asyncio.subprocess`.
+
+Other changes  
+~~~~~~~~~~~~~
+* `#69 <https://github.com/aklajnert/pytest-subprocess/pull/69>`_: Extracted code into separate files to improve navigation.
+
 1.3.2 (2021-11-07)  
 ------------------
 
