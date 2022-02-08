@@ -77,16 +77,12 @@ def test_multiple_levels(fp):
     """Register fake process on different levels and check the behavior"""
 
     # process definition on the top level
-    fp.register(
-        ("first_command"), stdout="first command top-level"
-    )
+    fp.register(("first_command"), stdout="first command top-level")
 
     with fp.context() as nested:
         # lower level, override the same command and define new one
         nested.register("first_command", stdout="first command lower-level")
-        nested.register(
-            "second_command", stdout="second command lower-level"
-        )
+        nested.register("second_command", stdout="second command lower-level")
 
         assert (
             subprocess.check_output("first_command")
@@ -226,7 +222,7 @@ def test_wait(fp, fake):
         process.wait(timeout=0.1)
     assert (
         str(exc.value) == "Command '('python', 'example_script.py', 'wait', 'stderr')' "
-                          "timed out after 0.1 seconds"
+        "timed out after 0.1 seconds"
     )
 
     assert process.wait() == 0
@@ -253,9 +249,7 @@ def test_check_call(fp, fake):
             ["python", "example_script.py"],
             stdout="Stdout line 1\nStdout line 2\n",
         )
-        fp.register(
-            ["python", "example_script.py", "non-zero"], returncode=1
-        )
+        fp.register(["python", "example_script.py", "non-zero"], returncode=1)
     assert subprocess.check_call(("python", "example_script.py")) == 0
 
     # check also non-zero exit code
@@ -265,7 +259,7 @@ def test_check_call(fp, fake):
     if sys.version_info >= (3, 6):
         assert (
             str(exc.value) == "Command '('python', 'example_script.py', 'non-zero')' "
-                              "returned non-zero exit status 1."
+            "returned non-zero exit status 1."
         )
 
 
@@ -374,6 +368,7 @@ def test_empty_stdout_list(fp):
 def test_input(fp, fake):
     fp.allow_unregistered(not fake)
     if fake:
+
         def stdin_callable(input):
             return {
                 "stdout": "Provide an input: Provided: {data}".format(
@@ -486,9 +481,7 @@ def test_callback(fp, capsys):
         process.returncode = 1
 
     fp.register("test", callback=callback)
-    fp.register(
-        "test", callback=callback, callback_kwargs={"argument": "value"}
-    )
+    fp.register("test", callback=callback, callback_kwargs={"argument": "value"})
 
     assert subprocess.call("test") == 1
     assert capsys.readouterr().out == "from callback with argument=None\n"
@@ -660,9 +653,7 @@ def test_keep_last_process(fp):
 
 
 def test_git(fp):
-    fp.register(
-        ["git", "branch"], stdout=["* fake_branch", "  master"]
-    )
+    fp.register(["git", "branch"], stdout=["* fake_branch", "  master"])
 
     process = subprocess.Popen(
         ["git", "branch"], stdout=subprocess.PIPE, universal_newlines=True
@@ -675,9 +666,7 @@ def test_git(fp):
 
 def test_use_real(fp):
     fp.pass_command(["python", "example_script.py"], occurrences=3)
-    fp.register(
-        ["python", "example_script.py"], stdout=["Fake line 1", "Fake line 2"]
-    )
+    fp.register(["python", "example_script.py"], stdout=["Fake line 1", "Fake line 2"])
 
     for _ in range(0, 3):
         assert (
@@ -833,9 +822,7 @@ def test_raise_exception_check_output(fp):
         raise FileNotFoundError("raised in callback")
 
     fp.register("regular-behavior", returncode=1)
-    fp.register(
-        "custom-exception", returncode=1, callback=callback_function
-    )
+    fp.register("custom-exception", returncode=1, callback=callback_function)
 
     with pytest.raises(subprocess.CalledProcessError):
         subprocess.check_output("regular-behavior")
@@ -855,18 +842,14 @@ def test_callback_and_return_code(fp):
 
     return_code = 1
 
-    fp.register(
-        "test-dummy", returncode=return_code, callback=dummy_callback
-    )
+    fp.register("test-dummy", returncode=return_code, callback=dummy_callback)
 
     process = subprocess.Popen("test-dummy")
     process.wait()
 
     assert process.returncode == return_code
 
-    fp.register(
-        "test-increment", returncode=return_code, callback=override_returncode
-    )
+    fp.register("test-increment", returncode=return_code, callback=override_returncode)
 
     process = subprocess.Popen("test-increment")
     process.wait()

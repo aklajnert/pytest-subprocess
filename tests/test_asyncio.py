@@ -25,9 +25,7 @@ def event_loop(request):
 @pytest.mark.parametrize("mode", ["shell", "exec"])
 async def test_basic_usage(fp, mode):
     shell = mode == "shell"
-    fp.register(
-        ["some-command-that-is-definitely-unavailable"], returncode=500
-    )
+    fp.register(["some-command-that-is-definitely-unavailable"], returncode=500)
     method = (
         asyncio.create_subprocess_shell if shell else asyncio.create_subprocess_exec
     )

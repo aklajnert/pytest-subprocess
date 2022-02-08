@@ -51,9 +51,7 @@ allows defining the fake processes behavior.
 .. code-block:: python
 
     def test_echo_null_byte(fp):
-        fp.register(
-            ["echo", "-ne", "\x00"], stdout=bytes.fromhex("00")
-        )
+        fp.register(["echo", "-ne", "\x00"], stdout=bytes.fromhex("00"))
 
         process = subprocess.Popen(
             ["echo", "-ne", "\x00"], stdout=subprocess.PIPE,
@@ -69,9 +67,7 @@ of lines to be joined together with a trailing ``os.linesep`` on each line.
 .. code-block:: python
 
     def test_git(fp):
-        fp.register(
-            ["git", "branch"], stdout=["* fake_branch", "  master"]
-        )
+        fp.register(["git", "branch"], stdout=["* fake_branch", "  master"])
 
         process = subprocess.Popen(
             ["git", "branch"],
@@ -161,9 +157,7 @@ which will keep the last registered process forever.
         # register process with output changing each execution
         fp.register("test", stdout="first execution")
         # the second execution will return non-zero exit code
-        fp.register(
-            "test", stdout="second execution", returncode=1
-        )
+        fp.register("test", stdout="second execution", returncode=1)
 
         assert subprocess.check_output("test") == b"first execution"
         second_process = subprocess.run("test", stdout=subprocess.PIPE)
@@ -304,9 +298,7 @@ if the subprocess command will be called with a string argument.
         assert subprocess.check_call("cd ~/") == 0
 
         # `min` and `max` can be used together
-        fp.register(
-            ["my_app", fp.any(min=1, max=2)]
-        )
+        fp.register(["my_app", fp.any(min=1, max=2)])
         assert subprocess.check_call(["my_app", "--help"]) == 0
 
 
