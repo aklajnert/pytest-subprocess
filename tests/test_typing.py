@@ -6,4 +6,4 @@ def test_typing() -> None:
     fp = FakeProcess()
     cmd = ["ls", "-l"]
     output = ["some", "lines", "of", "output"]
-    fp.register_subprocess(cmd, stdout=output)
+    fp.register(cmd, stdout=output)
