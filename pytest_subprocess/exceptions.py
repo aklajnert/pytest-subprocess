@@ -6,7 +6,7 @@ class ProcessNotRegisteredError(Exception):
 
 
 class IncorrectProcessDefinition(Exception):
-    """Raised when the register_subprocess() has been called with wrong arguments"""
+    """Raised when the register() has been called with wrong arguments"""
 
 
 class PluginInternalError(Exception):
