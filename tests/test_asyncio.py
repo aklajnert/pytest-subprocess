@@ -23,11 +23,9 @@ def event_loop(request):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("mode", ["shell", "exec"])
-async def test_basic_usage(fake_process, mode):
+async def test_basic_usage(fp, mode):
     shell = mode == "shell"
-    fake_process.register_subprocess(
-        ["some-command-that-is-definitely-unavailable"], returncode=500
-    )
+    fp.register(["some-command-that-is-definitely-unavailable"], returncode=500)
     method = (
         asyncio.create_subprocess_shell if shell else asyncio.create_subprocess_exec
     )
@@ -40,10 +38,10 @@ async def test_basic_usage(fake_process, mode):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("fake", [True, False])
-async def test_with_arguments_shell(fake_process, fake):
-    fake_process.allow_unregistered(not fake)
+async def test_with_arguments_shell(fp, fake):
+    fp.allow_unregistered(not fake)
     if fake:
-        fake_process.register_subprocess(
+        fp.register(
             ["python", "example_script.py", "stderr"],
             stdout=["Stdout line 1", "Stdout line 2"],
             stderr=["Stderr line 1"],
@@ -63,10 +61,10 @@ async def test_with_arguments_shell(fake_process, fake):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("fake", [True, False])
-async def test_with_arguments_exec(fake_process, fake):
-    fake_process.allow_unregistered(not fake)
+async def test_with_arguments_exec(fp, fake):
+    fp.allow_unregistered(not fake)
     if fake:
-        fake_process.register_subprocess(
+        fp.register(
             ["python", "example_script.py", "stderr"],
             stdout=["Stdout line 1", "Stdout line 2"],
             stderr=["Stderr line 1"],
@@ -89,12 +87,12 @@ async def test_with_arguments_exec(fake_process, fake):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("fake", [True, False])
 @pytest.mark.parametrize("mode", ["shell", "exec"])
-async def test_incorrect_call(fake_process, fake, mode):
+async def test_incorrect_call(fp, fake, mode):
     """Asyncio doesn't support command as a list"""
     shell = mode == "shell"
-    fake_process.allow_unregistered(not fake)
+    fp.allow_unregistered(not fake)
     if fake:
-        fake_process.register_subprocess(["test"])
+        fp.register(["test"])
 
     method = (
         asyncio.create_subprocess_shell if shell else asyncio.create_subprocess_exec
@@ -109,15 +107,15 @@ async def test_incorrect_call(fake_process, fake, mode):
 @pytest.mark.skipif('sys.platform!="win32"')
 @pytest.mark.parametrize("fake", [True, False])
 @pytest.mark.parametrize("mode", ["shell", "exec"])
-async def test_invalid_event_loop(fake_process, fake, mode):
+async def test_invalid_event_loop(fp, fake, mode):
     """
     The event_loop is changed by the `event_loop` fixture based on
     the test name (hack).
     """
     shell = mode == "shell"
-    fake_process.allow_unregistered(not fake)
+    fp.allow_unregistered(not fake)
     if fake:
-        fake_process.register_subprocess(["python", "example_script.py"])
+        fp.register(["python", "example_script.py"])
 
     with pytest.raises(NotImplementedError):
         if shell:
@@ -129,16 +127,16 @@ async def test_invalid_event_loop(fake_process, fake, mode):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("fake", [False, True])
 @pytest.mark.parametrize("mode", ["shell", "exec"])
-async def test_wait(fake_process, fake, mode):
+async def test_wait(fp, fake, mode):
     """
     Check that wait argument still works. Unfortunately asyncio doesn't have
     the timeout functionality.
     """
     shell = mode == "shell"
 
-    fake_process.allow_unregistered(not fake)
+    fp.allow_unregistered(not fake)
     if fake:
-        fake_process.register_subprocess(
+        fp.register(
             ["python", "example_script.py", "wait", "stderr"],
             stdout="Stdout line 1\nStdout line 2",
             stderr="Stderr line 1",
@@ -171,9 +169,9 @@ async def test_wait(fake_process, fake, mode):
 
 
 @pytest.mark.asyncio
-async def test_devnull_stdout(fake_process):
+async def test_devnull_stdout(fp):
     """From GitHub #63 - make sure all the `asyncio.subprocess` consts are available."""
-    fake_process.register_subprocess("cat")
+    fp.register("cat")
 
     await asyncio.create_subprocess_exec(
         "cat",
@@ -184,21 +182,21 @@ async def test_devnull_stdout(fake_process):
 
 
 @pytest.mark.asyncio
-async def test_anyio(fake_process):
+async def test_anyio(fp):
     await anyio.sleep(0.01)
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("fake", [False, True])
-async def test_stdout_and_stderr(fake_process, fake):
+async def test_stdout_and_stderr(fp, fake):
     if fake:
-        fake_process.register_subprocess(
+        fp.register(
             ["python", "example_script.py", "stderr"],
             stdout=["Stdout line 1", "Stdout line 2"],
             stderr=["Stderr line 1"],
         )
     else:
-        fake_process.allow_unregistered(True)
+        fp.allow_unregistered(True)
 
     process = await asyncio.create_subprocess_exec(
         "python",
@@ -224,15 +222,15 @@ async def test_stdout_and_stderr(fake_process, fake):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("fake", [False, True])
-async def test_combined_stdout_and_stderr(fake_process, fake):
+async def test_combined_stdout_and_stderr(fp, fake):
     if fake:
-        fake_process.register_subprocess(
+        fp.register(
             ["python", "example_script.py", "stderr"],
             stdout=["Stdout line 1", "Stdout line 2"],
             stderr=["Stderr line 1"],
         )
     else:
-        fake_process.allow_unregistered(True)
+        fp.allow_unregistered(True)
 
     process = await asyncio.create_subprocess_exec(
         "python",
@@ -277,8 +275,8 @@ async def _read_stream(stream: asyncio.StreamReader, output_list):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("fake", [False, True])
-async def test_input(fake_process, fake):
-    fake_process.allow_unregistered(not fake)
+async def test_input(fp, fake):
+    fp.allow_unregistered(not fake)
     if fake:
 
         def stdin_callable(input):
@@ -288,7 +286,7 @@ async def test_input(fake_process, fake):
                 )
             }
 
-        fake_process.register_subprocess(
+        fp.register(
             ["python", "example_script.py", "input"],
             stdout=[b"Stdout line 1", b"Stdout line 2"],
             stdin_callable=stdin_callable,

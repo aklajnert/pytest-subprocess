@@ -34,7 +34,7 @@ class FakeProcess:
 
         self.exceptions = exceptions
 
-    def register_subprocess(
+    def register(
         self,
         command: COMMAND,
         stdout: OPTIONAL_TEXT_OR_ITERABLE = None,
@@ -84,6 +84,8 @@ class FakeProcess:
             ]
             * occurrences
         )
+
+    register_subprocess = register
 
     def pass_command(
         self,

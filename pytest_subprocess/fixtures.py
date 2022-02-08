@@ -6,6 +6,10 @@ from . import FakeProcess
 
 
 @pytest.fixture
-def fake_process() -> Generator[FakeProcess, None, None]:
+def fp() -> Generator[FakeProcess, None, None]:
+    """Fake subprocess calls."""
     with FakeProcess() as process:
         yield process
+
+
+fake_process = fp
