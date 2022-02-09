@@ -1,6 +1,13 @@
 History
 =======
 
+1.4.1 (2022-02-09)  
+------------------
+
+Other changes  
+~~~~~~~~~~~~~
+* `#74 <https://github.com/aklajnert/pytest-subprocess/pull/74>`_: Add ``fp`` alias for the fixture, and ``register`` for the ``regisiter_subprocess``.
+
 1.4.0 (2022-01-23)  
 ------------------
 
