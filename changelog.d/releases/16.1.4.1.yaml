@@ -1,0 +1,10 @@
+entries:
+  other:
+  - message: Add ``fp`` alias for the fixture, and ``register`` for the ``regisiter_subprocess``.
+    pr_ids:
+    - '74'
+    timestamp: 1644310128
+previous_release: 1.4.0
+release_date: '2022-02-09'
+release_description: ''
+release_version: 1.4.1
