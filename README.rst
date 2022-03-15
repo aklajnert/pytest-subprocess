@@ -54,7 +54,8 @@ allows defining the fake processes behavior.
         fp.register(["echo", "-ne", "\x00"], stdout=bytes.fromhex("00"))
 
         process = subprocess.Popen(
-            ["echo", "-ne", "\x00"], stdout=subprocess.PIPE,
+            ["echo", "-ne", "\x00"],
+            stdout=subprocess.PIPE,
         )
         out, _ = process.communicate()
 
@@ -107,7 +108,9 @@ the input data. If the function will return a dictionary with ``stdout`` or
         )
 
         process = subprocess.Popen(
-            ["command"], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+            ["command"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
         )
         out, _ = process.communicate(input=b"sample input\n")
 
@@ -376,7 +379,9 @@ and ``asyncio.create_subprocess_exec``:
 .. code-block:: python
 
     @pytest.mark.asyncio
-    async def test_basic_usage(fp,):
+    async def test_basic_usage(
+        fp,
+    ):
         fp.register(
             ["some-command-that-is-definitely-unavailable"], returncode=500
         )
