@@ -29,7 +29,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           architecture: x64
       - name: Setup Nox
-        uses: excitedleigh/setup-nox@v2.0.0
+        uses: aklajnert/setup-nox@v2.0.1
       - name: Run tests
         run: |
           nox -s tests-${{ matrix.python-version }} --error-on-missing-interpreters
@@ -54,7 +54,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           architecture: x64
       - name: Setup Nox
-        uses: excitedleigh/setup-nox@v2.0.0
+        uses: aklajnert/setup-nox@v2.0.1
       - name: Run tests
         run: |
           nox -s tests-pypy3 --error-on-missing-interpreters
@@ -67,7 +67,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Setup Nox
-        uses: excitedleigh/setup-nox@v2.0.0
+        uses: aklajnert/setup-nox@v2.0.1
       - name: Run mypy
         run: |
           nox -s mypy
@@ -77,7 +77,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Setup Nox
-        uses: excitedleigh/setup-nox@v2.0.0
+        uses: aklajnert/setup-nox@v2.0.1
       - name: Run flake8
         run: |
           nox -s flake8
