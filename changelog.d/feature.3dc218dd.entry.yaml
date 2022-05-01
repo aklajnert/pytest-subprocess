@@ -1,0 +1,5 @@
+message: The `register()` method returns a list that will contain all matching `FakePopen` instances.
+pr_ids:
+- '80'
+timestamp: 1651409374
+type: feature

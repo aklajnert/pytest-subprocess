@@ -179,8 +179,10 @@ class ProcessDispatcher:
         # keep_last_process.
         fake_popen_kwargs = process.copy()
         fake_popen_kwargs["command"] = command
+        instances = fake_popen_kwargs.pop("instances")
 
         result = klass(**fake_popen_kwargs)
+        instances.append(result)
         result.pid = cls._pid
         result.configure(**kwargs)
         return result

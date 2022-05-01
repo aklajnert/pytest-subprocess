@@ -9,6 +9,7 @@ import time
 import pytest
 
 import pytest_subprocess
+from pytest_subprocess.fake_popen import FakePopen
 
 
 def setup_fake_popen(monkeypatch):
@@ -1109,3 +1110,15 @@ def test_non_piped_same_file(tmpdir, fp, fake, bytes):
         output = out_file.readlines()
 
     assert output == ["Stdout line 1\n", "Stdout line 2\n", "Stderr line 1\n"]
+
+
+def test_popen_instances(fp):
+    instances = fp.register(["test_script"], occurrences=2)
+    assert instances == []
+
+    subprocess.call(("test_script"))
+    assert len(instances) == 1
+    subprocess.Popen(["test_script"])
+    assert len(instances) == 2
+
+    assert all(isinstance(instance, FakePopen) for instance in instances)

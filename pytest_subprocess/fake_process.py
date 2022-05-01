@@ -12,6 +12,8 @@ from typing import Type
 from typing import Union
 
 from . import exceptions
+from .fake_popen import AsyncFakePopen
+from .fake_popen import FakePopen
 from .process_dispatcher import ProcessDispatcher
 from .types import COMMAND
 from .types import OPTIONAL_TEXT_OR_ITERABLE
@@ -46,7 +48,7 @@ class FakeProcess:
         signal_callback: Optional[Callable] = None,
         occurrences: int = 1,
         stdin_callable: Optional[Callable] = None,
-    ) -> None:
+    ) -> List[Union[FakePopen, AsyncFakePopen]]:
         """
         Main method for registering the subprocess instances.
 
@@ -68,6 +70,8 @@ class FakeProcess:
             )
         if not isinstance(command, Command):
             command = Command(command)
+
+        instances = list()
         self.definitions[command].extend(
             [
                 {
@@ -80,10 +84,13 @@ class FakeProcess:
                     "callback_kwargs": callback_kwargs,
                     "signal_callback": signal_callback,
                     "stdin_callable": stdin_callable,
+                    "instances": instances,
                 }
             ]
             * occurrences
         )
+
+        return instances
 
     register_subprocess = register
 
