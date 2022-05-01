@@ -372,10 +372,8 @@ set up an optional callback function for signals.
         assert process.received_signals() == (signal.SIGTERM,)
 
         # the instance appended to `register()` output is the `Popen` instance
-        # created later...
+        # created later
         assert process_instances[0] is process
-        # ... but it's no longer a `subprocess.Popen` instance
-        assert not isinstance(process_instances[0], subprocess.Popen)
 
 
 Asyncio support
