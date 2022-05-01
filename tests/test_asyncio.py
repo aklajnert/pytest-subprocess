@@ -6,6 +6,8 @@ import time
 import anyio
 import pytest
 
+from pytest_subprocess.fake_popen import AsyncFakePopen
+
 
 @pytest.fixture(autouse=True)
 def event_loop(request):
@@ -307,6 +309,19 @@ async def test_input(fp, fake):
         b"Provide an input: Provided: test",
     ]
     assert err is None
+
+
+@pytest.mark.asyncio
+async def test_popen_instances(fp):
+    instances = fp.register(["test_script"], occurrences=2)
+    assert instances == []
+
+    await asyncio.create_subprocess_exec("test_script")
+    assert len(instances) == 1
+    await asyncio.create_subprocess_shell("test_script")
+    assert len(instances) == 2
+
+    assert all(isinstance(instance, AsyncFakePopen) for instance in instances)
 
 
 @pytest.fixture(autouse=True)
