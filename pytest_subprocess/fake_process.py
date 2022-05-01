@@ -71,7 +71,7 @@ class FakeProcess:
         if not isinstance(command, Command):
             command = Command(command)
 
-        instances = list()
+        instances: List[Union[FakePopen, AsyncFakePopen]] = list()
         self.definitions[command].extend(
             [
                 {
