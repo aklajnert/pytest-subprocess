@@ -312,16 +312,16 @@ async def test_input(fp, fake):
 
 
 @pytest.mark.asyncio
-async def test_popen_instances(fp):
-    instances = fp.register(["test_script"], occurrences=2)
-    assert instances == []
+async def test_popen_recorder(fp):
+    recorder = fp.register(["test_script"], occurrences=2)
+    assert recorder.call_count() == 0
 
     await asyncio.create_subprocess_exec("test_script")
-    assert len(instances) == 1
+    assert recorder.call_count() == 1
     await asyncio.create_subprocess_shell("test_script")
-    assert len(instances) == 2
+    assert recorder.call_count() == 2
 
-    assert all(isinstance(instance, AsyncFakePopen) for instance in instances)
+    assert all(isinstance(instance, AsyncFakePopen) for instance in recorder.calls)
 
 
 @pytest.fixture(autouse=True)
