@@ -360,9 +360,9 @@ set up an optional callback function for signals.
             if sig == signal.SIGTERM:
                 process.returncode = -1
 
-        # the `register()` method returns a list, where all future
-        # matching `Popen()` instances will be appended
-        process_instances = fp.register("test", signal_callback=callback)
+        # the `register()` method returns a ProgressRecorder object, where
+        # all future matching `Popen()` instances will be appended
+        process_recorder = fp.register("test", signal_callback=callback)
 
         process = subprocess.Popen("test")
         process.send_signal(signal.SIGTERM)
@@ -373,7 +373,7 @@ set up an optional callback function for signals.
 
         # the instance appended to `register()` output is the `Popen` instance
         # created later
-        assert process_instances[0] is process
+        assert process_recorder.first_call is process
 
 
 Asyncio support

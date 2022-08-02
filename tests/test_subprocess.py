@@ -1112,13 +1112,31 @@ def test_non_piped_same_file(tmpdir, fp, fake, bytes):
     assert output == ["Stdout line 1\n", "Stdout line 2\n", "Stderr line 1\n"]
 
 
-def test_popen_instances(fp):
-    instances = fp.register(["test_script"], occurrences=2)
-    assert instances == []
+def test_process_recorder(fp):
+    fp.keep_last_process(True)
+    recorder = fp.register(["test_script", fp.any()])
+    assert recorder.calls == []
+    assert recorder.call_count() == 0
+    assert not recorder.was_called()
 
-    subprocess.call(("test_script"))
-    assert len(instances) == 1
-    subprocess.Popen(["test_script"])
-    assert len(instances) == 2
+    subprocess.call(("test_script", "random_argument"))
+    assert recorder.call_count() == 1
+    assert recorder.was_called()
+    assert recorder.was_called(("test_script", "random_argument"))
+    assert not recorder.was_called(("test_script", "another_argument"))
 
-    assert all(isinstance(instance, FakePopen) for instance in instances)
+    subprocess.Popen(["test_script", "another_argument"])
+    assert recorder.call_count() == 2
+    assert recorder.was_called(("test_script", "another_argument"))
+
+    assert recorder.call_count(["test_script", "random_argument"]) == 1
+    assert recorder.call_count(["test_script", "another_argument"]) == 1
+
+    assert recorder.first_call.args == ("test_script", "random_argument")
+    assert recorder.last_call.args == ["test_script", "another_argument"]
+
+    assert all(isinstance(instance, FakePopen) for instance in recorder.calls)
+
+    recorder.clear()
+
+    assert not recorder.was_called()
