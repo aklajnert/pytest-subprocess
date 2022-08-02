@@ -19,7 +19,7 @@ class ProcessRecorder:
 
     calls: List[Union["FakePopen", "AsyncFakePopen"]]
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.calls = []
 
     @property

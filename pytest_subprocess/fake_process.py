@@ -12,8 +12,6 @@ from typing import Type
 from typing import Union
 
 from . import exceptions
-from .fake_popen import AsyncFakePopen
-from .fake_popen import FakePopen
 from .process_dispatcher import ProcessDispatcher
 from .process_recorder import ProcessRecorder
 from .types import COMMAND
