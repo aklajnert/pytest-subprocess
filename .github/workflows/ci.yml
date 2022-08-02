@@ -31,8 +31,15 @@ jobs:
       - name: Setup Nox
         uses: aklajnert/setup-nox@v2.0.1
       - name: Run tests
+        if: matrix.python-version != '3.11-dev'
         run: |
           nox -s tests-${{ matrix.python-version }} --error-on-missing-interpreters
+        env:
+          PLATFORM: ${{ matrix.platform }}
+      - name: Run tests 3.11
+        if: matrix.python-version == '3.11-dev'
+        run: |
+          nox -s tests-3.11 --error-on-missing-interpreters
         env:
           PLATFORM: ${{ matrix.platform }}
       - name: Update coverage
