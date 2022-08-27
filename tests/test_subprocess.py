@@ -224,7 +224,7 @@ def test_wait(fp, fake):
     with pytest.raises(subprocess.TimeoutExpired) as exc:
         process.wait(timeout=0.1)
     assert (
-        str(exc.value)
+        str(exc.value).replace("\\\\", "\\")
         == f"Command '('{PYTHON}', 'example_script.py', 'wait', 'stderr')' "
         "timed out after 0.1 seconds"
     )
@@ -262,7 +262,7 @@ def test_check_call(fp, fake):
 
     if sys.version_info >= (3, 6):
         assert (
-            str(exc.value)
+            str(exc.value).replace("\\\\", "\\")
             == f"Command '('{PYTHON}', 'example_script.py', 'non-zero')' "
             "returned non-zero exit status 1."
         )
