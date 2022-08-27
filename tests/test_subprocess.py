@@ -11,6 +11,8 @@ import pytest
 import pytest_subprocess
 from pytest_subprocess.fake_popen import FakePopen
 
+PYTHON = sys.executable
+
 
 def setup_fake_popen(monkeypatch):
     """Set the real Popen to a dummy function that just returns input arguments."""
@@ -151,13 +153,13 @@ def test_basic_process(fp, fake):
     fp.allow_unregistered(not fake)
     if fake:
         fp.register(
-            ["python", "example_script.py"],
+            [PYTHON, "example_script.py"],
             stdout=["Stdout line 1", "Stdout line 2"],
             stderr=None,
         )
 
     process = subprocess.Popen(
-        ["python", "example_script.py"],
+        [PYTHON, "example_script.py"],
         cwd=os.path.dirname(__file__),
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -179,13 +181,13 @@ def test_basic_process_merge_streams(fp, fake):
     fp.allow_unregistered(not fake)
     if fake:
         fp.register(
-            ["python", "-u", "example_script.py", "stderr"],
+            [PYTHON, "-u", "example_script.py", "stderr"],
             stdout=["Stdout line 1", "Stdout line 2"],
             stderr=["Stderr line 1"],
         )
 
     process = subprocess.Popen(
-        ["python", "-u", "example_script.py", "stderr"],
+        [PYTHON, "-u", "example_script.py", "stderr"],
         cwd=os.path.dirname(__file__),
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
@@ -205,13 +207,13 @@ def test_wait(fp, fake):
     fp.allow_unregistered(not fake)
     if fake:
         fp.register(
-            ["python", "example_script.py", "wait", "stderr"],
+            [PYTHON, "example_script.py", "wait", "stderr"],
             stdout="Stdout line 1\nStdout line 2",
             stderr="Stderr line 1",
             wait=0.5,
         )
     process = subprocess.Popen(
-        ("python", "example_script.py", "wait", "stderr"),
+        (PYTHON, "example_script.py", "wait", "stderr"),
         cwd=os.path.dirname(__file__),
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
@@ -222,7 +224,8 @@ def test_wait(fp, fake):
     with pytest.raises(subprocess.TimeoutExpired) as exc:
         process.wait(timeout=0.1)
     assert (
-        str(exc.value) == "Command '('python', 'example_script.py', 'wait', 'stderr')' "
+        str(exc.value).replace("\\\\", "\\")
+        == f"Command '('{PYTHON}', 'example_script.py', 'wait', 'stderr')' "
         "timed out after 0.1 seconds"
     )
 
@@ -234,10 +237,10 @@ def test_check_output(fp, fake):
     fp.allow_unregistered(not fake)
     if fake:
         fp.register(
-            ["python", "example_script.py"],
+            [PYTHON, "example_script.py"],
             stdout="Stdout line 1\nStdout line 2",
         )
-    process = subprocess.check_output(("python", "example_script.py"))
+    process = subprocess.check_output((PYTHON, "example_script.py"))
 
     assert process.splitlines() == [b"Stdout line 1", b"Stdout line 2"]
 
@@ -247,19 +250,20 @@ def test_check_call(fp, fake):
     fp.allow_unregistered(not fake)
     if fake:
         fp.register(
-            ["python", "example_script.py"],
+            [PYTHON, "example_script.py"],
             stdout="Stdout line 1\nStdout line 2\n",
         )
-        fp.register(["python", "example_script.py", "non-zero"], returncode=1)
-    assert subprocess.check_call(("python", "example_script.py")) == 0
+        fp.register([PYTHON, "example_script.py", "non-zero"], returncode=1)
+    assert subprocess.check_call((PYTHON, "example_script.py")) == 0
 
     # check also non-zero exit code
     with pytest.raises(subprocess.CalledProcessError) as exc:
-        assert subprocess.check_call(("python", "example_script.py", "non-zero")) == 1
+        assert subprocess.check_call((PYTHON, "example_script.py", "non-zero")) == 1
 
     if sys.version_info >= (3, 6):
         assert (
-            str(exc.value) == "Command '('python', 'example_script.py', 'non-zero')' "
+            str(exc.value).replace("\\\\", "\\")
+            == f"Command '('{PYTHON}', 'example_script.py', 'non-zero')' "
             "returned non-zero exit status 1."
         )
 
@@ -269,10 +273,10 @@ def test_call(fp, fake):
     fp.allow_unregistered(not fake)
     if fake:
         fp.register(
-            ["python", "example_script.py"],
+            [PYTHON, "example_script.py"],
             stdout="Stdout line 1\nStdout line 2\n",
         )
-    assert subprocess.call(("python", "example_script.py")) == 0
+    assert subprocess.call((PYTHON, "example_script.py")) == 0
 
 
 @pytest.mark.parametrize("fake", [False, True])
@@ -284,10 +288,10 @@ def test_run(fp, fake):
     fp.allow_unregistered(not fake)
     if fake:
         fp.register(
-            ["python", "example_script.py"],
+            [PYTHON, "example_script.py"],
             stdout=["Stdout line 1", "Stdout line 2"],
         )
-    process = subprocess.run(("python", "example_script.py"), stdout=subprocess.PIPE)
+    process = subprocess.run((PYTHON, "example_script.py"), stdout=subprocess.PIPE)
 
     assert process.returncode == 0
     assert process.stdout == os.linesep.encode().join(
@@ -301,11 +305,11 @@ def test_universal_newlines(fp, fake):
     fp.allow_unregistered(not fake)
     if fake:
         fp.register(
-            ["python", "example_script.py"],
+            [PYTHON, "example_script.py"],
             stdout=b"Stdout line 1\r\nStdout line 2\r\n",
         )
     process = subprocess.Popen(
-        ("python", "example_script.py"), universal_newlines=True, stdout=subprocess.PIPE
+        (PYTHON, "example_script.py"), universal_newlines=True, stdout=subprocess.PIPE
     )
     process.wait()
 
@@ -317,18 +321,18 @@ def test_text(fp, fake):
     fp.allow_unregistered(not fake)
     if fake:
         fp.register(
-            ["python", "example_script.py"],
+            [PYTHON, "example_script.py"],
             stdout=[b"Stdout line 1", b"Stdout line 2"],
         )
     if sys.version_info < (3, 7):
         with pytest.raises(TypeError) as exc:
             subprocess.Popen(
-                ("python", "example_script.py"), stdout=subprocess.PIPE, text=True
+                (PYTHON, "example_script.py"), stdout=subprocess.PIPE, text=True
             )
         assert str(exc.value) == "__init__() got an unexpected keyword argument 'text'"
     else:
         process = subprocess.Popen(
-            ("python", "example_script.py"), stdout=subprocess.PIPE, text=True
+            (PYTHON, "example_script.py"), stdout=subprocess.PIPE, text=True
         )
         process.wait()
 
@@ -378,13 +382,13 @@ def test_input(fp, fake):
             }
 
         fp.register(
-            ["python", "example_script.py", "input"],
+            [PYTHON, "example_script.py", "input"],
             stdout=[b"Stdout line 1", b"Stdout line 2"],
             stdin_callable=stdin_callable,
         )
 
     process = subprocess.Popen(
-        ("python", "example_script.py", "input"),
+        (PYTHON, "example_script.py", "input"),
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
     )
@@ -438,12 +442,12 @@ def test_multiple_wait(fp, fake):
     fp.allow_unregistered(not fake)
     if fake:
         fp.register(
-            ["python", "example_script.py", "wait"],
+            [PYTHON, "example_script.py", "wait"],
             wait=0.5,
         )
 
     process = subprocess.Popen(
-        ("python", "example_script.py", "wait"),
+        (PYTHON, "example_script.py", "wait"),
     )
     with pytest.raises(subprocess.TimeoutExpired):
         process.wait(timeout=0.2)
@@ -666,20 +670,18 @@ def test_git(fp):
 
 
 def test_use_real(fp):
-    fp.pass_command(["python", "example_script.py"], occurrences=3)
-    fp.register(["python", "example_script.py"], stdout=["Fake line 1", "Fake line 2"])
+    fp.pass_command([PYTHON, "example_script.py"], occurrences=3)
+    fp.register([PYTHON, "example_script.py"], stdout=["Fake line 1", "Fake line 2"])
 
     for _ in range(0, 3):
         assert (
             subprocess.check_output(
-                ["python", "example_script.py"], universal_newlines=True
+                [PYTHON, "example_script.py"], universal_newlines=True
             )
             == "Stdout line 1\nStdout line 2\n"
         )
     assert (
-        subprocess.check_output(
-            ["python", "example_script.py"], universal_newlines=True
-        )
+        subprocess.check_output([PYTHON, "example_script.py"], universal_newlines=True)
         == "Fake line 1\nFake line 2\n"
     )
 
@@ -957,13 +959,13 @@ def test_allow_unregistered_cleaning(fp):
     with fp.context() as context:
         context.allow_unregistered(True)
 
-        subprocess.run(["python", "example_script.py"])
-        subprocess.run(["python", "example_script.py"])
-        subprocess.run(["python", "example_script.py"])
+        subprocess.run([PYTHON, "example_script.py"])
+        subprocess.run([PYTHON, "example_script.py"])
+        subprocess.run([PYTHON, "example_script.py"])
 
     with fp.context():
         with pytest.raises(fp.exceptions.ProcessNotRegisteredError):
-            subprocess.run(["python", "example_script.py"])
+            subprocess.run([PYTHON, "example_script.py"])
 
     with pytest.raises(fp.exceptions.ProcessNotRegisteredError):
         subprocess.run(["test"])
@@ -1049,7 +1051,7 @@ def test_non_piped_streams(tmpdir, fp, fake, bytes):
     fp.allow_unregistered(not fake)
     if fake:
         fp.register(
-            ["python", "-u", "example_script.py", "stderr"],
+            [PYTHON, "-u", "example_script.py", "stderr"],
             stdout=["Stdout line 1", "Stdout line 2"],
             stderr=["Stderr line 1"],
         )
@@ -1061,7 +1063,7 @@ def test_non_piped_streams(tmpdir, fp, fake, bytes):
 
     with open(stdout_path, mode) as stdout, open(stderr_path, mode) as stderr:
         process = subprocess.Popen(
-            ["python", "-u", "example_script.py", "stderr"],
+            [PYTHON, "-u", "example_script.py", "stderr"],
             stdout=stdout,
             stderr=stderr,
         )
@@ -1085,7 +1087,7 @@ def test_non_piped_same_file(tmpdir, fp, fake, bytes):
     fp.allow_unregistered(not fake)
     if fake:
         fp.register(
-            ["python", "-u", "example_script.py", "stderr"],
+            [PYTHON, "-u", "example_script.py", "stderr"],
             stdout=["Stdout line 1", "Stdout line 2"],
             stderr="Stderr line 1\n",
         )
@@ -1096,7 +1098,7 @@ def test_non_piped_same_file(tmpdir, fp, fake, bytes):
 
     with open(output_path, mode) as out_file:
         process = subprocess.Popen(
-            ["python", "-u", "example_script.py", "stderr"],
+            [PYTHON, "-u", "example_script.py", "stderr"],
             stdout=out_file,
             stderr=out_file,
         )
