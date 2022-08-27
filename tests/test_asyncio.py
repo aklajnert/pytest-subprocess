@@ -8,6 +8,8 @@ import pytest
 
 from pytest_subprocess.fake_popen import AsyncFakePopen
 
+PYTHON = sys.executable
+
 
 @pytest.fixture(autouse=True)
 def event_loop(request):
@@ -44,13 +46,13 @@ async def test_with_arguments_shell(fp, fake):
     fp.allow_unregistered(not fake)
     if fake:
         fp.register(
-            ["python", "example_script.py", "stderr"],
+            [PYTHON, "example_script.py", "stderr"],
             stdout=["Stdout line 1", "Stdout line 2"],
             stderr=["Stderr line 1"],
         )
 
     process = await asyncio.create_subprocess_shell(
-        "python example_script.py stderr",
+        f"{PYTHON} example_script.py stderr",
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
@@ -67,13 +69,13 @@ async def test_with_arguments_exec(fp, fake):
     fp.allow_unregistered(not fake)
     if fake:
         fp.register(
-            ["python", "example_script.py", "stderr"],
+            [PYTHON, "example_script.py", "stderr"],
             stdout=["Stdout line 1", "Stdout line 2"],
             stderr=["Stderr line 1"],
         )
 
     process = await asyncio.create_subprocess_exec(
-        "python",
+        PYTHON,
         "example_script.py",
         "stderr",
         stdout=asyncio.subprocess.PIPE,
@@ -117,13 +119,13 @@ async def test_invalid_event_loop(fp, fake, mode):
     shell = mode == "shell"
     fp.allow_unregistered(not fake)
     if fake:
-        fp.register(["python", "example_script.py"])
+        fp.register([PYTHON, "example_script.py"])
 
     with pytest.raises(NotImplementedError):
         if shell:
-            await asyncio.create_subprocess_shell("python example_script.py")
+            await asyncio.create_subprocess_shell(f"{PYTHON} example_script.py")
         else:
-            await asyncio.create_subprocess_exec("python", "example_script.py")
+            await asyncio.create_subprocess_exec(PYTHON, "example_script.py")
 
 
 @pytest.mark.asyncio
@@ -139,7 +141,7 @@ async def test_wait(fp, fake, mode):
     fp.allow_unregistered(not fake)
     if fake:
         fp.register(
-            ["python", "example_script.py", "wait", "stderr"],
+            [PYTHON, "example_script.py", "wait", "stderr"],
             stdout="Stdout line 1\nStdout line 2",
             stderr="Stderr line 1",
             wait=0.5,
@@ -148,7 +150,7 @@ async def test_wait(fp, fake, mode):
         asyncio.create_subprocess_shell if shell else asyncio.create_subprocess_exec
     )
 
-    command = "python example_script.py wait stderr"
+    command = f"{PYTHON} example_script.py wait stderr"
     if not shell:
         command = command.split()
     else:
@@ -193,7 +195,7 @@ async def test_anyio(fp):
 async def test_stdout_and_stderr(fp, fake):
     if fake:
         fp.register(
-            ["python", "example_script.py", "stderr"],
+            [PYTHON, "example_script.py", "stderr"],
             stdout=["Stdout line 1", "Stdout line 2"],
             stderr=["Stderr line 1"],
         )
@@ -201,7 +203,7 @@ async def test_stdout_and_stderr(fp, fake):
         fp.allow_unregistered(True)
 
     process = await asyncio.create_subprocess_exec(
-        "python",
+        PYTHON,
         "example_script.py",
         "stderr",
         stdout=asyncio.subprocess.PIPE,
@@ -227,7 +229,7 @@ async def test_stdout_and_stderr(fp, fake):
 async def test_combined_stdout_and_stderr(fp, fake):
     if fake:
         fp.register(
-            ["python", "example_script.py", "stderr"],
+            [PYTHON, "example_script.py", "stderr"],
             stdout=["Stdout line 1", "Stdout line 2"],
             stderr=["Stderr line 1"],
         )
@@ -235,7 +237,7 @@ async def test_combined_stdout_and_stderr(fp, fake):
         fp.allow_unregistered(True)
 
     process = await asyncio.create_subprocess_exec(
-        "python",
+        PYTHON,
         "example_script.py",
         "stderr",
         stdout=asyncio.subprocess.PIPE,
@@ -289,13 +291,13 @@ async def test_input(fp, fake):
             }
 
         fp.register(
-            ["python", "example_script.py", "input"],
+            [PYTHON, "example_script.py", "input"],
             stdout=[b"Stdout line 1", b"Stdout line 2"],
             stdin_callable=stdin_callable,
         )
 
     process = await asyncio.create_subprocess_exec(
-        "python",
+        PYTHON,
         "example_script.py",
         "input",
         stdin=asyncio.subprocess.PIPE,
