@@ -88,3 +88,13 @@ jobs:
       - name: Run flake8
         run: |
           nox -s flake8
+  check-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup Nox
+        uses: aklajnert/setup-nox@v2.0.1
+      - name: Build docs
+        run: |
+          nox -s docs
