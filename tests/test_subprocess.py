@@ -956,9 +956,10 @@ def test_communicate_raises_exceptions_from_callback(fp):
         raise MyException()
 
     fp.register(["test"], callback=callback)
+    
+    proc = subprocess.Popen("test")
     with pytest.raises(MyException):
-        p = subprocess.Popen("test")
-        p.communicate()
+        proc.communicate()
 
 
 def test_allow_unregistered_cleaning(fp):
