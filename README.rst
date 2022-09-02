@@ -17,7 +17,7 @@ pytest-subprocess
    :target: https://pytest-subprocess.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
-A plugin to fake subprocess for pytest
+Pytest plugin to fake subprocess.
 
 .. contents:: :local:
 
