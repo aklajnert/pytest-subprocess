@@ -948,6 +948,20 @@ def test_called_process_waits_for_the_callback_to_finish(fp, tmp_path):
     assert output_file_path.exists()
 
 
+def test_communicate_raises_exceptions_from_callback(fp):
+    class MyException(Exception):
+        pass
+
+    def callback(process):
+        raise MyException()
+
+    fp.register(["test"], callback=callback)
+
+    proc = subprocess.Popen("test")
+    with pytest.raises(MyException):
+        proc.communicate()
+
+
 def test_allow_unregistered_cleaning(fp):
     """
     GitHub: #46.
