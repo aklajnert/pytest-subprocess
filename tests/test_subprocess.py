@@ -956,7 +956,7 @@ def test_communicate_raises_exceptions_from_callback(fp):
         raise MyException()
 
     fp.register(["test"], callback=callback)
-    
+
     proc = subprocess.Popen("test")
     with pytest.raises(MyException):
         proc.communicate()
