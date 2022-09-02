@@ -948,7 +948,10 @@ def test_called_process_waits_for_the_callback_to_finish(fp, tmp_path):
     assert output_file_path.exists()
 
 
-def test_communicate_raises_exceptions_from_callback(fp):
+@pytest.mark.parametrize("method", [FakePopen.wait, FakePopen.communicate])
+def test_raises_exceptions_from_callback(fp, method):
+    """Make sure that both .wait() and .communicate() raise exception from callback"""
+
     class MyException(Exception):
         pass
 
@@ -959,7 +962,7 @@ def test_communicate_raises_exceptions_from_callback(fp):
 
     proc = subprocess.Popen("test")
     with pytest.raises(MyException):
-        proc.communicate()
+        method(proc)
 
 
 def test_allow_unregistered_cleaning(fp):
