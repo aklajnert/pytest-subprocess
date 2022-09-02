@@ -97,8 +97,13 @@ class FakePopen:
                 )
 
     def _finalize_thread(self, timeout: Optional[float]) -> None:
-        if self.__thread is not None:
-            self.__thread.join(timeout)
+        if self.__thread is None:
+            return
+        self.__thread.join(timeout)
+        if self.returncode is None and self.__returncode is not None:
+            self.returncode = self.__returncode
+        if self.__thread.exception:
+            raise self.__thread.exception
 
     def _extend_stream_from_dict(
         self, dictionary: Dict[str, AnyType], key: str, stream: Optional[BUFFER]
@@ -115,12 +120,7 @@ class FakePopen:
         if timeout and self.__wait and timeout < self.__wait:
             self.__wait -= timeout
             raise subprocess.TimeoutExpired(self.args, timeout)
-        if self.__thread is not None:
-            self.__thread.join()
-            if self.returncode is None and self.__returncode is not None:
-                self.returncode = self.__returncode
-            if self.__thread.exception:
-                raise self.__thread.exception
+        self._finalize_thread(timeout)
         if self.returncode is None:
             raise exceptions.PluginInternalError
         return self.returncode
