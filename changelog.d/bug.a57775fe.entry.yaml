@@ -1,5 +1,0 @@
-message: Raise callback exceptions on `communicate()` calls.
-pr_ids:
-- '93'
-timestamp: 1662136001
-type: bug

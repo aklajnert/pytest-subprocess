@@ -1,6 +1,0 @@
-message: The `register()` method returns an auxiliary object that will contain all matching `FakePopen` instances.
-pr_ids:
-- '80'
-- '86'
-timestamp: 1651409374
-type: feature

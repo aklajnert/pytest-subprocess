@@ -1,0 +1,35 @@
+entries:
+  bug:
+  - message: Raise callback exceptions on `communicate()` calls.
+    pr_ids:
+    - '93'
+    timestamp: 1662136001
+  feature:
+  - message: Add support for Python 3.11.
+    pr_ids:
+    - '87'
+    timestamp: 1659440672
+  - message: The `register()` method returns an auxiliary object that will contain
+      all matching `FakePopen` instances.
+    pr_ids:
+    - '80'
+    - '86'
+    timestamp: 1651409374
+  other:
+  - message: Fixed warnings in tests, treat warnings as errors.
+    pr_ids:
+    - '97'
+    timestamp: 1664691594
+  - message: Use `sys.executable` instead just `"python"` in tests while invoking
+      python subprocess.
+    pr_ids:
+    - '91'
+    timestamp: 1661605450
+  - message: Fix documentation build, add CI check for it.
+    pr_ids:
+    - '90'
+    timestamp: 1661604388
+previous_release: 1.4.1
+release_date: '2022-10-02'
+release_description: ''
+release_version: 1.4.2
