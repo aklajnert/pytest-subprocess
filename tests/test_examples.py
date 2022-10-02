@@ -14,7 +14,7 @@ def get_code_blocks(file_path):
     with file_path.open() as file_handle:
         content = file_handle.read()
 
-    code_blocks = publish_doctree(content).traverse(condition=is_code_block)
+    code_blocks = publish_doctree(content).findall(condition=is_code_block)
     return [block.astext() for block in code_blocks]
 
 
