@@ -1,6 +1,24 @@
 History
 =======
 
+unreleased (2022-10-02)  
+-----------------------
+
+Features  
+~~~~~~~~
+* `#87 <https://github.com/aklajnert/pytest-subprocess/pull/87>`_: Add support for Python 3.11.
+* `#80 <https://github.com/aklajnert/pytest-subprocess/pull/80>`_, `#86 <https://github.com/aklajnert/pytest-subprocess/pull/86>`_: The `register()` method returns an auxiliary object that will contain all matching `FakePopen` instances.
+
+Bug fixes  
+~~~~~~~~~
+* `#93 <https://github.com/aklajnert/pytest-subprocess/pull/93>`_: Raise callback exceptions on `communicate()` calls.
+
+Other changes  
+~~~~~~~~~~~~~
+* `#97 <https://github.com/aklajnert/pytest-subprocess/pull/97>`_: Fixed warnings in tests, treat warnings as errors.
+* `#91 <https://github.com/aklajnert/pytest-subprocess/pull/91>`_: Use `sys.executable` instead just `"python"` in tests while invoking python subprocess.
+* `#90 <https://github.com/aklajnert/pytest-subprocess/pull/90>`_: Fix documentation build, add CI check for it.
+
 1.4.1 (2022-02-09)  
 ------------------
 
