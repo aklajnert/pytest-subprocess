@@ -1,6 +1,0 @@
-message: Use `sys.executable` instead just `"python"` in tests while invoking python
-  subprocess.
-pr_ids:
-- '91'
-timestamp: 1661605450
-type: other
