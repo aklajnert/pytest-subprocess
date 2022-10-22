@@ -1,5 +1,6 @@
 import os
 import sys
+import shlex
 import threading
 from pathlib import Path
 from typing import Any as AnyType
@@ -38,8 +39,10 @@ class Command:
         command: "COMMAND",
     ):
         if isinstance(command, str):
-            command = tuple(command.split(" "))
-        if not isinstance(command, (list, tuple)):
+            command = tuple(shlex.split(command))
+        if isinstance(command, list):
+            command = tuple(command)
+        elif not isinstance(command, tuple):
             raise TypeError("Command can be only of type string, list or tuple.")
 
         self.command: Tuple[ARGUMENT, ...] = tuple(
@@ -54,7 +57,9 @@ class Command:
 
     def __eq__(self, other: AnyType) -> bool:
         if isinstance(other, str):
-            other = other.split(" ")
+            other = shlex.split(other)
+        elif isinstance(other, tuple):
+            other = list(other)
 
         norm_command = [
             os.fspath(c) if isinstance(c, os.PathLike) else c for c in self.command
