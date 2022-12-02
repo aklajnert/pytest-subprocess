@@ -4,13 +4,12 @@ import threading
 from pathlib import Path
 from typing import Any as AnyType
 from typing import Iterator
-from typing import List
 from typing import Optional
 from typing import Sequence
 from typing import Tuple
 from typing import Union
 
-ARGUMENT = Union[str, "Any"]
+ARGUMENT = Union[str, "Any", os.PathLike]
 
 
 class Thread(threading.Thread):
@@ -36,11 +35,12 @@ class Command:
     ):
         if isinstance(command, str):
             command = tuple(command.split(" "))
-        if isinstance(command, list):
-            command = tuple(command)
-        elif not isinstance(command, tuple):
+        if not isinstance(command, (list, tuple)):
             raise TypeError("Command can be only of type string, list or tuple.")
-        self.command: Tuple[Union[str, Any], ...] = command
+
+        self.command: Tuple[ARGUMENT, ...] = tuple(
+            os.fspath(c) if isinstance(c, os.PathLike) else c for c in command
+        )
 
         for (i, command_elem) in enumerate(self.command):
             if isinstance(command_elem, Any) and isinstance(
@@ -51,24 +51,26 @@ class Command:
     def __eq__(self, other: AnyType) -> bool:
         if isinstance(other, str):
             other = other.split(" ")
-        elif isinstance(other, tuple):
-            other = list(other)
 
-        if other == list(self.command):
+        norm_command = [
+            os.fspath(c) if isinstance(c, os.PathLike) else c for c in self.command
+        ]
+        norm_other = [os.fspath(c) if isinstance(c, os.PathLike) else c for c in other]
+
+        if norm_other == norm_command:
             # straightforward matching
             return True
 
-        other = list(other)
-        for (i, command_elem) in enumerate(self.command):
+        for (i, command_elem) in enumerate(norm_command):
             if isinstance(command_elem, Any):
                 next_command_elem = self._get_next_command_elem(i)
                 if next_command_elem is None:
-                    if not self._are_thresholds_ok(command_elem, len(other)):
+                    if not self._are_thresholds_ok(command_elem, len(norm_other)):
                         return False
                     return True
                 else:
                     next_matching_elem = self._get_next_matching_elem_index(
-                        other, next_command_elem
+                        norm_other, next_command_elem
                     )
                     if next_matching_elem is None:
                         return False
@@ -78,12 +80,12 @@ class Command:
                         ):
                             return False
 
-                        other = other[next_matching_elem:]
+                        norm_other = norm_other[next_matching_elem:]
             else:
-                if len(other) == 0 or other.pop(0) != command_elem:
+                if len(norm_other) == 0 or norm_other.pop(0) != command_elem:
                     return False
 
-        return len(other) == 0
+        return len(norm_other) == 0
 
     def __iter__(self) -> Iterator:
         return iter(self.command)
@@ -96,7 +98,7 @@ class Command:
             return False
         return True
 
-    def _get_next_command_elem(self, index: int) -> Optional[Union[str, "Any"]]:
+    def _get_next_command_elem(self, index: int) -> Optional[ARGUMENT]:
         try:
             return self.command[index + 1]
         except IndexError:
@@ -104,7 +106,7 @@ class Command:
 
     @staticmethod
     def _get_next_matching_elem_index(
-        other: List[Union[str, "Any"]], elem: Union[str, "Any"]
+        other: Sequence[ARGUMENT], elem: ARGUMENT
     ) -> Optional[int]:
         return next(
             (i for i, other_elem in enumerate(other) if elem == other_elem), None

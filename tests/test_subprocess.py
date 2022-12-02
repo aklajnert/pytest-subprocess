@@ -5,6 +5,7 @@ import signal
 import subprocess
 import sys
 import time
+from pathlib import Path
 
 import pytest
 
@@ -41,6 +42,16 @@ def test_completedprocess_args(fp, cmd):
 
     assert proc.args == cmd
     assert isinstance(proc.args, type(cmd))
+
+
+@pytest.mark.parametrize("p1,p2", [(Path, str), (str, Path), (Path, Path)])
+def test_completedprocess_args_path(fp, p1, p2):
+    fp.register([p1("cmd")])
+
+    proc = subprocess.run([p2("cmd")], check=True)
+
+    assert proc.args == [p2("cmd")]
+    assert isinstance(proc.args[0], p2)
 
 
 @pytest.mark.parametrize("cmd", [("cmd"), ["cmd"]])
