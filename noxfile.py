@@ -7,13 +7,13 @@ def tests(session):
     session.run("coverage", "run", "-m", "pytest", "-v", *session.posargs)
 
 
-@nox.session(reuse_venv=True)
+@nox.session
 def flake8(session):
     session.install("flake8")
     session.run("flake8", "pytest_subprocess", "tests", *session.posargs)
 
 
-@nox.session(reuse_venv=True)
+@nox.session
 def mypy(session):
     session.install("mypy")
     session.run("mypy", "--version")
@@ -27,14 +27,14 @@ def docs(session):
     session.run("sphinx-build", "-b", "html", "docs", "docs/_build", "-v", "-W")
 
 
-@nox.session(reuse_venv=True)
+@nox.session
 def create_dist(session):
     session.install("twine", "build")
     session.run("python", "-m", "build")
     session.run("twine", "check", "dist/*")
 
 
-@nox.session(reuse_venv=True)
+@nox.session
 def publish(session):
     """Publish to pypi. Run `nox publish -- prod` to publish to the official repo."""
     create_dist(session)
