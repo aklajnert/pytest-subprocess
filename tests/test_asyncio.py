@@ -324,16 +324,3 @@ async def test_popen_recorder(fp):
     assert recorder.call_count() == 2
 
     assert all(isinstance(instance, AsyncFakePopen) for instance in recorder.calls)
-
-
-@pytest.fixture(autouse=True)
-def skip_on_pypy():
-    """Async test for some reason crash on pypy 3.6 on Windows"""
-    if sys.platform == "win32" and sys.version.startswith("3.6"):
-        try:
-            import __pypy__
-
-            _ = __pypy__
-            pytest.skip()
-        except ImportError:
-            pass
