@@ -14,6 +14,10 @@ from pytest_subprocess.fake_popen import FakePopen
 
 PYTHON = sys.executable
 
+path_or_str = pytest.mark.parametrize(
+    "rtype,ptype", [(str, str), (Path, str), (str, Path), (Path, Path)]
+)
+
 
 def setup_fake_popen(monkeypatch):
     """Set the real Popen to a dummy function that just returns input arguments."""
@@ -44,14 +48,14 @@ def test_completedprocess_args(fp, cmd):
     assert isinstance(proc.args, type(cmd))
 
 
-@pytest.mark.parametrize("p1,p2", [(Path, str), (str, Path), (Path, Path)])
-def test_completedprocess_args_path(fp, p1, p2):
-    fp.register([p1("cmd")])
+@path_or_str
+def test_completedprocess_args_path(fp, rtype, ptype):
+    fp.register([rtype("cmd")])
 
-    proc = subprocess.run([p2("cmd")], check=True)
+    proc = subprocess.run([ptype("cmd")], check=True)
 
-    assert proc.args == [p2("cmd")]
-    assert isinstance(proc.args[0], p2)
+    assert proc.args == [ptype("cmd")]
+    assert isinstance(proc.args[0], ptype)
 
 
 @pytest.mark.parametrize("cmd", [("cmd"), ["cmd"]])
@@ -160,17 +164,18 @@ def test_context(fp, monkeypatch):
 
 
 @pytest.mark.parametrize("fake", [False, True])
-def test_basic_process(fp, fake):
+@path_or_str
+def test_basic_process(fp, fake, rtype, ptype):
     fp.allow_unregistered(not fake)
     if fake:
         fp.register(
-            [PYTHON, "example_script.py"],
+            [rtype(PYTHON), "example_script.py"],
             stdout=["Stdout line 1", "Stdout line 2"],
             stderr=None,
         )
 
     process = subprocess.Popen(
-        [PYTHON, "example_script.py"],
+        [ptype(PYTHON), "example_script.py"],
         cwd=os.path.dirname(__file__),
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
