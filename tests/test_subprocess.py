@@ -14,8 +14,18 @@ from pytest_subprocess.fake_popen import FakePopen
 
 PYTHON = sys.executable
 
+win_path_skip = pytest.mark.skipif(
+    sys.platform.startswith("win") and sys.version_info < (3, 8),
+    reason="Path in subprocess not supported before 3.8 on Windows",
+)
 path_or_str = pytest.mark.parametrize(
-    "rtype,ptype", [(str, str), (Path, str), (str, Path), (Path, Path)]
+    "rtype,ptype",
+    [
+        pytest.param(str, str, id="str"),
+        pytest.param(Path, str, marks=win_path_skip, id="path,str"),
+        pytest.param(str, Path, marks=win_path_skip, id="str,path"),
+        pytest.param(Path, Path, marks=win_path_skip, id="path"),
+    ],
 )
 
 
