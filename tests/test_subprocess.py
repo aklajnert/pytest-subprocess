@@ -913,6 +913,32 @@ def test_with_wildcards(fp):
     assert subprocess.check_call("cd ~/") == 0
 
 
+def test_with_program(fp, monkeypatch):
+    """Use Program() with real example"""
+    fp.keep_last_process(True)
+    fp.register((fp.program("ls"), fp.any()))
+
+    assert subprocess.check_call("ls -lah") == 0
+    assert subprocess.check_call(["/ls", "-lah", "/tmp"]) == 0
+    assert subprocess.check_call(["/usr/bin/ls"]) == 0
+
+    with monkeypatch.context():
+        monkeypatch.setattr(sys, "platform", "win32")
+        monkeypatch.setenv("PATHEXT", ".EXE")
+        assert subprocess.check_call("ls.EXE -lah") == 0
+        assert subprocess.check_call("ls.exe -lah") == 0
+
+    fp.register([fp.program("cp"), fp.any()])
+    with pytest.raises(fp.exceptions.ProcessNotRegisteredError):
+        subprocess.check_call(["other"])
+    assert subprocess.check_call("cp /source/dir /tmp/random-dir") == 0
+
+    fp.register([fp.program("cd")])
+    with pytest.raises(fp.exceptions.ProcessNotRegisteredError):
+        subprocess.check_call(["cq"])
+    assert subprocess.check_call("cd") == 0
+
+
 def test_call_count(fp):
     """Check if commands are registered and counted properly"""
     fp.keep_last_process(True)

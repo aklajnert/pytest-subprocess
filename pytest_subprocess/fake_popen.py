@@ -170,6 +170,7 @@ class FakePopen:
             self._write_to_buffer(self.__stdout, stdout)
         stderr = kwargs.get("stderr")
         if stderr == subprocess.STDOUT and self.__stderr:
+            assert self.stdout is not None
             self.stdout = self._prepare_buffer(self.__stderr, self.stdout)
         elif stderr == subprocess.PIPE:
             self.stderr = self._prepare_buffer(self.__stderr)

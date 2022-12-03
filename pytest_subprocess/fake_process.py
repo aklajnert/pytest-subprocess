@@ -3,6 +3,7 @@ from collections import defaultdict
 from collections import deque
 from typing import Any as AnyType
 from typing import Callable
+from typing import ClassVar
 from typing import DefaultDict
 from typing import Deque
 from typing import Dict
@@ -18,12 +19,14 @@ from .types import COMMAND
 from .types import OPTIONAL_TEXT_OR_ITERABLE
 from .utils import Any
 from .utils import Command
+from .utils import Program
 
 
 class FakeProcess:
     """Main class responsible for process operations"""
 
-    any: Type[Any] = Any
+    any: ClassVar[Type[Any]] = Any
+    program: ClassVar[Type[Program]] = Program
 
     def __init__(self) -> None:
         self.definitions: DefaultDict[Command, Deque[Union[Dict, bool]]] = defaultdict(

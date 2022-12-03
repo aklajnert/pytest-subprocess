@@ -305,6 +305,18 @@ if the subprocess command will be called with a string argument.
         assert subprocess.check_call(["my_app", "--help"]) == 0
 
 
+You can also specify just the command name, and have it match any command with
+the same name, regardless of the location. This is accomplished with
+``fake_subprocess.program("name")``.
+
+.. code-block:: python
+
+    def test_any_matching_program(fp):
+        # define a command that can come from anywhere
+        fp.register([fp.program("ls")])
+        assert subprocess.check_call("/bin/ls") == 0
+
+
 Check if process was called
 ---------------------------
 

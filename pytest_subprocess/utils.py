@@ -1,4 +1,7 @@
+import os
+import sys
 import threading
+from pathlib import Path
 from typing import Any as AnyType
 from typing import Iterator
 from typing import List
@@ -127,7 +130,34 @@ class Any:
         self.max: Optional[int] = max
 
     def __str__(self) -> str:
-        return f"Any (min={self.min}, max={self.max})"
+        return f"{self.__class__.__name__} (min={self.min}, max={self.max})"
 
     def __repr__(self) -> str:
         return str(self)
+
+
+class Program:
+    """Specifies the name of the final program to be executed."""
+
+    def __init__(self, program: str) -> None:
+        self.program: str = program
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self.program!r})"
+
+    def __eq__(self, other: AnyType) -> bool:
+        if isinstance(other, str):
+            if Path(other).name == self.program:
+                return True
+
+            if sys.platform.startswith("win"):
+                for ext in os.environ.get("PATHEXT", "").split(os.pathsep):
+                    if (
+                        Path(other).name.lower()
+                        == Path(self.program).with_suffix(ext).name.lower()
+                    ):
+                        return True
+        return False
+
+    def __hash__(self) -> int:
+        return hash(self.program)
