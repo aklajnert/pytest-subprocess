@@ -18,63 +18,33 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        platform: [ ubuntu-latest, macos-latest, windows-latest ]
-        python-version: [ 3.7, 3.8, 3.9, '3.10', '3.11' ]
+        platform: [ ubuntu-20.04, macos-latest, windows-latest ]
+        python-version: [ '3.6', '3.7', '3.8', '3.9', '3.10', '3.11', 'pypy3.8']
 
     steps:
-      - uses: actions/checkout@v2
-      - name: Setup python
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
-          architecture: x64
+      - uses: actions/checkout@v3
+
       - name: Setup Nox
-        uses: aklajnert/setup-nox@v2.0.1
+        uses: wntrblm/nox@2022.11.21
+        with:
+          python-versions: ${{ matrix.python-version }}
       - name: Run tests
-        if: matrix.python-version != '3.11-dev'
         run: |
-          nox -s tests-${{ matrix.python-version }} --error-on-missing-interpreters
-        env:
-          PLATFORM: ${{ matrix.platform }}
-      - name: Run tests 3.11
-        if: matrix.python-version == '3.11-dev'
-        run: |
-          nox -s tests-3.11 --error-on-missing-interpreters
+          nox -s tests-${{ matrix.python-version }}
         env:
           PLATFORM: ${{ matrix.platform }}
       - name: Update coverage
+        if: matrix.python-version != 'pypy3.8'
         uses: codecov/codecov-action@v1
 
-  test-pypy:
-    runs-on: ${{ matrix.platform }}
-    strategy:
-      max-parallel: 4
-      matrix:
-        platform: [ ubuntu-latest, macos-latest, windows-latest ]
-        python-version: [ pypy-3.7 ]
-
-    steps:
-      - uses: actions/checkout@v2
-      - name: Setup python
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
-          architecture: x64
-      - name: Setup Nox
-        uses: aklajnert/setup-nox@v2.0.1
-      - name: Run tests
-        run: |
-          nox -s tests-pypy3 --error-on-missing-interpreters
-        env:
-          PLATFORM: ${{ matrix.platform }}
 
   mypy:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Setup Nox
-        uses: aklajnert/setup-nox@v2.0.1
+        uses: wntrblm/nox@2022.11.21
       - name: Run mypy
         run: |
           nox -s mypy
@@ -82,9 +52,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Setup Nox
-        uses: aklajnert/setup-nox@v2.0.1
+        uses: wntrblm/nox@2022.11.21
       - name: Run flake8
         run: |
           nox -s flake8
@@ -92,9 +62,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Setup Nox
-        uses: aklajnert/setup-nox@v2.0.1
+        uses: wntrblm/nox@2022.11.21
       - name: Build docs
         run: |
           nox -s docs
