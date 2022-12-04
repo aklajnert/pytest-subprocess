@@ -1,4 +1,5 @@
 import os
+import shlex
 import sys
 import threading
 from pathlib import Path
@@ -35,7 +36,7 @@ class Command:
         command: Union[Sequence[ARGUMENT], str],
     ):
         if isinstance(command, str):
-            command = tuple(command.split(" "))
+            command = tuple(shlex.split(command))
         if isinstance(command, list):
             command = tuple(command)
         elif not isinstance(command, tuple):
@@ -50,7 +51,7 @@ class Command:
 
     def __eq__(self, other: AnyType) -> bool:
         if isinstance(other, str):
-            other = other.split(" ")
+            other = shlex.split(other)
         elif isinstance(other, tuple):
             other = list(other)
 
