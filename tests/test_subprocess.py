@@ -1,3 +1,4 @@
+import contextlib
 import getpass
 import os
 import platform
@@ -14,17 +15,13 @@ from pytest_subprocess.fake_popen import FakePopen
 
 PYTHON = sys.executable
 
-win_path_skip = pytest.mark.skipif(
-    sys.platform.startswith("win") and sys.version_info < (3, 8),
-    reason="Path in subprocess not supported before 3.8 on Windows",
-)
 path_or_str = pytest.mark.parametrize(
     "rtype,ptype",
     [
         pytest.param(str, str, id="str"),
-        pytest.param(Path, str, marks=win_path_skip, id="path,str"),
-        pytest.param(str, Path, marks=win_path_skip, id="str,path"),
-        pytest.param(Path, Path, marks=win_path_skip, id="path"),
+        pytest.param(Path, str, id="path,str"),
+        pytest.param(str, Path, id="str,path"),
+        pytest.param(Path, Path, id="path"),
     ],
 )
 
@@ -184,21 +181,38 @@ def test_basic_process(fp, fake, rtype, ptype):
             stderr=None,
         )
 
-    process = subprocess.Popen(
-        [ptype(PYTHON), "example_script.py"],
-        cwd=os.path.dirname(__file__),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-    out, err = process.communicate()
+    if (
+        not fake
+        and sys.platform.startswith("win")
+        and sys.version_info < (3, 8)
+        and ptype is Path
+    ):
+        condition = pytest.raises(TypeError)
 
-    assert process.poll() == 0
-    assert process.returncode == 0
-    assert process.pid > 0
+    else:
 
-    # splitlines is required to ignore differences between LF and CRLF
-    assert out.splitlines() == [b"Stdout line 1", b"Stdout line 2"]
-    assert err == b""
+        @contextlib.contextmanager
+        def null_context():
+            yield
+
+        condition = null_context()
+
+    with condition:
+        process = subprocess.Popen(
+            [ptype(PYTHON), "example_script.py"],
+            cwd=os.path.dirname(__file__),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        out, err = process.communicate()
+
+        assert process.poll() == 0
+        assert process.returncode == 0
+        assert process.pid > 0
+
+        # splitlines is required to ignore differences between LF and CRLF
+        assert out.splitlines() == [b"Stdout line 1", b"Stdout line 2"]
+        assert err == b""
 
 
 @pytest.mark.parametrize("fake", [False, True])
