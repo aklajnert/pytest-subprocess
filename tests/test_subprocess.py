@@ -59,10 +59,22 @@ def test_completedprocess_args(fp, cmd):
 def test_completedprocess_args_path(fp, rtype, ptype):
     fp.register([rtype("cmd")])
 
-    proc = subprocess.run([ptype("cmd")], check=True)
+    if sys.platform.startswith("win") and sys.version_info < (3, 8) and ptype is Path:
+        condition = pytest.raises(TypeError)
 
-    assert proc.args == [ptype("cmd")]
-    assert isinstance(proc.args[0], ptype)
+    else:
+
+        @contextlib.contextmanager
+        def null_context():
+            yield
+
+        condition = null_context()
+
+    with condition:
+        proc = subprocess.run([ptype("cmd")], check=True)
+
+        assert proc.args == [ptype("cmd")]
+        assert isinstance(proc.args[0], ptype)
 
 
 @pytest.mark.parametrize("cmd", [("cmd"), ["cmd"]])
@@ -181,12 +193,7 @@ def test_basic_process(fp, fake, rtype, ptype):
             stderr=None,
         )
 
-    if (
-        not fake
-        and sys.platform.startswith("win")
-        and sys.version_info < (3, 8)
-        and ptype is Path
-    ):
+    if sys.platform.startswith("win") and sys.version_info < (3, 8) and ptype is Path:
         condition = pytest.raises(TypeError)
 
     else:

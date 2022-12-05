@@ -25,6 +25,12 @@ from .types import OPTIONAL_TEXT_OR_ITERABLE
 from .utils import Thread
 
 
+if sys.platform.startswith("win") and sys.version_info < (3, 8):
+    COMMAND_SEQ = Sequence[Union[str, bytes]]
+else:
+    COMMAND_SEQ = Sequence[Union[str, bytes, "os.PathLike[str]", "os.PathLike[bytes]"]]
+
+
 class FakePopen:
     """Base class that fakes the real subprocess.Popen()"""
 
@@ -38,7 +44,7 @@ class FakePopen:
         self,
         command: Union[
             Union[bytes, str],
-            Sequence[Union[str, bytes, "os.PathLike[str]", "os.PathLike[bytes]"]],
+            COMMAND_SEQ,
         ],
         stdout: OPTIONAL_TEXT_OR_ITERABLE = None,
         stderr: OPTIONAL_TEXT_OR_ITERABLE = None,
@@ -48,8 +54,17 @@ class FakePopen:
         callback_kwargs: Optional[Dict[str, AnyType]] = None,
         signal_callback: Optional[Callable] = None,
         stdin_callable: Optional[Callable] = None,
-        **_: Dict[str, AnyType]
+        **_: Dict[str, AnyType],
     ) -> None:
+        if (
+            not isinstance(command, (str, bytes))
+            and sys.platform.startswith("win")
+            and sys.version_info < (3, 8)
+        ):
+            for arg in command:
+                if isinstance(arg, os.PathLike):
+                    msg = f"argument of type {arg.__class__.__name__!r} is not iterable"
+                    raise TypeError(msg)
         self.args = command
         self.__stdout: OPTIONAL_TEXT_OR_ITERABLE = stdout
         self.__stderr: OPTIONAL_TEXT_OR_ITERABLE = stderr

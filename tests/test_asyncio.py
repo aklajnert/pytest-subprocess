@@ -14,7 +14,7 @@ PYTHON = sys.executable
 @pytest.fixture(autouse=True)
 def event_loop(request):
     policy = asyncio.get_event_loop_policy()
-    if sys.platform == "win32":
+    if sys.platform.startswith("win"):
         if request.node.name.startswith("test_invalid_event_loop"):
             loop = asyncio.SelectorEventLoop()
         else:
