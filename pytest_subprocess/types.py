@@ -1,5 +1,6 @@
 import asyncio
 import io
+import os
 from typing import Sequence
 from typing import Union
 
@@ -14,5 +15,5 @@ OPTIONAL_TEXT_OR_ITERABLE = Union[
     Sequence[Union[str, bytes]],
 ]
 BUFFER = Union[io.BytesIO, io.StringIO, asyncio.StreamReader]
-ARGUMENT = Union[str, Any]
+ARGUMENT = Union[str, Any, os.PathLike]
 COMMAND = Union[Sequence[ARGUMENT], str, Command]

@@ -1,3 +1,4 @@
+import contextlib
 import getpass
 import os
 import platform
@@ -5,6 +6,7 @@ import signal
 import subprocess
 import sys
 import time
+from pathlib import Path
 
 import pytest
 
@@ -12,6 +14,16 @@ import pytest_subprocess
 from pytest_subprocess.fake_popen import FakePopen
 
 PYTHON = sys.executable
+
+path_or_str = pytest.mark.parametrize(
+    "rtype,ptype",
+    [
+        pytest.param(str, str, id="str"),
+        pytest.param(Path, str, id="path,str"),
+        pytest.param(str, Path, id="str,path"),
+        pytest.param(Path, Path, id="path"),
+    ],
+)
 
 
 def setup_fake_popen(monkeypatch):
@@ -41,6 +53,16 @@ def test_completedprocess_args(fp, cmd):
 
     assert proc.args == cmd
     assert isinstance(proc.args, type(cmd))
+
+
+@path_or_str
+def test_completedprocess_args_path(fp, rtype, ptype):
+    fp.register([rtype("cmd")])
+
+    proc = subprocess.run([ptype("cmd")], check=True)
+
+    assert proc.args == [ptype("cmd")]
+    assert isinstance(proc.args[0], ptype)
 
 
 @pytest.mark.parametrize("cmd", [("cmd"), ["cmd"]])
@@ -149,30 +171,48 @@ def test_context(fp, monkeypatch):
 
 
 @pytest.mark.parametrize("fake", [False, True])
-def test_basic_process(fp, fake):
+@path_or_str
+def test_basic_process(fp, fake, rtype, ptype):
     fp.allow_unregistered(not fake)
     if fake:
         fp.register(
-            [PYTHON, "example_script.py"],
+            [rtype(PYTHON), "example_script.py"],
             stdout=["Stdout line 1", "Stdout line 2"],
             stderr=None,
         )
 
-    process = subprocess.Popen(
-        [PYTHON, "example_script.py"],
-        cwd=os.path.dirname(__file__),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-    out, err = process.communicate()
+    if (
+        not fake
+        and sys.platform.startswith("win")
+        and sys.version_info < (3, 8)
+        and ptype is Path
+    ):
+        condition = pytest.raises(TypeError)
 
-    assert process.poll() == 0
-    assert process.returncode == 0
-    assert process.pid > 0
+    else:
 
-    # splitlines is required to ignore differences between LF and CRLF
-    assert out.splitlines() == [b"Stdout line 1", b"Stdout line 2"]
-    assert err == b""
+        @contextlib.contextmanager
+        def null_context():
+            yield
+
+        condition = null_context()
+
+    with condition:
+        process = subprocess.Popen(
+            [ptype(PYTHON), "example_script.py"],
+            cwd=os.path.dirname(__file__),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        out, err = process.communicate()
+
+        assert process.poll() == 0
+        assert process.returncode == 0
+        assert process.pid > 0
+
+        # splitlines is required to ignore differences between LF and CRLF
+        assert out.splitlines() == [b"Stdout line 1", b"Stdout line 2"]
+        assert err == b""
 
 
 @pytest.mark.parametrize("fake", [False, True])
