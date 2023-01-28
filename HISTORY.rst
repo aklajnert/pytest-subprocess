@@ -1,6 +1,18 @@
 History
 =======
 
+1.5.0 (2023-01-28)  
+------------------
+
+Features  
+~~~~~~~~
+* `#109 <https://github.com/aklajnert/pytest-subprocess/pull/109>`_: Match also `os.PathLike`.
+* `#105 <https://github.com/aklajnert/pytest-subprocess/pull/105>`_: Add program matcher.
+
+Other changes  
+~~~~~~~~~~~~~
+* `#110 <https://github.com/aklajnert/pytest-subprocess/pull/110>`_: Produce TypeError on Win Py<3.8 for Path args.
+
 1.4.2 (2022-10-02)  
 ------------------
 

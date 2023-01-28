@@ -1,0 +1,19 @@
+entries:
+  feature:
+  - message: Match also `os.PathLike`.
+    pr_ids:
+    - '109'
+    timestamp: 1674900284
+  - message: Add program matcher.
+    pr_ids:
+    - '105'
+    timestamp: 1674900223
+  other:
+  - message: Produce TypeError on Win Py<3.8 for Path args.
+    pr_ids:
+    - '110'
+    timestamp: 1674900321
+previous_release: 1.4.2
+release_date: '2023-01-28'
+release_description: ''
+release_version: 1.5.0
