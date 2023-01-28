@@ -2,7 +2,6 @@ import asyncio
 import os
 import sys
 import time
-from asyncio import get_running_loop, new_event_loop
 
 import anyio
 import pytest
@@ -19,11 +18,13 @@ def event_loop(request):
             loop = asyncio.SelectorEventLoop()
         else:
             loop = asyncio.ProactorEventLoop()
+    elif sys.version_info.minor < 7:
+        loop = asyncio.get_event_loop()
     else:
         try:
-            loop = get_running_loop()
+            loop = asyncio.get_running_loop()
         except RuntimeError:
-            loop = new_event_loop()
+            loop = asyncio.new_event_loop()
     yield loop
     loop.close()
 
