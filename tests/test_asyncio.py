@@ -13,14 +13,18 @@ PYTHON = sys.executable
 
 @pytest.fixture(autouse=True)
 def event_loop(request):
-    policy = asyncio.get_event_loop_policy()
     if sys.platform.startswith("win"):
         if request.node.name.startswith("test_invalid_event_loop"):
             loop = asyncio.SelectorEventLoop()
         else:
             loop = asyncio.ProactorEventLoop()
+    elif sys.version_info.minor < 7:
+        loop = asyncio.get_event_loop()
     else:
-        loop = policy.get_event_loop()
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
     yield loop
     loop.close()
 
