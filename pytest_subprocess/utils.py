@@ -42,7 +42,7 @@ class Command:
             os.fspath(c) if isinstance(c, os.PathLike) else c for c in command
         )
 
-        for (i, command_elem) in enumerate(self.command):
+        for i, command_elem in enumerate(self.command):
             if isinstance(command_elem, Any) and isinstance(
                 self._get_next_command_elem(i), Any
             ):
@@ -61,7 +61,7 @@ class Command:
             # straightforward matching
             return True
 
-        for (i, command_elem) in enumerate(norm_command):
+        for i, command_elem in enumerate(norm_command):
             if isinstance(command_elem, Any):
                 next_command_elem = self._get_next_command_elem(i)
                 if next_command_elem is None:
