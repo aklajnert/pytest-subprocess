@@ -33,10 +33,11 @@ must be something like
 
     import subprocess
 
+
     def my_function(*args):
-       ...
-       proc = subprocess.Popen(CMDLINE)
-       ...
+        ...
+        proc = subprocess.Popen(CMDLINE)
+        ...
 
 
 
