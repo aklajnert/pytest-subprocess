@@ -24,6 +24,22 @@ This will prevent a real subprocess execution.
         assert process.returncode == 0
 
 
+**Note:** because of the way the mechanism is implemented, in order for this
+plugin to be able to "fake" ``Popen()``, your code needs to use it directly
+from the ``subprocess`` module and not by direct import, i.e. your implementation
+must be something like
+
+.. code-block:: python
+
+    import subprocess
+
+    def my_function(*args):
+       ...
+       proc = subprocess.Popen(CMDLINE)
+       ...
+
+
+
 Table of contents
 -----------------
 
