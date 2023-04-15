@@ -330,6 +330,37 @@ async def test_popen_recorder(fp):
     assert all(isinstance(instance, AsyncFakePopen) for instance in recorder.calls)
 
 
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "callback",
+    [
+        pytest.param(None, id="no-callback"),
+        pytest.param(
+            lambda process: process,
+            id="noop-callback-causes-infinite-loop",
+            marks=pytest.mark.xfail(
+                strict=True, raises=asyncio.TimeoutError, reason="Github #120"
+            ),
+        ),
+    ],
+)
+async def test_asyncio_subprocess_using_callback(callback, fp):
+    async def my_async_func():
+        process = await asyncio.create_subprocess_exec(
+            "test",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        await process.wait()
+
+        # This reads forever when passing a callback to fp.register
+        # Add a timeout to abort test when condition occurs.
+        return await asyncio.wait_for(process.stdout.read(), timeout=1)
+
+    fp.register(["test"], stdout=b"fizz", callback=callback)
+    assert await my_async_func() == b"fizz"
+
+
 @pytest.fixture(autouse=True)
 def skip_on_pypy():
     """Async test for some reason crash on pypy 3.6 on Windows"""
