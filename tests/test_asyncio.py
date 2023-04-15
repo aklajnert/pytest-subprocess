@@ -338,7 +338,7 @@ async def test_popen_recorder(fp):
         pytest.param(
             lambda process: process,
             id="noop-callback-causes-infinite-loop",
-            marks=pytest.mark.xfail(strict=True, raises=asyncio.TimeoutError),
+            marks=pytest.mark.xfail(strict=True, raises=asyncio.TimeoutError, reason="Github #120"),
         ),
     ],
 )
