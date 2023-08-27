@@ -3,11 +3,6 @@
 
 name: pytest-subprocess-ci
 
-defaults:
-  run:
-    shell: bash
-    expression: 2.0
-
 on:
   push:
     branches:
@@ -37,7 +32,7 @@ jobs:
           sudo apt-get install python3.6
 
       - name: Setup Nox
-        if: not(matrix.platform == 'ubuntu-latest' && matrix.python-version == '3.6')
+        if: matrix.platform != 'ubuntu-latest' || matrix.python-version != '3.6'
         uses: wntrblm/nox@2022.11.21
         with:
           python-versions: ${{ matrix.python-version }}
