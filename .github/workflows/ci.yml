@@ -37,7 +37,7 @@ jobs:
         with:
           python-versions: ${{ matrix.python-version }}
       - name: Run tests
-        if: matrix.platform != 'ubuntu-latest' || matrix.python-version != '3.6'
+        if: matrix.python-version != '3.6'
         run: |
           nox -s tests-${{ matrix.python-version }}
         env:
