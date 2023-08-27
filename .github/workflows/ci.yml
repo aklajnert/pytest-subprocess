@@ -31,9 +31,12 @@ jobs:
           sudo apt-get update
           sudo apt-get install python3.6
 
+      - name: Setup Nox
+        uses: wntrblm/nox@2023.04.22
+        with:
+          python-versions: ${{ matrix.python-version }}
       - name: Run tests
         run: |
-          sudo apt -y install nox
           nox -s tests-${{ matrix.python-version }}
         env:
           PLATFORM: ${{ matrix.platform }}
@@ -48,7 +51,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Setup Nox
-        uses: wntrblm/nox@2022.11.21
+        uses: wntrblm/nox@2023.04.22
       - name: Run mypy
         run: |
           nox -s mypy
@@ -58,7 +61,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Setup Nox
-        uses: wntrblm/nox@2022.11.21
+        uses: wntrblm/nox@2023.04.22
       - name: Run flake8
         run: |
           nox -s flake8
@@ -68,7 +71,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Setup Nox
-        uses: wntrblm/nox@2022.11.21
+        uses: wntrblm/nox@2023.04.22
       - name: Build docs
         run: |
           nox -s docs
