@@ -32,11 +32,20 @@ jobs:
           sudo apt-get install python3.6
 
       - name: Setup Nox
+        if: matrix.platform != 'ubuntu-latest' || matrix.python-version != '3.6'
         uses: wntrblm/nox@2023.04.22
         with:
           python-versions: ${{ matrix.python-version }}
       - name: Run tests
+        if: matrix.platform != 'ubuntu-latest' || matrix.python-version != '3.6'
         run: |
+          nox -s tests-${{ matrix.python-version }}
+        env:
+          PLATFORM: ${{ matrix.platform }}
+      - name: Run tests ubuntu 3.6
+        if: matrix.platform == 'ubuntu-latest' && matrix.python-version == '3.6'
+        run: |
+          sudo apt-get install -y nox
           nox -s tests-${{ matrix.python-version }}
         env:
           PLATFORM: ${{ matrix.platform }}
