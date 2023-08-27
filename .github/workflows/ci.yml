@@ -3,6 +3,11 @@
 
 name: pytest-subprocess-ci
 
+defaults:
+  run:
+    shell: bash
+    expression: 2.0
+
 on:
   push:
     branches:
