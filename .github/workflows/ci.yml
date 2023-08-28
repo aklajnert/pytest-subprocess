@@ -18,18 +18,34 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        platform: [ ubuntu-20.04, macos-latest, windows-latest ]
+        platform: [ ubuntu-latest, macos-latest, windows-latest ]
         python-version: [ '3.6', '3.7', '3.8', '3.9', '3.10', '3.11', 'pypy3.8']
 
     steps:
       - uses: actions/checkout@v3
 
+      - name: Install Python 3.6
+        if: matrix.platform == 'ubuntu-latest' && matrix.python-version == '3.6'
+        run: |
+          sudo add-apt-repository ppa:deadsnakes/ppa
+          sudo apt-get update
+          sudo apt-get install python3.6
+
       - name: Setup Nox
-        uses: wntrblm/nox@2022.11.21
+        if: matrix.platform != 'ubuntu-latest' || matrix.python-version != '3.6'
+        uses: wntrblm/nox@2023.04.22
         with:
           python-versions: ${{ matrix.python-version }}
       - name: Run tests
+        if: matrix.python-version != '3.6'
         run: |
+          nox -s tests-${{ matrix.python-version }}
+        env:
+          PLATFORM: ${{ matrix.platform }}
+      - name: Run tests ubuntu 3.6
+        if: matrix.platform == 'ubuntu-latest' && matrix.python-version == '3.6'
+        run: |
+          sudo apt-get install -y nox
           nox -s tests-${{ matrix.python-version }}
         env:
           PLATFORM: ${{ matrix.platform }}
@@ -44,7 +60,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Setup Nox
-        uses: wntrblm/nox@2022.11.21
+        uses: wntrblm/nox@2023.04.22
       - name: Run mypy
         run: |
           nox -s mypy
@@ -54,7 +70,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Setup Nox
-        uses: wntrblm/nox@2022.11.21
+        uses: wntrblm/nox@2023.04.22
       - name: Run flake8
         run: |
           nox -s flake8
@@ -64,7 +80,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Setup Nox
-        uses: wntrblm/nox@2022.11.21
+        uses: wntrblm/nox@2023.04.22
       - name: Build docs
         run: |
           nox -s docs

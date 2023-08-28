@@ -40,6 +40,7 @@ setup(
             "Pygments>=2.0",
             "pytest-rerunfailures",
             "pytest-asyncio>=0.15.1",
+            "pytest-timeout",
             "anyio",
         ],
         "dev": ["nox", "changelogd"],
