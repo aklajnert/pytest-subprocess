@@ -4,7 +4,9 @@ import nox
 @nox.session(python=["3.6", "3.7", "3.8", "3.9", "3.10", "3.11", "pypy3.8"])
 def tests(session):
     session.install(".[test]")
-    session.run("coverage", "run", "-m", "pytest", "-v", *session.posargs)
+    session.run(
+        "coverage", "run", "-m", "pytest", "--timeout=300", "-v", *session.posargs
+    )
 
 
 @nox.session
