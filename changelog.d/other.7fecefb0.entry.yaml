@@ -1,0 +1,5 @@
+message: Add `tests` directory to sdist.
+pr_ids:
+- '127'
+timestamp: 1693138907
+type: other

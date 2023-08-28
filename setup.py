@@ -52,7 +52,7 @@ setup(
             "changelogd",
         ],
     },
-    packages=find_packages(exclude=["docs", "tests"]),
+    packages=find_packages(exclude=["docs"]),
     package_data={"pytest_subprocess": ["py.typed"]},
     classifiers=[
         "Development Status :: 5 - Production/Stable",
