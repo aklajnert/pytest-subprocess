@@ -51,7 +51,7 @@ jobs:
           PLATFORM: ${{ matrix.platform }}
       - name: Update coverage
         if: matrix.python-version != 'pypy3.8'
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v3
 
 
   mypy:
