@@ -4,7 +4,9 @@ import os
 from typing import Sequence
 from typing import Union
 
-from .utils import Any, Command, Program
+from .utils import Any
+from .utils import Command
+from .utils import Program
 
 
 OPTIONAL_TEXT = Union[str, bytes, None]
