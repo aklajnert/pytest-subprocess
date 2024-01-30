@@ -197,9 +197,11 @@ class ProcessDispatcher:
                 raise exceptions.ProcessNotRegisteredError(
                     "The process '%s' was not registered."
                     % (
-                        command
-                        if isinstance(command, str)
-                        else " ".join(str(item) for item in command),
+                        (
+                            command
+                            if isinstance(command, str)
+                            else " ".join(str(item) for item in command)
+                        ),
                     )
                 )
             else:
