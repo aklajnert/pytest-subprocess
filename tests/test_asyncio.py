@@ -10,6 +10,7 @@ from pytest_subprocess.fake_popen import AsyncFakePopen
 
 PYTHON = sys.executable
 
+
 @pytest.fixture()
 def event_loop_policy(request):
     if sys.platform.startswith("win"):
