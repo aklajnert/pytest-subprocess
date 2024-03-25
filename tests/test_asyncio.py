@@ -20,6 +20,13 @@ def event_loop_policy(request):
             return asyncio.WindowsProactorEventLoopPolicy()
     return asyncio.DefaultEventLoopPolicy()
 
+if sys.platform.startswith("win") and sys.version_info < (3, 8):
+    @pytest.fixture(autouse=True)
+    def event_loop(request, event_loop_policy):
+        loop = event_loop_policy.new_event_loop()
+        yield loop
+        loop.close()
+
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("mode", ["shell", "exec"])
