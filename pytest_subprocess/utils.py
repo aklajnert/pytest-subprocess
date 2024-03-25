@@ -7,7 +7,11 @@ from typing import Iterator
 from typing import Optional
 from typing import Sequence
 from typing import Tuple
+from typing import TYPE_CHECKING
 from typing import Union
+
+if TYPE_CHECKING:
+    from .types import COMMAND
 
 ARGUMENT = Union[str, "Any", os.PathLike]
 
@@ -31,7 +35,7 @@ class Command:
 
     def __init__(
         self,
-        command: Union[Sequence[ARGUMENT], str],
+        command: "COMMAND",
     ):
         if isinstance(command, str):
             command = tuple(command.split(" "))

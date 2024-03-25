@@ -11,22 +11,23 @@ from pytest_subprocess.fake_popen import AsyncFakePopen
 PYTHON = sys.executable
 
 
-@pytest.fixture(autouse=True)
-def event_loop(request):
+@pytest.fixture()
+def event_loop_policy(request):
     if sys.platform.startswith("win"):
         if request.node.name.startswith("test_invalid_event_loop"):
-            loop = asyncio.SelectorEventLoop()
+            return asyncio.WindowsSelectorEventLoopPolicy()
         else:
-            loop = asyncio.ProactorEventLoop()
-    elif sys.version_info.minor < 7:
-        loop = asyncio.get_event_loop()
-    else:
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-    yield loop
-    loop.close()
+            return asyncio.WindowsProactorEventLoopPolicy()
+    return asyncio.DefaultEventLoopPolicy()
+
+
+if sys.platform.startswith("win") and sys.version_info < (3, 8):
+
+    @pytest.fixture(autouse=True)
+    def event_loop(request, event_loop_policy):
+        loop = event_loop_policy.new_event_loop()
+        yield loop
+        loop.close()
 
 
 @pytest.mark.asyncio
