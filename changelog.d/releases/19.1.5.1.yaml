@@ -1,5 +1,11 @@
 entries:
   other:
+  - message: Changed pytest entrypoint to avoid error while loading plugin with `-p`
+      argument.
+    pr_ids:
+    - '160'
+    timestamp: 1721758426
+    type: other
   - message: Add `tests` directory to sdist.
     pr_ids:
     - '127'

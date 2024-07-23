@@ -6,6 +6,7 @@ History
 
 Other changes  
 ~~~~~~~~~~~~~
+* `#160 <https://github.com/aklajnert/pytest-subprocess/pull/160>`_: Changed pytest entrypoint to avoid error while loading plugin with `-p` argument.
 * `#127 <https://github.com/aklajnert/pytest-subprocess/pull/127>`_: Add `tests` directory to sdist.
 
 1.5.0 (2023-01-28)  
