@@ -74,7 +74,7 @@ setup(
     ],
     entry_points={
         "pytest11": [
-            "subprocess = pytest_subprocess.fixtures",
+            "pytest-subprocess = pytest_subprocess.fixtures",
         ],
     },
 )
