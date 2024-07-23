@@ -1,6 +1,13 @@
 History
 =======
 
+1.5.1 (2024-07-23)  
+------------------
+
+Other changes  
+~~~~~~~~~~~~~
+* `#127 <https://github.com/aklajnert/pytest-subprocess/pull/127>`_: Add `tests` directory to sdist.
+
 1.5.0 (2023-01-28)  
 ------------------
 

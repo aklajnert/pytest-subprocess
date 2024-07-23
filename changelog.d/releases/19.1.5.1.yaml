@@ -1,0 +1,10 @@
+entries:
+  other:
+  - message: Add `tests` directory to sdist.
+    pr_ids:
+    - '127'
+    timestamp: 1693138907
+previous_release: 1.5.0
+release_date: '2024-07-23'
+release_description: ''
+release_version: 1.5.1
