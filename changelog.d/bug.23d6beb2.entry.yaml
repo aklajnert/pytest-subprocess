@@ -1,6 +1,0 @@
-message: Include tests (and docs) and sdist correctly, and stop installing them to
-  site-packages.
-pr_ids:
-- '162'
-timestamp: 1721819311
-type: bug

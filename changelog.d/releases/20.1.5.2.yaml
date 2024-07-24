@@ -1,0 +1,16 @@
+entries:
+  bug:
+  - message: Include tests (and docs) and sdist correctly, and stop installing them
+      to site-packages.
+    pr_ids:
+    - '162'
+    timestamp: 1721819311
+  other:
+  - message: Add support for Python 3.12.
+    pr_ids:
+    - '163'
+    timestamp: 1721819580
+previous_release: 1.5.1
+release_date: '2024-07-24'
+release_description: ''
+release_version: 1.5.2

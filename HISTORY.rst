@@ -1,13 +1,24 @@
 History
 =======
 
+1.5.2 (2024-07-24)  
+------------------
+
+Bug fixes  
+~~~~~~~~~
+* `#162 <https://github.com/aklajnert/pytest-subprocess/pull/162>`_: Include tests (and docs) and sdist correctly, and stop installing them to site-packages.
+
+Other changes  
+~~~~~~~~~~~~~
+* `#163 <https://github.com/aklajnert/pytest-subprocess/pull/163>`_: Add support for Python 3.12.
+
 1.5.1 (2024-07-23)  
 ------------------
 
 Other changes  
 ~~~~~~~~~~~~~
 * `#160 <https://github.com/aklajnert/pytest-subprocess/pull/160>`_: Changed pytest entrypoint to avoid error while loading plugin with `-p` argument.
-* `#127 <https://github.com/aklajnert/pytest-subprocess/pull/127>`_: Add `tests` directory to sdist.
+* `#128 <https://github.com/aklajnert/pytest-subprocess/pull/128>`_: Add `tests` directory to sdist.
 
 1.5.0 (2023-01-28)  
 ------------------
