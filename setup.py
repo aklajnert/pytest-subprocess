@@ -29,7 +29,6 @@ setup(
     },
     description="A plugin to fake subprocess for pytest",
     long_description=read("README.rst") + "\n" + read("HISTORY.rst"),
-    py_modules=["pytest_subprocess"],
     python_requires=">=3.6",
     install_requires=requirements,
     extras_require={
