@@ -16,7 +16,7 @@ requirements = ["pytest>=4.0.0"]
 
 setup(
     name="pytest-subprocess",
-    version="1.5.2",
+    version="1.5.1",
     author="Andrzej Klajnert",
     author_email="python@aklajnert.pl",
     maintainer="Andrzej Klajnert",
@@ -66,7 +66,6 @@ setup(
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
-        "Programming Language :: Python :: 3.12",
         "Programming Language :: Python :: Implementation :: CPython",
         "Programming Language :: Python :: Implementation :: PyPy",
         "Operating System :: OS Independent",
