@@ -29,7 +29,6 @@ setup(
     },
     description="A plugin to fake subprocess for pytest",
     long_description=read("README.rst") + "\n" + read("HISTORY.rst"),
-    py_modules=["pytest_subprocess"],
     python_requires=">=3.6",
     install_requires=requirements,
     extras_require={
@@ -52,7 +51,7 @@ setup(
             "changelogd",
         ],
     },
-    packages=find_packages(exclude=["docs"]),
+    packages=find_packages(exclude=["docs", "tests"]),
     package_data={"pytest_subprocess": ["py.typed"]},
     classifiers=[
         "Development Status :: 5 - Production/Stable",
