@@ -395,4 +395,6 @@ class AsyncFakePopen(FakePopen):
             await asyncio.wait_for(self._run_callback_in_executor(), timeout=timeout)
         else:
             await self._run_callback_in_executor()
-        self._finish_process()
+        if self.returncode is None:
+            self.returncode = self._returncode
+        self._finalize_streams()
