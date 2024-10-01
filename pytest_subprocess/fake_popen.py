@@ -1,4 +1,5 @@
 """FakePopen class declaration"""
+
 import asyncio
 import collections.abc
 import io
