@@ -336,8 +336,7 @@ class AsyncFakePopen(FakePopen):
 
             # feed eof one more time as streams were opened
             self._finalize_streams()
-        await self._run_callback(timeout)
-
+        await self._finalize(timeout)
         return (
             await self.stdout.read() if self.stdout else None,
             await self.stderr.read() if self.stderr else None,
@@ -347,7 +346,7 @@ class AsyncFakePopen(FakePopen):
         if timeout and self._wait_timeout and timeout < self._wait_timeout:
             self._wait_timeout -= timeout
             raise subprocess.TimeoutExpired(self.args, timeout)
-        await self._run_callback(timeout)
+        await self._finalize(timeout)
         if self.returncode is None:
             raise exceptions.PluginInternalError
         return self.returncode
@@ -370,7 +369,10 @@ class AsyncFakePopen(FakePopen):
         return None
 
     def run_thread(self) -> None:
-        """Check if async process needs to be finished."""
+        """Async impl should not contain any thread based implementation"""
+
+    def evaluate(self) -> None:
+        """Check if process needs to be finished."""
         if self._wait_timeout is None and self._callback is None:
             self._finish_process()
 
@@ -385,8 +387,8 @@ class AsyncFakePopen(FakePopen):
             elif self._wait_timeout is not None:
                 await loop.run_in_executor(pool, self._wait, self._wait_timeout)
 
-    async def _run_callback(self, timeout: Optional[float] = None) -> None:
-        """Run the user-defined callback or wait."""
+    async def _finalize(self, timeout: Optional[float] = None) -> None:
+        """Run the user-defined callback or wait. Finish process"""
         if self.returncode is not None:
             return
         if timeout is not None:
