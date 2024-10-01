@@ -9,8 +9,9 @@ import signal
 import subprocess
 import sys
 import time
+from asyncio import Task
 from functools import partial
-from typing import Any as AnyType
+from typing import Any as AnyType, Awaitable
 from typing import Callable
 from typing import Dict
 from typing import IO
@@ -325,6 +326,12 @@ class AsyncFakePopen(FakePopen):
     stdout: Optional[asyncio.StreamReader]
     stderr: Optional[asyncio.StreamReader]
 
+    def __init__(
+        self, *args: Tuple[AnyType, ...], **kwargs: Dict[str, AnyType]
+    ) -> None:
+        super().__init__(*args, **kwargs)
+        self.__task: Optional[Task[AnyType]] = None
+
     async def communicate(  # type: ignore
         self, input: OPTIONAL_TEXT = None, timeout: Optional[float] = None
     ) -> Tuple[AnyType, AnyType]:
@@ -336,7 +343,7 @@ class AsyncFakePopen(FakePopen):
 
             # feed eof one more time as streams were opened
             self._finalize_streams()
-        await self._run_callback(timeout)
+        await self._finalize_task(timeout)
 
         return (
             await self.stdout.read() if self.stdout else None,
@@ -347,7 +354,7 @@ class AsyncFakePopen(FakePopen):
         if timeout and self._wait_timeout and timeout < self._wait_timeout:
             self._wait_timeout -= timeout
             raise subprocess.TimeoutExpired(self.args, timeout)
-        await self._run_callback(timeout)
+        await self._finalize_task(timeout)
         if self.returncode is None:
             raise exceptions.PluginInternalError
         return self.returncode
@@ -370,9 +377,10 @@ class AsyncFakePopen(FakePopen):
         return None
 
     def run_thread(self) -> None:
-        """Check if async process needs to be finished."""
+        """Run the user-defined callback or wait in a coroutine."""
         if self._wait_timeout is None and self._callback is None:
             self._finish_process()
+        self.__task = asyncio.create_task(self._run_callback_in_executor())
 
     async def _run_callback_in_executor(self) -> None:
         """Run in executor the user-defined callback or wait."""
@@ -385,12 +393,11 @@ class AsyncFakePopen(FakePopen):
             elif self._wait_timeout is not None:
                 await loop.run_in_executor(pool, self._wait, self._wait_timeout)
 
-    async def _run_callback(self, timeout: Optional[float] = None) -> None:
-        """Run the user-defined callback or wait."""
-        if self.returncode is not None:
+    async def _finalize_task(self, timeout: Optional[float]) -> None:
+        if self.__task is None:
             return
         if timeout is not None:
-            await asyncio.wait_for(self._run_callback_in_executor(), timeout=timeout)
+            await asyncio.wait_for(self.__task, timeout=timeout)
         else:
-            await self._run_callback_in_executor()
+            await self.__task
         self._finish_process()
