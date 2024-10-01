@@ -338,10 +338,7 @@ async def test_popen_recorder(fp):
         pytest.param(None, id="no-callback"),
         pytest.param(
             lambda process: process,
-            id="noop-callback-causes-infinite-loop",
-            marks=pytest.mark.xfail(
-                strict=True, raises=asyncio.TimeoutError, reason="Github #120"
-            ),
+            id="with-callback",
         ),
     ],
 )
@@ -353,12 +350,35 @@ async def test_asyncio_subprocess_using_callback(callback, fp):
             stderr=asyncio.subprocess.PIPE,
         )
         await process.wait()
-
-        # This reads forever when passing a callback to fp.register
-        # Add a timeout to abort test when condition occurs.
-        return await asyncio.wait_for(process.stdout.read(), timeout=1)
+        return await process.stdout.read()
 
     fp.register(["test"], stdout=b"fizz", callback=callback)
+    assert await my_async_func() == b"fizz"
+
+
+@pytest.mark.asyncio
+async def test_asyncio_subprocess_using_communicate_with_callback_kwargs(fp):
+    expected_some_value = 2
+
+    def cbk(fake_obj, some_value=None):
+        assert expected_some_value == some_value
+        return fake_obj
+
+    async def my_async_func():
+        process = await asyncio.create_subprocess_exec(
+            "test",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        out, _ = await process.communicate()
+        return out
+
+    fp.register(
+        ["test"],
+        stdout=b"fizz",
+        callback=cbk,
+        callback_kwargs={"some_value": expected_some_value},
+    )
     assert await my_async_func() == b"fizz"
 
 

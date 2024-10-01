@@ -2,6 +2,7 @@
 
 import asyncio
 import collections.abc
+import concurrent.futures
 import io
 import os
 import signal
@@ -69,14 +70,14 @@ class FakePopen:
         self.args = command
         self.__stdout: OPTIONAL_TEXT_OR_ITERABLE = stdout
         self.__stderr: OPTIONAL_TEXT_OR_ITERABLE = stderr
-        self.__returncode: Optional[int] = returncode
-        self.__wait: Optional[float] = wait
         self.__thread: Optional[Thread] = None
-        self.__callback: Optional[Optional[Callable]] = callback
-        self.__callback_kwargs: Optional[Dict[str, AnyType]] = callback_kwargs
         self.__signal_callback: Optional[Callable] = signal_callback
         self.__stdin_callable: Optional[Optional[Callable]] = stdin_callable
         self._signals: List[int] = []
+        self._returncode: Optional[int] = returncode
+        self._wait_timeout: Optional[float] = wait
+        self._callback: Optional[Optional[Callable]] = callback
+        self._callback_kwargs: Optional[Dict[str, AnyType]] = callback_kwargs
 
     def __enter__(self) -> "FakePopen":
         return self
@@ -116,8 +117,8 @@ class FakePopen:
         if self.__thread is None:
             return
         self.__thread.join(timeout)
-        if self.returncode is None and self.__returncode is not None:
-            self.returncode = self.__returncode
+        if self.returncode is None and self._returncode is not None:
+            self.returncode = self._returncode
         if self.__thread.exception:
             raise self.__thread.exception
 
@@ -133,8 +134,8 @@ class FakePopen:
         return self.returncode
 
     def wait(self, timeout: Optional[float] = None) -> int:
-        if timeout and self.__wait and timeout < self.__wait:
-            self.__wait -= timeout
+        if timeout and self._wait_timeout and timeout < self._wait_timeout:
+            self._wait_timeout -= timeout
             raise subprocess.TimeoutExpired(self.args, timeout)
         self._finalize_thread(timeout)
         if self.returncode is None:
@@ -285,21 +286,21 @@ class FakePopen:
 
     def run_thread(self) -> None:
         """Run the user-defined callback or wait in a thread."""
-        if self.__wait is None and self.__callback is None:
+        if self._wait_timeout is None and self._callback is None:
             self._finish_process()
         else:
-            if self.__callback:
+            if self._callback:
                 self.__thread = Thread(
-                    target=self.__callback,
+                    target=self._callback,
                     args=(self,),
-                    kwargs=self.__callback_kwargs or {},
+                    kwargs=self._callback_kwargs or {},
                 )
             else:
-                self.__thread = Thread(target=self._wait, args=(self.__wait,))
+                self.__thread = Thread(target=self._wait, args=(self._wait_timeout,))
             self.__thread.start()
 
     def _finish_process(self) -> None:
-        self.returncode = self.__returncode
+        self.returncode = self._returncode
 
         self._finalize_streams()
 
@@ -335,8 +336,7 @@ class AsyncFakePopen(FakePopen):
 
             # feed eof one more time as streams were opened
             self._finalize_streams()
-
-        self._finalize_thread(timeout)
+        await self._run_callback(timeout)
 
         return (
             await self.stdout.read() if self.stdout else None,
@@ -344,7 +344,13 @@ class AsyncFakePopen(FakePopen):
         )
 
     async def wait(self, timeout: Optional[float] = None) -> int:  # type: ignore
-        return super().wait(timeout)
+        if timeout and self._wait_timeout and timeout < self._wait_timeout:
+            self._wait_timeout -= timeout
+            raise subprocess.TimeoutExpired(self.args, timeout)
+        await self._run_callback(timeout)
+        if self.returncode is None:
+            raise exceptions.PluginInternalError
+        return self.returncode
 
     def _get_empty_buffer(self, _: bool) -> asyncio.StreamReader:
         return asyncio.StreamReader()
@@ -362,3 +368,29 @@ class AsyncFakePopen(FakePopen):
             fresh_stream.feed_data(data)
             return fresh_stream
         return None
+
+    def run_thread(self) -> None:
+        """Check if async process needs to be finished."""
+        if self._wait_timeout is None and self._callback is None:
+            self._finish_process()
+
+    async def _run_callback_in_executor(self) -> None:
+        """Run in executor the user-defined callback or wait."""
+        loop = asyncio.get_running_loop()
+        with concurrent.futures.ThreadPoolExecutor() as pool:
+            if self._callback:
+                kwargs = self._callback_kwargs or {}
+                cbk = partial(self._callback, **kwargs)
+                await loop.run_in_executor(pool, cbk, self)
+            elif self._wait_timeout is not None:
+                await loop.run_in_executor(pool, self._wait, self._wait_timeout)
+
+    async def _run_callback(self, timeout: Optional[float] = None) -> None:
+        """Run the user-defined callback or wait."""
+        if self.returncode is not None:
+            return
+        if timeout is not None:
+            await asyncio.wait_for(self._run_callback_in_executor(), timeout=timeout)
+        else:
+            await self._run_callback_in_executor()
+        self._finish_process()
