@@ -11,7 +11,8 @@ import sys
 import time
 from asyncio import Task
 from functools import partial
-from typing import Any as AnyType, Awaitable
+from typing import Any as AnyType
+from typing import Awaitable
 from typing import Callable
 from typing import Dict
 from typing import IO
