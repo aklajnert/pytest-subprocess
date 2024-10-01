@@ -1,4 +1,5 @@
 """Additional target for mypy type checking"""
+
 from pytest_subprocess import FakeProcess
 
 
