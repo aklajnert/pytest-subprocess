@@ -1232,3 +1232,25 @@ def test_process_recorder(fp):
     recorder.clear()
 
     assert not recorder.was_called()
+
+
+def test_fake_popen_is_typed(fp):
+    fp.allow_unregistered(True)
+    fp.register(
+        [PYTHON, "example_script.py"],
+        stdout=b"Stdout line 1\r\nStdout line 2\r\n",
+    )
+
+    def spawn_process() -> subprocess.Popen[str]:
+        import subprocess
+
+        return subprocess.Popen(
+            (PYTHON, "example_script.py"),
+            universal_newlines=True,
+            stdout=subprocess.PIPE,
+        )
+
+    proc = spawn_process()
+    proc.wait()
+
+    assert proc.stdout.read() == "Stdout line 1\nStdout line 2\n"
