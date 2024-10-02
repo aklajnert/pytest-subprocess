@@ -1,0 +1,6 @@
+message: Get rid of using thread in AsyncFakePopen as it causes thread.join() to hang
+  indefinitely.
+pr_ids:
+- '169'
+timestamp: 1727847419
+type: bug
