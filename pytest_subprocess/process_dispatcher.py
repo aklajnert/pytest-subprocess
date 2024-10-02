@@ -162,7 +162,7 @@ class ProcessDispatcher:
         result = cls._prepare_instance(AsyncFakePopen, command, kwargs, process)
         if not isinstance(result, AsyncFakePopen):
             raise exceptions.PluginInternalError
-        result.run_thread()
+        result.evaluate()
         return result
 
     @classmethod
