@@ -1,0 +1,6 @@
+message: Wrapped ProcessDispatcher.dispatch into FakePopenWrapper as it was causing
+  TypeError when Popen is used as a type.
+pr_ids:
+- '170'
+timestamp: 1727883418
+type: bug
