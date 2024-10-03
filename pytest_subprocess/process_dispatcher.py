@@ -8,10 +8,12 @@ from collections import deque
 from copy import deepcopy
 from functools import partial
 from typing import Any as AnyType
+from typing import AnyStr
 from typing import Awaitable
 from typing import Callable
 from typing import Deque
 from typing import Dict
+from typing import Generic
 from typing import List
 from typing import Optional
 from typing import Tuple
@@ -29,6 +31,9 @@ if typing.TYPE_CHECKING:
     from .fake_process import FakeProcess
 
 
+__all__ = ["ProcessDispatcher"]
+
+
 class ProcessDispatcher:
     """Main class for handling processes."""
 
@@ -44,7 +49,7 @@ class ProcessDispatcher:
     def register(cls, process: "FakeProcess") -> None:
         if not cls.process_list:
             cls.built_in_popen = subprocess.Popen
-            subprocess.Popen = cls.dispatch  # type: ignore
+            subprocess.Popen = FakePopenWrapper  # type: ignore
 
             cls.built_in_async_subprocess = asyncio.subprocess
             asyncio.create_subprocess_shell = cls.async_shell  # type: ignore
@@ -238,3 +243,10 @@ class ProcessDispatcher:
             if processes and isinstance(processes, deque):
                 return command_instance, processes, process_instance
         return None, None, None
+
+
+class FakePopenWrapper(Generic[AnyStr]):
+    def __new__(  # type: ignore
+        cls, command: COMMAND, **kwargs: Optional[Dict]
+    ) -> FakePopen:
+        return ProcessDispatcher.dispatch(command, **kwargs)  # type: ignore
