@@ -1,6 +1,6 @@
 import os
-import sys
 import shlex
+import sys
 import threading
 from pathlib import Path
 from typing import Any as AnyType
