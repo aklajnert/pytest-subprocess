@@ -68,16 +68,22 @@ class FakePopen:
                     msg = f"argument of type {arg.__class__.__name__!r} is not iterable"
                     raise TypeError(msg)
         self.args = command
+        self.__env: Optional[Dict[str, AnyType]] = None
         self.__stdout: OPTIONAL_TEXT_OR_ITERABLE = stdout
         self.__stderr: OPTIONAL_TEXT_OR_ITERABLE = stderr
         self.__thread: Optional[Thread] = None
         self.__signal_callback: Optional[Callable] = signal_callback
         self.__stdin_callable: Optional[Optional[Callable]] = stdin_callable
+        self.__universal_newlines: Optional[Dict[AnyType, AnyType]] = None
         self._signals: List[int] = []
         self._returncode: Optional[int] = returncode
         self._wait_timeout: Optional[float] = wait
         self._callback: Optional[Optional[Callable]] = callback
         self._callback_kwargs: Optional[Dict[str, AnyType]] = callback_kwargs
+
+    @property
+    def env(self) -> Optional[Dict[str, AnyType]]:
+        return self.__env
 
     def __enter__(self) -> "FakePopen":
         return self
@@ -159,6 +165,7 @@ class FakePopen:
     def configure(self, **kwargs: Optional[Dict]) -> None:
         """Setup the FakePopen instance based on a real Popen arguments."""
         self.__universal_newlines = kwargs.get("universal_newlines", None)
+        self.__env = kwargs.get("env")
         text = kwargs.get("text", None)
         encoding = kwargs.get("encoding", None)
         errors = kwargs.get("errors", None)

@@ -1234,6 +1234,20 @@ def test_process_recorder(fp):
     assert not recorder.was_called()
 
 
+def test_process_recorder_env(fp):
+    fp.keep_last_process(True)
+    recorder = fp.register(["test_script", fp.any()])
+
+    subprocess.call(("test_script", "arg1"))
+    subprocess.run(("test_script", "arg2"), env={"foo": "bar"})
+    subprocess.Popen(["test_script", "arg3"], env={"foo": "bar1"})
+
+    assert recorder.call_count() == 3
+    assert recorder.calls[0].env is None
+    assert recorder.calls[1].env.get("foo") == "bar"
+    assert recorder.calls[2].env.get("foo") == "bar1"
+
+
 def test_fake_popen_is_typed(fp):
     fp.allow_unregistered(True)
     fp.register(

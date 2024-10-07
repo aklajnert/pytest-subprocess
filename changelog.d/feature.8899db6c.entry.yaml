@@ -1,0 +1,5 @@
+message: Add env property to FakePopen.
+pr_ids:
+- '171'
+timestamp: 1728114595
+type: feature

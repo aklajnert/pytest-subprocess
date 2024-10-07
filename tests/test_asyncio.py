@@ -382,6 +382,20 @@ async def test_asyncio_subprocess_using_communicate_with_callback_kwargs(fp):
     assert await my_async_func() == b"fizz"
 
 
+@pytest.mark.asyncio
+async def test_process_recorder_env(fp):
+    fp.keep_last_process(True)
+    recorder = fp.register(["test_script", fp.any()])
+    await asyncio.create_subprocess_exec(
+        "test_script",
+        "arg1",
+        env={"foo": "bar"},
+    )
+
+    assert recorder.call_count() == 1
+    assert recorder.calls[0].env.get("foo") == "bar"
+
+
 @pytest.fixture(autouse=True)
 def skip_on_pypy():
     """Async test for some reason crash on pypy 3.6 on Windows"""
