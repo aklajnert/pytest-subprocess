@@ -1234,18 +1234,30 @@ def test_process_recorder(fp):
     assert not recorder.was_called()
 
 
-def test_process_recorder_env(fp):
+def test_process_recorder_args(fp):
     fp.keep_last_process(True)
     recorder = fp.register(["test_script", fp.any()])
 
     subprocess.call(("test_script", "arg1"))
-    subprocess.run(("test_script", "arg2"), env={"foo": "bar"})
-    subprocess.Popen(["test_script", "arg3"], env={"foo": "bar1"})
+    subprocess.run(("test_script", "arg2"), env={"foo": "bar"}, cwd="/home/user")
+    subprocess.Popen(
+        ["test_script", "arg3"],
+        env={"foo": "bar1"},
+        executable="test_script",
+        shell=True,
+    )
 
     assert recorder.call_count() == 3
-    assert recorder.calls[0].env is None
-    assert recorder.calls[1].env.get("foo") == "bar"
-    assert recorder.calls[2].env.get("foo") == "bar1"
+    assert recorder.calls[0].args == ("test_script", "arg1")
+    assert recorder.calls[0].kwargs == {}
+    assert recorder.calls[1].args == ("test_script", "arg2")
+    assert recorder.calls[1].kwargs == {"cwd": "/home/user", "env": {"foo": "bar"}}
+    assert recorder.calls[2].args == ["test_script", "arg3"]
+    assert recorder.calls[2].kwargs == {
+        "env": {"foo": "bar1"},
+        "executable": "test_script",
+        "shell": True,
+    }
 
 
 def test_fake_popen_is_typed(fp):
