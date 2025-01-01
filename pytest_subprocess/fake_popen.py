@@ -3,6 +3,7 @@
 import asyncio
 import collections.abc
 import concurrent.futures
+import copy
 import io
 import os
 import signal
@@ -68,7 +69,7 @@ class FakePopen:
                     msg = f"argument of type {arg.__class__.__name__!r} is not iterable"
                     raise TypeError(msg)
         self.args = command
-        self.__env: Optional[Dict[str, AnyType]] = None
+        self.__kwargs: Optional[Dict[str, AnyType]] = None
         self.__stdout: OPTIONAL_TEXT_OR_ITERABLE = stdout
         self.__stderr: OPTIONAL_TEXT_OR_ITERABLE = stderr
         self.__thread: Optional[Thread] = None
@@ -82,8 +83,8 @@ class FakePopen:
         self._callback_kwargs: Optional[Dict[str, AnyType]] = callback_kwargs
 
     @property
-    def env(self) -> Optional[Dict[str, AnyType]]:
-        return self.__env
+    def kwargs(self) -> Optional[Dict[str, AnyType]]:
+        return self.__kwargs
 
     def __enter__(self) -> "FakePopen":
         return self
@@ -164,8 +165,8 @@ class FakePopen:
 
     def configure(self, **kwargs: Optional[Dict]) -> None:
         """Setup the FakePopen instance based on a real Popen arguments."""
+        self.__kwargs = self.safe_copy(kwargs)
         self.__universal_newlines = kwargs.get("universal_newlines", None)
-        self.__env = kwargs.get("env")
         text = kwargs.get("text", None)
         encoding = kwargs.get("encoding", None)
         errors = kwargs.get("errors", None)
@@ -200,6 +201,16 @@ class FakePopen:
             self.stderr = self._prepare_buffer(self.__stderr)
         elif isinstance(stderr, (io.BufferedWriter, io.TextIOWrapper)):
             self._write_to_buffer(self.__stderr, stderr)
+
+    @staticmethod
+    def safe_copy(kwargs: Dict[str, AnyType]) -> Dict[str, AnyType]:
+        """
+        Deepcopy can fail if the value is not serializable, fallback to shallow copy.
+        """
+        try:
+            return copy.deepcopy(kwargs)
+        except TypeError:
+            return dict(**kwargs)
 
     def _prepare_buffer(
         self,

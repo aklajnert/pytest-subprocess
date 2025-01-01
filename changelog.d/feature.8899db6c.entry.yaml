@@ -1,5 +1,6 @@
-message: Add env property to FakePopen.
+message: Allow to access keyword arguments passed to Popen.
 pr_ids:
 - '171'
+- '178'
 timestamp: 1728114595
 type: feature

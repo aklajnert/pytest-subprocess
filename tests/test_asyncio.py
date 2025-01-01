@@ -383,7 +383,7 @@ async def test_asyncio_subprocess_using_communicate_with_callback_kwargs(fp):
 
 
 @pytest.mark.asyncio
-async def test_process_recorder_env(fp):
+async def test_process_recorder_args(fp):
     fp.keep_last_process(True)
     recorder = fp.register(["test_script", fp.any()])
     await asyncio.create_subprocess_exec(
@@ -393,7 +393,8 @@ async def test_process_recorder_env(fp):
     )
 
     assert recorder.call_count() == 1
-    assert recorder.calls[0].env.get("foo") == "bar"
+    assert recorder.calls[0].args == ["test_script", "arg1"]
+    assert recorder.calls[0].kwargs == {"env": {"foo": "bar"}}
 
 
 @pytest.fixture(autouse=True)

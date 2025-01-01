@@ -352,6 +352,40 @@ how many a command has been called. The latter supports ``fp.any()``.
         assert fp.call_count(["cp", fp.any()]) == 3
 
 
+Check Popen arguments
+---------------------
+
+You can use the recorded calls functionality to introspect the keyword
+arguments that were passed to `Popen`.
+
+.. code-block:: python
+
+    def test_process_recorder_kwargs(fp):
+        fp.keep_last_process(True)
+        recorder = fp.register(["test_script", fp.any()])
+
+        subprocess.run(
+            ("test_script", "arg1"), env={"foo": "bar"}, cwd="/home/user"
+        )
+        subprocess.Popen(
+            ["test_script", "arg2"],
+            env={"foo": "bar1"},
+            executable="test_script",
+            shell=True,
+        )
+
+        assert recorder.calls[0].args == ("test_script", "arg1")
+        assert recorder.calls[0].kwargs == {
+            "cwd": "/home/user",
+            "env": {"foo": "bar"},
+        }
+        assert recorder.calls[1].args == ["test_script", "arg2"]
+        assert recorder.calls[1].kwargs == {
+            "env": {"foo": "bar1"},
+            "executable": "test_script",
+            "shell": True,
+        }
+
 Handling signals
 ----------------
 
