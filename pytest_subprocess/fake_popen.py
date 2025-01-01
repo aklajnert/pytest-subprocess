@@ -141,9 +141,10 @@ class FakePopen:
         return self.returncode
 
     def wait(self, timeout: Optional[float] = None) -> int:
-        if timeout and self._wait_timeout and timeout < self._wait_timeout:
+        if timeout and self._wait_timeout:
             self._wait_timeout -= timeout
-            raise subprocess.TimeoutExpired(self.args, timeout)
+            if timeout < self._wait_timeout:
+                raise subprocess.TimeoutExpired(self.args, timeout)
         self._finalize_thread(timeout)
         if self.returncode is None:
             raise exceptions.PluginInternalError

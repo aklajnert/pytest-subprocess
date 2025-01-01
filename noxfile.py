@@ -5,7 +5,12 @@ import nox
 def tests(session):
     session.install(".[test]")
     session.run(
-        "coverage", "run", "-m", "pytest", "--timeout=300", "-v", *session.posargs
+        "pytest",
+        "--cov",
+        "--junitxml=junit.xml",
+        "-o",
+        "junit_family=legacy",
+        *session.posargs
     )
 
 

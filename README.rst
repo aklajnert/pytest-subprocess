@@ -10,8 +10,8 @@ pytest-subprocess
     :target: https://pypi.org/project/pytest-subprocess
     :alt: Python versions
 
-.. image:: https://codecov.io/gh/aklajnert/pytest-subprocess/branch/master/graph/badge.svg?token=JAU1cGoYL8
-  :target: https://codecov.io/gh/aklajnert/pytest-subprocess
+.. image:: https://codecov.io/github/aklajnert/pytest-subprocess/graph/badge.svg?token=JAU1cGoYL8
+   :target: https://codecov.io/github/aklajnert/pytest-subprocess
 
 .. image:: https://readthedocs.org/projects/pytest-subprocess/badge/?version=latest
    :target: https://pytest-subprocess.readthedocs.io/en/latest/?badge=latest
