@@ -34,7 +34,7 @@ setup(
     extras_require={
         "test": [
             "pytest>=4.0",
-            "coverage",
+            "pytest-cov",
             "docutils>=0.12",
             "Pygments>=2.0",
             "pytest-rerunfailures",
