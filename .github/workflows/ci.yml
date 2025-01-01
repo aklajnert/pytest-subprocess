@@ -23,14 +23,17 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
       - name: Setup Nox
         uses: wntrblm/nox@2024.10.09
         with:
           python-versions: ${{ matrix.python-version }}
       - name: Run tests
         run: |
-          nox -s tests-${{ matrix.python-version }}
+          nox -db uv -s tests-${{ matrix.python-version }}
         env:
           PLATFORM: ${{ matrix.platform }}
       - name: Update coverage
@@ -43,28 +46,40 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
       - name: Setup Nox
         uses: wntrblm/nox@2024.10.09
       - name: Run mypy
         run: |
-          nox -s mypy
+          nox -db uv -s mypy
   flake8:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v3
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
       - name: Setup Nox
         uses: wntrblm/nox@2024.10.09
       - name: Run flake8
         run: |
-          nox -s flake8
+          nox -db uv -s flake8
   check-docs:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v3
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
       - name: Setup Nox
         uses: wntrblm/nox@2024.10.09
       - name: Build docs
         run: |
-          nox -s docs
+          nox -db uv -s docs
