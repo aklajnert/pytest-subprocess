@@ -23,7 +23,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-
       - name: Setup Nox
         uses: wntrblm/nox@2024.10.09
         with:
@@ -36,6 +35,10 @@ jobs:
       - name: Upload test results to Codecov
         if: ${{ !cancelled() }}
         uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+      - uses: codecov/codecov-action@v5
+        if: matrix.python-version != 'pypy3.8'
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
