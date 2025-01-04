@@ -1,5 +1,5 @@
 [run]
-source=pytest_subprocess
+source = pytest_subprocess
 
 [report]
 # Regexes for lines to exclude from consideration
@@ -20,5 +20,4 @@ exclude_lines =
     if 0:
     if __name__ == .__main__.:
 
-omit = setup.py
 ignore_errors = True

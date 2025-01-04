@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import nox
 
 
@@ -10,7 +12,8 @@ def tests(session):
         "--junitxml=junit.xml",
         "-o",
         "junit_family=legacy",
-        *session.posargs
+        *session.posargs,
+        env={"PYTHONPATH": str(Path(__file__).resolve().parent)}
     )
 
 
