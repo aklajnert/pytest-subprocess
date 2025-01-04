@@ -482,7 +482,7 @@ def test_ambiguous_input(fp, fake):
 @pytest.mark.parametrize("fake", [False, True])
 def test_multiple_wait(fp, fake):
     """
-    Wait multiple times for 0.2 seconds with process lasting for 0.7.
+    Wait multiple times for 0.2 seconds with process lasting for 1s.
     Third wait shall be a bit longer and will not raise an exception,
     due to exceeding the subprocess runtime.
     """
@@ -490,7 +490,7 @@ def test_multiple_wait(fp, fake):
     if fake:
         fp.register(
             [PYTHON, "example_script.py", "wait"],
-            wait=0.7,
+            wait=1,
         )
 
     process = subprocess.Popen(
@@ -502,7 +502,7 @@ def test_multiple_wait(fp, fake):
     with pytest.raises(subprocess.TimeoutExpired):
         process.wait(timeout=0.2)
 
-    process.wait(0.6)
+    process.wait(0.9)
 
     assert process.returncode == 0
 
