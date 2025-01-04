@@ -32,15 +32,6 @@ jobs:
           nox -s tests-${{ matrix.python-version }}
         env:
           PLATFORM: ${{ matrix.platform }}
-      - name: Upload test results to Codecov
-        if: ${{ !cancelled() }}
-        uses: codecov/test-results-action@v1
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-      - uses: codecov/codecov-action@v5
-        if: matrix.python-version != 'pypy3.8'
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
 
 
   mypy:

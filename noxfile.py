@@ -8,10 +8,6 @@ def tests(session):
     session.install(".[test]")
     session.run(
         "pytest",
-        "--cov",
-        "--junitxml=junit.xml",
-        "-o",
-        "junit_family=legacy",
         *session.posargs,
         env={"PYTHONPATH": str(Path(__file__).resolve().parent)}
     )
