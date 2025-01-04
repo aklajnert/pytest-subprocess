@@ -1,6 +1,19 @@
 History
 =======
 
+1.5.3 (2025-01-04)  
+------------------
+
+Features  
+~~~~~~~~
+* `#171 <https://github.com/aklajnert/pytest-subprocess/pull/171>`_, `#178 <https://github.com/aklajnert/pytest-subprocess/pull/178>`_: Allow to access keyword arguments passed to Popen.
+
+Bug fixes  
+~~~~~~~~~
+* `#180 <https://github.com/aklajnert/pytest-subprocess/pull/180>`_: Fixed an incorrect wait timeout calculation.
+* `#170 <https://github.com/aklajnert/pytest-subprocess/pull/170>`_: Wrapped ProcessDispatcher.dispatch into FakePopenWrapper as it was causing TypeError when Popen is used as a type.
+* `#169 <https://github.com/aklajnert/pytest-subprocess/pull/169>`_: Get rid of using thread in AsyncFakePopen as it causes thread.join() to hang indefinitely.
+
 1.5.2 (2024-07-24)  
 ------------------
 

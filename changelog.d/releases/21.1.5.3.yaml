@@ -1,0 +1,26 @@
+entries:
+  bug:
+  - message: Fixed an incorrect wait timeout calculation.
+    pr_ids:
+    - '180'
+    timestamp: 1735744258
+  - message: Wrapped ProcessDispatcher.dispatch into FakePopenWrapper as it was causing
+      TypeError when Popen is used as a type.
+    pr_ids:
+    - '170'
+    timestamp: 1727883418
+  - message: Get rid of using thread in AsyncFakePopen as it causes thread.join()
+      to hang indefinitely.
+    pr_ids:
+    - '169'
+    timestamp: 1727847419
+  feature:
+  - message: Allow to access keyword arguments passed to Popen.
+    pr_ids:
+    - '171'
+    - '178'
+    timestamp: 1728114595
+previous_release: 1.5.2
+release_date: '2025-01-04'
+release_description: ''
+release_version: 1.5.3

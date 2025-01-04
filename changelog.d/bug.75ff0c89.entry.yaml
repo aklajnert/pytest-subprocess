@@ -1,5 +1,0 @@
-message: Fixed an incorrect wait timeout calculation.
-pr_ids:
-- '180'
-timestamp: 1735744258
-type: bug
