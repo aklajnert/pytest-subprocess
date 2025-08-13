@@ -1283,6 +1283,34 @@ def test_fake_popen_is_typed(fp):
     assert proc.stdout.read() == "Stdout line 1\nStdout line 2\n"
 
 
+def test_stdin_pipe(fp):
+    """
+    Test that stdin is a writable buffer when using subprocess.PIPE.
+    """
+    fp.register(["my-command"])
+
+    process = subprocess.Popen(
+        ["my-command"],
+        stdin=subprocess.PIPE,
+    )
+
+    assert process.stdin is not None
+    assert process.stdin.writable()
+
+    # We can write to the buffer.
+    process.stdin.write(b"some data")
+    process.stdin.flush()
+
+    # The data can be read back from the buffer for inspection.
+    process.stdin.seek(0)
+    assert process.stdin.read() == b"some data"
+
+    # After closing, it should raise a ValueError.
+    process.stdin.close()
+    with pytest.raises(ValueError):
+        process.stdin.write(b"more data")
+
+
 def test_stdout_stderr_as_file_bug(fp):
     """
     Test that no TypeError is raised when stdout/stderr is a file
