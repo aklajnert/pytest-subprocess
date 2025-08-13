@@ -288,7 +288,7 @@ class FakePopen:
         )
         if isinstance(data, (list, tuple)):
             buffer.writelines([data_type(line + "\n") for line in data])
-        else:
+        elif data is not None:
             buffer.write(data_type(data))
 
     def _convert(self, input: Union[str, bytes]) -> Union[str, bytes]:

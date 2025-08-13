@@ -7,6 +7,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 
 import pytest
 
@@ -1280,3 +1281,39 @@ def test_fake_popen_is_typed(fp):
     proc.wait()
 
     assert proc.stdout.read() == "Stdout line 1\nStdout line 2\n"
+
+
+def test_stdout_stderr_as_file_bug(fp):
+    """
+    Test that no TypeError is raised when stdout/stderr is a file
+    and the stream is not registered.
+
+    From GitHub #144
+    """
+    # register process with stdout but no stderr
+    fp.register(
+        ["test-no-stderr"],
+        stdout="test",
+    )
+    # register process with stderr but no stdout
+    fp.register(
+        ["test-no-stdout"],
+        stderr="test",
+    )
+    # register process with no streams
+    fp.register(
+        ["test-no-streams"],
+    )
+
+    with NamedTemporaryFile("wb") as f:
+        # test with stderr not registered
+        p = subprocess.Popen("test-no-stderr", stdout=f.file, stderr=f.file)
+        p.wait()
+
+        # test with stdout not registered
+        p = subprocess.Popen("test-no-stdout", stdout=f.file, stderr=f.file)
+        p.wait()
+
+        # test with no streams registered
+        p = subprocess.Popen("test-no-streams", stdout=f.file, stderr=f.file)
+        p.wait()
