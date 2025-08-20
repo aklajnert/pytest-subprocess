@@ -925,10 +925,10 @@ def test_encoding(fp, fake, argument):
 
     output = subprocess.check_output(
         ["whoami"], **{argument: values.get(argument)}
-    ).strip()
+    ).strip().lower()
 
     assert isinstance(output, str)
-    assert output.endswith(username)
+    assert output.endswith(username.lower())
 
 
 @pytest.mark.parametrize("command", ["ls -lah", ["ls", "-lah"]])
