@@ -923,9 +923,11 @@ def test_encoding(fp, fake, argument):
     if fake:
         fp.register(["whoami"], stdout=username)
 
-    output = subprocess.check_output(
-        ["whoami"], **{argument: values.get(argument)}
-    ).strip().lower()
+    output = (
+        subprocess.check_output(["whoami"], **{argument: values.get(argument)})
+        .strip()
+        .lower()
+    )
 
     assert isinstance(output, str)
     assert output.endswith(username.lower())
