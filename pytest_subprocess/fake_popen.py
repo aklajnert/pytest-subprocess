@@ -39,6 +39,7 @@ class FakePopen:
 
     stdout: Optional[BUFFER] = None
     stderr: Optional[BUFFER] = None
+    stdin: Optional[BUFFER] = None
     returncode: Optional[int] = None
     text_mode: bool = False
     pid: int = 0
@@ -168,6 +169,11 @@ class FakePopen:
         """Setup the FakePopen instance based on a real Popen arguments."""
         self.__kwargs = self.safe_copy(kwargs)
         self.__universal_newlines = kwargs.get("universal_newlines", None)
+
+        stdin = kwargs.get("stdin")
+        if stdin == subprocess.PIPE:
+            self.stdin = self._get_empty_buffer(False)
+
         text = kwargs.get("text", None)
         encoding = kwargs.get("encoding", None)
         errors = kwargs.get("errors", None)
@@ -288,7 +294,7 @@ class FakePopen:
         )
         if isinstance(data, (list, tuple)):
             buffer.writelines([data_type(line + "\n") for line in data])
-        else:
+        elif data is not None:
             buffer.write(data_type(data))
 
     def _convert(self, input: Union[str, bytes]) -> Union[str, bytes]:

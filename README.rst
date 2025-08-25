@@ -129,17 +129,18 @@ processes with real ``subprocess``, or use
 .. code-block:: python
 
     def test_real_process(fp):
+        command = ["python", "-c", "pass"]
         with pytest.raises(fp.exceptions.ProcessNotRegisteredError):
-            # this will fail, as "ls" command is not registered
-            subprocess.call("ls")
+            # this will fail, as the command is not registered
+            subprocess.call(command)
 
-        fp.pass_command("ls")
+        fp.pass_command(command)
         # now it should be fine
-        assert subprocess.call("ls") == 0
+        assert subprocess.call(command) == 0
 
         # allow all commands to be called by real subprocess
         fp.allow_unregistered(True)
-        assert subprocess.call(["ls", "-l"]) == 0
+        assert subprocess.call(command) == 0
 
 
 Differing results
@@ -272,12 +273,12 @@ if the subprocess command will be called with a string argument.
 
     def test_non_exact_matching(fp):
         # define a command that will take any number of arguments
-        fp.register(["ls", fp.any()])
-        assert subprocess.check_call("ls -lah") == 0
+        fp.register(["python", fp.any()])
+        assert subprocess.check_call(["python", "-c", "pass"]) == 0
 
         # `fake_subprocess.any()` is OK even with no arguments
-        fp.register(["ls", fp.any()])
-        assert subprocess.check_call("ls") == 0
+        fp.register(["python", fp.any()])
+        assert subprocess.check_call(["python"]) == 0
 
         # but it can force a minimum amount of arguments
         fp.register(["cp", fp.any(min=2)])
@@ -310,8 +311,8 @@ the same name, regardless of the location. This is accomplished with
 
     def test_any_matching_program(fp):
         # define a command that can come from anywhere
-        fp.register([fp.program("ls")])
-        assert subprocess.check_call("/bin/ls") == 0
+        fp.register([fp.program("python")])
+        assert subprocess.check_call(sys.executable) == 0
 
 
 Check if process was called

@@ -7,6 +7,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 
 import pytest
 
@@ -347,6 +348,7 @@ def test_run(fp, fake):
     assert process.stderr is None
 
 
+@pytest.mark.filterwarnings("ignore:unclosed file:ResourceWarning")
 @pytest.mark.parametrize("fake", [False, True])
 def test_universal_newlines(fp, fake):
     fp.allow_unregistered(not fake)
@@ -363,6 +365,7 @@ def test_universal_newlines(fp, fake):
     assert process.stdout.read() == "Stdout line 1\nStdout line 2\n"
 
 
+@pytest.mark.filterwarnings("ignore:unclosed file:ResourceWarning")
 @pytest.mark.parametrize("fake", [False, True])
 def test_text(fp, fake):
     fp.allow_unregistered(not fake)
@@ -922,12 +925,14 @@ def test_encoding(fp, fake, argument):
     if fake:
         fp.register(["whoami"], stdout=username)
 
-    output = subprocess.check_output(
-        ["whoami"], **{argument: values.get(argument)}
-    ).strip()
+    output = (
+        subprocess.check_output(["whoami"], **{argument: values.get(argument)})
+        .strip()
+        .lower()
+    )
 
     assert isinstance(output, str)
-    assert output.endswith(username)
+    assert output.endswith(username.lower())
 
 
 @pytest.mark.parametrize("command", ["ls -lah", ["ls", "-lah"]])
@@ -1280,3 +1285,73 @@ def test_fake_popen_is_typed(fp):
     proc.wait()
 
     assert proc.stdout.read() == "Stdout line 1\nStdout line 2\n"
+
+
+def test_stdin_pipe(fp):
+    """
+    Test that stdin is a writable buffer when using subprocess.PIPE.
+    """
+    fp.register(["my-command"])
+
+    process = subprocess.Popen(
+        ["my-command"],
+        stdin=subprocess.PIPE,
+    )
+
+    assert process.stdin is not None
+    assert process.stdin.writable()
+
+    # We can write to the buffer.
+    process.stdin.write(b"some data")
+    process.stdin.flush()
+
+    # The data can be read back from the buffer for inspection.
+    process.stdin.seek(0)
+    assert process.stdin.read() == b"some data"
+
+    # After closing, it should raise a ValueError.
+    process.stdin.close()
+    with pytest.raises(ValueError):
+        process.stdin.write(b"more data")
+
+
+def test_stdout_stderr_as_file_bug(fp):
+    """
+    Test that no TypeError is raised when stdout/stderr is a file
+    and the stream is not registered.
+
+    From GitHub #144
+    """
+    # register process with stdout but no stderr
+    fp.register(
+        ["test-no-stderr"],
+        stdout="test",
+    )
+    # register process with stderr but no stdout
+    fp.register(
+        ["test-no-stdout"],
+        stderr="test",
+    )
+    # register process with no streams
+    fp.register(
+        ["test-no-streams"],
+    )
+
+    with NamedTemporaryFile("wb") as temp_file:
+        # test with stderr not registered
+        process = subprocess.Popen(
+            "test-no-stderr", stdout=temp_file.file, stderr=temp_file.file
+        )
+        process.wait()
+
+        # test with stdout not registered
+        process = subprocess.Popen(
+            "test-no-stdout", stdout=temp_file.file, stderr=temp_file.file
+        )
+        process.wait()
+
+        # test with no streams registered
+        process = subprocess.Popen(
+            "test-no-streams", stdout=temp_file.file, stderr=temp_file.file
+        )
+        process.wait()
