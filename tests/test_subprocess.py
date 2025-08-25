@@ -348,6 +348,7 @@ def test_run(fp, fake):
     assert process.stderr is None
 
 
+@pytest.mark.filterwarnings("ignore:unclosed file:ResourceWarning")
 @pytest.mark.parametrize("fake", [False, True])
 def test_universal_newlines(fp, fake):
     fp.allow_unregistered(not fake)
@@ -364,6 +365,7 @@ def test_universal_newlines(fp, fake):
     assert process.stdout.read() == "Stdout line 1\nStdout line 2\n"
 
 
+@pytest.mark.filterwarnings("ignore:unclosed file:ResourceWarning")
 @pytest.mark.parametrize("fake", [False, True])
 def test_text(fp, fake):
     fp.allow_unregistered(not fake)
