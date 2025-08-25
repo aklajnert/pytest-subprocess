@@ -1,0 +1,5 @@
+message: Support file handles in stdout and stderr.
+pr_ids:
+- '186'
+timestamp: 1756146621
+type: bug

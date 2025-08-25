@@ -1337,15 +1337,21 @@ def test_stdout_stderr_as_file_bug(fp):
         ["test-no-streams"],
     )
 
-    with NamedTemporaryFile("wb") as f:
+    with NamedTemporaryFile("wb") as temp_file:
         # test with stderr not registered
-        p = subprocess.Popen("test-no-stderr", stdout=f.file, stderr=f.file)
-        p.wait()
+        process = subprocess.Popen(
+            "test-no-stderr", stdout=temp_file.file, stderr=temp_file.file
+        )
+        process.wait()
 
         # test with stdout not registered
-        p = subprocess.Popen("test-no-stdout", stdout=f.file, stderr=f.file)
-        p.wait()
+        process = subprocess.Popen(
+            "test-no-stdout", stdout=temp_file.file, stderr=temp_file.file
+        )
+        process.wait()
 
         # test with no streams registered
-        p = subprocess.Popen("test-no-streams", stdout=f.file, stderr=f.file)
-        p.wait()
+        process = subprocess.Popen(
+            "test-no-streams", stdout=temp_file.file, stderr=temp_file.file
+        )
+        process.wait()
