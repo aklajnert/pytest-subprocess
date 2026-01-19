@@ -27,7 +27,6 @@ from .types import OPTIONAL_TEXT
 from .types import OPTIONAL_TEXT_OR_ITERABLE
 from .utils import Thread
 
-
 if sys.platform.startswith("win") and sys.version_info < (3, 8):
     COMMAND_SEQ = Sequence[Union[str, bytes]]
 else:
