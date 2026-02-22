@@ -1,0 +1,5 @@
+message: Patch imported `subprocess.Popen` aliases.
+pr_ids:
+- '194'
+timestamp: 1771750535
+type: bug
