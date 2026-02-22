@@ -20,6 +20,7 @@ from typing import Optional
 from typing import Sequence
 from typing import Tuple
 from typing import Union
+from typing import cast
 
 from . import exceptions
 from .types import BUFFER
@@ -228,7 +229,7 @@ class FakePopen:
         if callable(getattr(stream, "write", None)) and isinstance(
             getattr(stream, "mode", None), str
         ):
-            return stream
+            return cast(IO, stream)
         return None
 
     def _prepare_buffer(
