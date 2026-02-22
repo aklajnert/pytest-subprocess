@@ -13,6 +13,7 @@ import pytest
 
 import pytest_subprocess
 from pytest_subprocess.fake_popen import FakePopen
+from tests.imported_popen_fixture import run_imported_popen
 
 PYTHON = sys.executable
 
@@ -1355,3 +1356,13 @@ def test_stdout_stderr_as_file_bug(fp):
             "test-no-streams", stdout=temp_file.file, stderr=temp_file.file
         )
         process.wait()
+
+
+def test_imported_popen_is_patched(fp):
+    fp.register(["echo", "-ne", "\\x00"], stdout=bytes.fromhex("00"))
+
+    process = run_imported_popen(["echo", "-ne", "\\x00"])
+    out, _ = process.communicate()
+
+    assert process.returncode == 0
+    assert out == b"\x00"
