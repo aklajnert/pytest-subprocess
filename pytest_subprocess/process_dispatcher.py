@@ -91,6 +91,7 @@ class ProcessDispatcher:
 
     @classmethod
     def _patch_popen_references(cls, new_popen: Callable) -> None:
+        """Replace module-level aliases of the original Popen."""
         old_popen = cls.built_in_popen
         cls._patched_popen_locations = []
         for module in list(sys.modules.values()):
@@ -104,6 +105,7 @@ class ProcessDispatcher:
 
     @classmethod
     def _restore_popen_references(cls, original_popen: Callable) -> None:
+        """Restore module-level aliases patched earlier."""
         for module, name in cls._patched_popen_locations:
             if getattr(module, name, None) is FakePopenWrapper:
                 setattr(module, name, original_popen)
