@@ -1210,6 +1210,39 @@ def test_non_piped_same_file(tmpdir, fp, fake, bytes):
     assert output == ["Stdout line 1\n", "Stdout line 2\n", "Stderr line 1\n"]
 
 
+@pytest.mark.parametrize("fake", [False, True])
+@pytest.mark.parametrize("bytes", [True, False])
+def test_non_piped_stdout_file_stderr_stdout(tmpdir, fp, fake, bytes):
+    fp.allow_unregistered(not fake)
+    if fake:
+        fp.register(
+            [PYTHON, "-u", "example_script.py", "stderr"],
+            stdout=["Stdout line 1", "Stdout line 2"],
+            stderr="Stderr line 1\n",
+        )
+
+    output_path = tmpdir.join("output")
+
+    mode = "wb" if bytes else "w"
+
+    with open(output_path, mode) as out_file:
+        process = subprocess.Popen(
+            [PYTHON, "-u", "example_script.py", "stderr"],
+            stdout=out_file,
+            stderr=subprocess.STDOUT,
+        )
+
+        err, out = process.communicate()
+
+    assert out is None
+    assert err is None
+
+    with open(output_path, "r") as out_file:
+        output = out_file.readlines()
+
+    assert output == ["Stdout line 1\n", "Stdout line 2\n", "Stderr line 1\n"]
+
+
 def test_process_recorder(fp):
     fp.keep_last_process(True)
     recorder = fp.register(["test_script", fp.any()])

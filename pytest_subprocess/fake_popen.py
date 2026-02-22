@@ -195,18 +195,23 @@ class FakePopen:
             )
 
         stdout = kwargs.get("stdout")
+        stdout_writer = self._get_io_writer(stdout)
         if stdout == subprocess.PIPE:
             self.stdout = self._prepare_buffer(self.__stdout)
-        elif isinstance(stdout, (io.BufferedWriter, io.TextIOWrapper)):
-            self._write_to_buffer(self.__stdout, stdout)
+        elif stdout_writer is not None:
+            self._write_to_buffer(self.__stdout, stdout_writer)
         stderr = kwargs.get("stderr")
         if stderr == subprocess.STDOUT and self.__stderr:
-            assert self.stdout is not None
-            self.stdout = self._prepare_buffer(self.__stderr, self.stdout)
+            if stdout_writer is not None:
+                self._write_to_buffer(self.__stderr, stdout_writer)
+            elif self.stdout is not None:
+                self.stdout = self._prepare_buffer(self.__stderr, self.stdout)
         elif stderr == subprocess.PIPE:
             self.stderr = self._prepare_buffer(self.__stderr)
-        elif isinstance(stderr, (io.BufferedWriter, io.TextIOWrapper)):
-            self._write_to_buffer(self.__stderr, stderr)
+        else:
+            stderr_writer = self._get_io_writer(stderr)
+            if stderr_writer is not None:
+                self._write_to_buffer(self.__stderr, stderr_writer)
 
     @staticmethod
     def safe_copy(kwargs: Dict[str, AnyType]) -> Dict[str, AnyType]:
@@ -217,6 +222,14 @@ class FakePopen:
             return copy.deepcopy(kwargs)
         except TypeError:
             return dict(**kwargs)
+
+    @staticmethod
+    def _get_io_writer(stream: AnyType) -> Optional[IO]:
+        if callable(getattr(stream, "write", None)) and isinstance(
+            getattr(stream, "mode", None), str
+        ):
+            return stream
+        return None
 
     def _prepare_buffer(
         self,
@@ -285,16 +298,33 @@ class FakePopen:
         return data
 
     def _write_to_buffer(self, data: OPTIONAL_TEXT_OR_ITERABLE, buffer: IO) -> None:
-        data_type: Callable = (
-            # mypy doesn't seem to recognize `partial` as a function
-            partial(bytes, encoding=sys.getfilesystemencoding())  # type: ignore
-            if "b" in buffer.mode
-            else str
-        )
+        if data is None:
+            return
+        binary_mode = "b" in buffer.mode
         if isinstance(data, (list, tuple)):
-            buffer.writelines([data_type(line + "\n") for line in data])
-        elif data is not None:
-            buffer.write(data_type(data))
+            self._write_lines(buffer, data, binary_mode)
+        else:
+            self._write_value(buffer, data, binary_mode)
+
+    def _write_lines(self, buffer: IO, lines: Sequence[AnyType], binary: bool) -> None:
+        if binary:
+            buffer.writelines([self._to_bytes_value(line) + b"\n" for line in lines])
+        else:
+            buffer.writelines([self._to_text_value(line) + "\n" for line in lines])
+
+    def _write_value(self, buffer: IO, value: AnyType, binary: bool) -> None:
+        if binary:
+            buffer.write(self._to_bytes_value(value))
+        else:
+            buffer.write(self._to_text_value(value))
+
+    def _to_text_value(self, value: AnyType) -> str:
+        return value if isinstance(value, str) else str(value)
+
+    def _to_bytes_value(self, value: AnyType) -> bytes:
+        if isinstance(value, bytes):
+            return value
+        return str(value).encode(sys.getfilesystemencoding())
 
     def _convert(self, input: Union[str, bytes]) -> Union[str, bytes]:
         if isinstance(input, bytes) and self.text_mode:
@@ -346,9 +376,6 @@ class FakePopen:
 class AsyncFakePopen(FakePopen):
     """Class to handle async processes"""
 
-    stdout: Optional[asyncio.StreamReader]
-    stderr: Optional[asyncio.StreamReader]
-
     async def communicate(  # type: ignore
         self, input: OPTIONAL_TEXT = None, timeout: Optional[float] = None
     ) -> Tuple[AnyType, AnyType]:
@@ -361,9 +388,11 @@ class AsyncFakePopen(FakePopen):
             # feed eof one more time as streams were opened
             self._finalize_streams()
         await self._finalize(timeout)
+        stdout = self.stdout
+        stderr = self.stderr
         return (
-            await self.stdout.read() if self.stdout else None,
-            await self.stderr.read() if self.stderr else None,
+            await stdout.read() if isinstance(stdout, asyncio.StreamReader) else None,
+            await stderr.read() if isinstance(stderr, asyncio.StreamReader) else None,
         )
 
     async def wait(self, timeout: Optional[float] = None) -> int:  # type: ignore
@@ -375,7 +404,7 @@ class AsyncFakePopen(FakePopen):
             raise exceptions.PluginInternalError
         return self.returncode
 
-    def _get_empty_buffer(self, _: bool) -> asyncio.StreamReader:
+    def _get_empty_buffer(self, text: bool) -> asyncio.StreamReader:
         return asyncio.StreamReader()
 
     async def _reopen_streams(self) -> None:
@@ -383,9 +412,9 @@ class AsyncFakePopen(FakePopen):
         self.stderr = await self._reopen_stream(self.stderr)
 
     async def _reopen_stream(
-        self, stream: Optional[asyncio.StreamReader]
+        self, stream: Optional[BUFFER]
     ) -> Optional[asyncio.StreamReader]:
-        if stream:
+        if isinstance(stream, asyncio.StreamReader):
             data = await stream.read()
             fresh_stream = self._get_empty_buffer(False)
             fresh_stream.feed_data(data)
