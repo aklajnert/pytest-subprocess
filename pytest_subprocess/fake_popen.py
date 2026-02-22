@@ -13,6 +13,7 @@ import time
 from functools import partial
 from typing import Any as AnyType
 from typing import Callable
+from typing import cast
 from typing import Dict
 from typing import IO
 from typing import List
@@ -20,7 +21,6 @@ from typing import Optional
 from typing import Sequence
 from typing import Tuple
 from typing import Union
-from typing import cast
 
 from . import exceptions
 from .types import BUFFER
