@@ -92,8 +92,6 @@ class ProcessDispatcher:
     @classmethod
     def _patch_popen_references(cls, new_popen: Callable) -> None:
         old_popen = cls.built_in_popen
-        if old_popen is None:
-            return
         cls._patched_popen_locations = []
         for module in list(sys.modules.values()):
             if not module or not hasattr(module, "__dict__"):

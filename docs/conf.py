@@ -15,12 +15,17 @@ sys.path.insert(0, os.path.abspath(".."))
 import datetime
 from pathlib import Path
 
-import pkg_resources
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version
 from changelogd import changelogd
 
 ROOT_PATH = Path(__file__).parents[1]
 
-changelogd.release(partial=True, output="history.rst", config=ROOT_PATH / "changelog.d")
+changelogd.release(
+    partial=True,
+    output=str(ROOT_PATH / "docs" / "history.rst"),
+    config=str(ROOT_PATH / "changelog.d"),
+)
 
 # -- Project information -----------------------------------------------------
 
@@ -29,7 +34,10 @@ copyright = f"2019-{datetime.datetime.now().year}, Andrzej Klajnert"
 author = "Andrzej Klajnert"
 
 # The full version, including alpha/beta/rc tags
-release = pkg_resources.get_distribution("pip").version
+try:
+    release = version("pytest-subprocess")
+except PackageNotFoundError:
+    release = "unknown"
 
 
 # -- General configuration ---------------------------------------------------
