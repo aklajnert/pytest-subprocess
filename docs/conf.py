@@ -15,8 +15,8 @@ sys.path.insert(0, os.path.abspath(".."))
 import datetime
 from pathlib import Path
 
+import importlib.metadata as importlib_metadata
 from importlib.metadata import PackageNotFoundError
-from importlib.metadata import version
 from changelogd import changelogd
 
 ROOT_PATH = Path(__file__).parents[1]
@@ -35,9 +35,10 @@ author = "Andrzej Klajnert"
 
 # The full version, including alpha/beta/rc tags
 try:
-    release = version("pytest-subprocess")
+    release = importlib_metadata.version("pytest-subprocess")
 except PackageNotFoundError:
     release = "unknown"
+version = release
 
 
 # -- General configuration ---------------------------------------------------
