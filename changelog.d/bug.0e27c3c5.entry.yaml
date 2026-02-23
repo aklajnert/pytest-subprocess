@@ -1,0 +1,5 @@
+message: Handle stderr=STDOUT when stdout is a file handle.
+pr_ids:
+- '196'
+timestamp: 1771774550
+type: bug
