@@ -19,13 +19,12 @@ jobs:
       max-parallel: 4
       matrix:
         platform: [ ubuntu-latest, macos-latest, windows-latest ]
-        python-version: [ '3.8', '3.9', '3.10', '3.11', '3.12', 'pypy3.8']
+        python-version: [ '3.8', '3.9', '3.10', '3.11', '3.12', '3.13', 'pypy3.8']
 
     steps:
       - uses: actions/checkout@v3
-
       - name: Setup Nox
-        uses: wntrblm/nox@2023.04.22
+        uses: wntrblm/nox@2024.10.09
         with:
           python-versions: ${{ matrix.python-version }}
       - name: Run tests
@@ -33,9 +32,6 @@ jobs:
           nox -s tests-${{ matrix.python-version }}
         env:
           PLATFORM: ${{ matrix.platform }}
-      - name: Update coverage
-        if: matrix.python-version != 'pypy3.8'
-        uses: codecov/codecov-action@v3
 
 
   mypy:
@@ -44,7 +40,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Setup Nox
-        uses: wntrblm/nox@2023.04.22
+        uses: wntrblm/nox@2024.10.09
       - name: Run mypy
         run: |
           nox -s mypy
@@ -54,7 +50,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Setup Nox
-        uses: wntrblm/nox@2023.04.22
+        uses: wntrblm/nox@2024.10.09
       - name: Run flake8
         run: |
           nox -s flake8
@@ -64,7 +60,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Setup Nox
-        uses: wntrblm/nox@2023.04.22
+        uses: wntrblm/nox@2024.10.09
       - name: Build docs
         run: |
           nox -s docs

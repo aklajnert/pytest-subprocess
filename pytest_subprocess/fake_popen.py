@@ -2,6 +2,8 @@
 
 import asyncio
 import collections.abc
+import concurrent.futures
+import copy
 import io
 import os
 import signal
@@ -11,6 +13,7 @@ import time
 from functools import partial
 from typing import Any as AnyType
 from typing import Callable
+from typing import cast
 from typing import Dict
 from typing import IO
 from typing import List
@@ -25,7 +28,6 @@ from .types import OPTIONAL_TEXT
 from .types import OPTIONAL_TEXT_OR_ITERABLE
 from .utils import Thread
 
-
 if sys.platform.startswith("win") and sys.version_info < (3, 8):
     COMMAND_SEQ = Sequence[Union[str, bytes]]
 else:
@@ -37,6 +39,7 @@ class FakePopen:
 
     stdout: Optional[BUFFER] = None
     stderr: Optional[BUFFER] = None
+    stdin: Optional[BUFFER] = None
     returncode: Optional[int] = None
     text_mode: bool = False
     pid: int = 0
@@ -67,16 +70,22 @@ class FakePopen:
                     msg = f"argument of type {arg.__class__.__name__!r} is not iterable"
                     raise TypeError(msg)
         self.args = command
+        self.__kwargs: Optional[Dict[str, AnyType]] = None
         self.__stdout: OPTIONAL_TEXT_OR_ITERABLE = stdout
         self.__stderr: OPTIONAL_TEXT_OR_ITERABLE = stderr
-        self.__returncode: Optional[int] = returncode
-        self.__wait: Optional[float] = wait
         self.__thread: Optional[Thread] = None
-        self.__callback: Optional[Optional[Callable]] = callback
-        self.__callback_kwargs: Optional[Dict[str, AnyType]] = callback_kwargs
         self.__signal_callback: Optional[Callable] = signal_callback
         self.__stdin_callable: Optional[Optional[Callable]] = stdin_callable
+        self.__universal_newlines: Optional[Dict[AnyType, AnyType]] = None
         self._signals: List[int] = []
+        self._returncode: Optional[int] = returncode
+        self._wait_timeout: Optional[float] = wait
+        self._callback: Optional[Optional[Callable]] = callback
+        self._callback_kwargs: Optional[Dict[str, AnyType]] = callback_kwargs
+
+    @property
+    def kwargs(self) -> Optional[Dict[str, AnyType]]:
+        return self.__kwargs
 
     def __enter__(self) -> "FakePopen":
         return self
@@ -116,8 +125,8 @@ class FakePopen:
         if self.__thread is None:
             return
         self.__thread.join(timeout)
-        if self.returncode is None and self.__returncode is not None:
-            self.returncode = self.__returncode
+        if self.returncode is None and self._returncode is not None:
+            self.returncode = self._returncode
         if self.__thread.exception:
             raise self.__thread.exception
 
@@ -133,9 +142,10 @@ class FakePopen:
         return self.returncode
 
     def wait(self, timeout: Optional[float] = None) -> int:
-        if timeout and self.__wait and timeout < self.__wait:
-            self.__wait -= timeout
-            raise subprocess.TimeoutExpired(self.args, timeout)
+        if timeout and self._wait_timeout:
+            self._wait_timeout -= timeout
+            if timeout < self._wait_timeout:
+                raise subprocess.TimeoutExpired(self.args, timeout)
         self._finalize_thread(timeout)
         if self.returncode is None:
             raise exceptions.PluginInternalError
@@ -157,7 +167,13 @@ class FakePopen:
 
     def configure(self, **kwargs: Optional[Dict]) -> None:
         """Setup the FakePopen instance based on a real Popen arguments."""
+        self.__kwargs = self.safe_copy(kwargs)
         self.__universal_newlines = kwargs.get("universal_newlines", None)
+
+        stdin = kwargs.get("stdin")
+        if stdin == subprocess.PIPE:
+            self.stdin = self._get_empty_buffer(False)
+
         text = kwargs.get("text", None)
         encoding = kwargs.get("encoding", None)
         errors = kwargs.get("errors", None)
@@ -180,18 +196,41 @@ class FakePopen:
             )
 
         stdout = kwargs.get("stdout")
+        stdout_writer = self._get_io_writer(stdout)
         if stdout == subprocess.PIPE:
             self.stdout = self._prepare_buffer(self.__stdout)
-        elif isinstance(stdout, (io.BufferedWriter, io.TextIOWrapper)):
-            self._write_to_buffer(self.__stdout, stdout)
+        elif stdout_writer is not None:
+            self._write_to_buffer(self.__stdout, stdout_writer)
         stderr = kwargs.get("stderr")
         if stderr == subprocess.STDOUT and self.__stderr:
-            assert self.stdout is not None
-            self.stdout = self._prepare_buffer(self.__stderr, self.stdout)
+            if stdout_writer is not None:
+                self._write_to_buffer(self.__stderr, stdout_writer)
+            elif self.stdout is not None:
+                self.stdout = self._prepare_buffer(self.__stderr, self.stdout)
         elif stderr == subprocess.PIPE:
             self.stderr = self._prepare_buffer(self.__stderr)
-        elif isinstance(stderr, (io.BufferedWriter, io.TextIOWrapper)):
-            self._write_to_buffer(self.__stderr, stderr)
+        else:
+            stderr_writer = self._get_io_writer(stderr)
+            if stderr_writer is not None:
+                self._write_to_buffer(self.__stderr, stderr_writer)
+
+    @staticmethod
+    def safe_copy(kwargs: Dict[str, AnyType]) -> Dict[str, AnyType]:
+        """
+        Deepcopy can fail if the value is not serializable, fallback to shallow copy.
+        """
+        try:
+            return copy.deepcopy(kwargs)
+        except TypeError:
+            return dict(**kwargs)
+
+    @staticmethod
+    def _get_io_writer(stream: AnyType) -> Optional[IO]:
+        if callable(getattr(stream, "write", None)) and isinstance(
+            getattr(stream, "mode", None), str
+        ):
+            return cast(IO, stream)
+        return None
 
     def _prepare_buffer(
         self,
@@ -260,16 +299,33 @@ class FakePopen:
         return data
 
     def _write_to_buffer(self, data: OPTIONAL_TEXT_OR_ITERABLE, buffer: IO) -> None:
-        data_type: Callable = (
-            # mypy doesn't seem to recognize `partial` as a function
-            partial(bytes, encoding=sys.getfilesystemencoding())  # type: ignore
-            if "b" in buffer.mode
-            else str
-        )
+        if data is None:
+            return
+        binary_mode = "b" in buffer.mode
         if isinstance(data, (list, tuple)):
-            buffer.writelines([data_type(line + "\n") for line in data])
+            self._write_lines(buffer, data, binary_mode)
         else:
-            buffer.write(data_type(data))
+            self._write_value(buffer, data, binary_mode)
+
+    def _write_lines(self, buffer: IO, lines: Sequence[AnyType], binary: bool) -> None:
+        if binary:
+            buffer.writelines([self._to_bytes_value(line) + b"\n" for line in lines])
+        else:
+            buffer.writelines([self._to_text_value(line) + "\n" for line in lines])
+
+    def _write_value(self, buffer: IO, value: AnyType, binary: bool) -> None:
+        if binary:
+            buffer.write(self._to_bytes_value(value))
+        else:
+            buffer.write(self._to_text_value(value))
+
+    def _to_text_value(self, value: AnyType) -> str:
+        return value if isinstance(value, str) else str(value)
+
+    def _to_bytes_value(self, value: AnyType) -> bytes:
+        if isinstance(value, bytes):
+            return value
+        return str(value).encode(sys.getfilesystemencoding())
 
     def _convert(self, input: Union[str, bytes]) -> Union[str, bytes]:
         if isinstance(input, bytes) and self.text_mode:
@@ -285,21 +341,21 @@ class FakePopen:
 
     def run_thread(self) -> None:
         """Run the user-defined callback or wait in a thread."""
-        if self.__wait is None and self.__callback is None:
+        if self._wait_timeout is None and self._callback is None:
             self._finish_process()
         else:
-            if self.__callback:
+            if self._callback:
                 self.__thread = Thread(
-                    target=self.__callback,
+                    target=self._callback,
                     args=(self,),
-                    kwargs=self.__callback_kwargs or {},
+                    kwargs=self._callback_kwargs or {},
                 )
             else:
-                self.__thread = Thread(target=self._wait, args=(self.__wait,))
+                self.__thread = Thread(target=self._wait, args=(self._wait_timeout,))
             self.__thread.start()
 
     def _finish_process(self) -> None:
-        self.returncode = self.__returncode
+        self.returncode = self._returncode
 
         self._finalize_streams()
 
@@ -321,9 +377,6 @@ class FakePopen:
 class AsyncFakePopen(FakePopen):
     """Class to handle async processes"""
 
-    stdout: Optional[asyncio.StreamReader]
-    stderr: Optional[asyncio.StreamReader]
-
     async def communicate(  # type: ignore
         self, input: OPTIONAL_TEXT = None, timeout: Optional[float] = None
     ) -> Tuple[AnyType, AnyType]:
@@ -335,18 +388,24 @@ class AsyncFakePopen(FakePopen):
 
             # feed eof one more time as streams were opened
             self._finalize_streams()
-
-        self._finalize_thread(timeout)
-
+        await self._finalize(timeout)
+        stdout = self.stdout
+        stderr = self.stderr
         return (
-            await self.stdout.read() if self.stdout else None,
-            await self.stderr.read() if self.stderr else None,
+            await stdout.read() if isinstance(stdout, asyncio.StreamReader) else None,
+            await stderr.read() if isinstance(stderr, asyncio.StreamReader) else None,
         )
 
     async def wait(self, timeout: Optional[float] = None) -> int:  # type: ignore
-        return super().wait(timeout)
+        if timeout and self._wait_timeout and timeout < self._wait_timeout:
+            self._wait_timeout -= timeout
+            raise subprocess.TimeoutExpired(self.args, timeout)
+        await self._finalize(timeout)
+        if self.returncode is None:
+            raise exceptions.PluginInternalError
+        return self.returncode
 
-    def _get_empty_buffer(self, _: bool) -> asyncio.StreamReader:
+    def _get_empty_buffer(self, text: bool) -> asyncio.StreamReader:
         return asyncio.StreamReader()
 
     async def _reopen_streams(self) -> None:
@@ -354,11 +413,42 @@ class AsyncFakePopen(FakePopen):
         self.stderr = await self._reopen_stream(self.stderr)
 
     async def _reopen_stream(
-        self, stream: Optional[asyncio.StreamReader]
+        self, stream: Optional[BUFFER]
     ) -> Optional[asyncio.StreamReader]:
-        if stream:
+        if isinstance(stream, asyncio.StreamReader):
             data = await stream.read()
             fresh_stream = self._get_empty_buffer(False)
             fresh_stream.feed_data(data)
             return fresh_stream
         return None
+
+    def run_thread(self) -> None:
+        """Async impl should not contain any thread based implementation"""
+
+    def evaluate(self) -> None:
+        """Check if process needs to be finished."""
+        if self._wait_timeout is None and self._callback is None:
+            self._finish_process()
+
+    async def _run_callback_in_executor(self) -> None:
+        """Run in executor the user-defined callback or wait."""
+        loop = asyncio.get_running_loop()
+        with concurrent.futures.ThreadPoolExecutor() as pool:
+            if self._callback:
+                kwargs = self._callback_kwargs or {}
+                cbk = partial(self._callback, **kwargs)
+                await loop.run_in_executor(pool, cbk, self)
+            elif self._wait_timeout is not None:
+                await loop.run_in_executor(pool, self._wait, self._wait_timeout)
+
+    async def _finalize(self, timeout: Optional[float] = None) -> None:
+        """Run the user-defined callback or wait. Finish process"""
+        if self.returncode is not None:
+            return
+        if timeout is not None:
+            await asyncio.wait_for(self._run_callback_in_executor(), timeout=timeout)
+        else:
+            await self._run_callback_in_executor()
+        if self.returncode is None:
+            self.returncode = self._returncode
+        self._finalize_streams()

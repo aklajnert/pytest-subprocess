@@ -8,10 +8,12 @@ from collections import deque
 from copy import deepcopy
 from functools import partial
 from typing import Any as AnyType
+from typing import AnyStr
 from typing import Awaitable
 from typing import Callable
 from typing import Deque
 from typing import Dict
+from typing import Generic
 from typing import List
 from typing import Optional
 from typing import Tuple
@@ -29,6 +31,9 @@ if typing.TYPE_CHECKING:
     from .fake_process import FakeProcess
 
 
+__all__ = ["ProcessDispatcher"]
+
+
 class ProcessDispatcher:
     """Main class for handling processes."""
 
@@ -39,12 +44,14 @@ class ProcessDispatcher:
     _cache: Dict["FakeProcess", Dict["FakeProcess", AnyType]] = dict()
     _keep_last_process: bool = False
     _pid: int = 0
+    _patched_popen_locations: List[Tuple[AnyType, str]] = []
 
     @classmethod
     def register(cls, process: "FakeProcess") -> None:
         if not cls.process_list:
             cls.built_in_popen = subprocess.Popen
-            subprocess.Popen = cls.dispatch  # type: ignore
+            subprocess.Popen = FakePopenWrapper  # type: ignore
+            cls._patch_popen_references(subprocess.Popen)
 
             cls.built_in_async_subprocess = asyncio.subprocess
             asyncio.create_subprocess_shell = cls.async_shell  # type: ignore
@@ -63,6 +70,10 @@ class ProcessDispatcher:
         for proc, processes in cache.items():
             proc.definitions = processes
         if not cls.process_list:
+            if cls.built_in_popen is None:
+                raise exceptions.PluginInternalError
+
+            cls._restore_popen_references(cls.built_in_popen)
             subprocess.Popen = cls.built_in_popen  # type: ignore
             cls.built_in_popen = None
 
@@ -77,6 +88,28 @@ class ProcessDispatcher:
                 cls.built_in_async_subprocess.create_subprocess_exec
             )
             cls.built_in_async_subprocess = None
+
+    @classmethod
+    def _patch_popen_references(cls, new_popen: Callable) -> None:
+        """Replace module-level aliases of the original Popen."""
+        old_popen = cls.built_in_popen
+        cls._patched_popen_locations = []
+        for module in list(sys.modules.values()):
+            if not module or not hasattr(module, "__dict__"):
+                continue
+            module_dict = module.__dict__
+            for name, value in list(module_dict.items()):
+                if value is old_popen:
+                    module_dict[name] = new_popen
+                    cls._patched_popen_locations.append((module, name))
+
+    @classmethod
+    def _restore_popen_references(cls, original_popen: Callable) -> None:
+        """Restore module-level aliases patched earlier."""
+        for module, name in cls._patched_popen_locations:
+            if getattr(module, name, None) is FakePopenWrapper:
+                setattr(module, name, original_popen)
+        cls._patched_popen_locations = []
 
     @classmethod
     def dispatch(
@@ -162,7 +195,7 @@ class ProcessDispatcher:
         result = cls._prepare_instance(AsyncFakePopen, command, kwargs, process)
         if not isinstance(result, AsyncFakePopen):
             raise exceptions.PluginInternalError
-        result.run_thread()
+        result.evaluate()
         return result
 
     @classmethod
@@ -238,3 +271,10 @@ class ProcessDispatcher:
             if processes and isinstance(processes, deque):
                 return command_instance, processes, process_instance
         return None, None, None
+
+
+class FakePopenWrapper(Generic[AnyStr]):
+    def __new__(  # type: ignore
+        cls, command: COMMAND, **kwargs: Optional[Dict]
+    ) -> FakePopen:
+        return ProcessDispatcher.dispatch(command, **kwargs)  # type: ignore
