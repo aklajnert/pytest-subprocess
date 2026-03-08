@@ -174,20 +174,21 @@ async def test_loop_check_does_not_call_get_event_loop_policy(fp, monkeypatch):
     """Regression test for Python 3.14 asyncio policy deprecations."""
     fp.register(["test-script"])
 
-    monkeypatch.setattr(sys, "platform", "win32")
+    with monkeypatch.context() as test_ctx:
+        test_ctx.setattr(sys, "platform", "win32")
 
-    class _DummySelectorEventLoop:
-        pass
+        class _DummySelectorEventLoop:
+            pass
 
-    monkeypatch.setattr(asyncio, "SelectorEventLoop", _DummySelectorEventLoop)
+        test_ctx.setattr(asyncio, "SelectorEventLoop", _DummySelectorEventLoop)
 
-    def _fail_get_event_loop_policy():
-        raise AssertionError("asyncio.get_event_loop_policy() should not be called")
+        def _fail_get_event_loop_policy():
+            raise AssertionError("asyncio.get_event_loop_policy() should not be called")
 
-    monkeypatch.setattr(asyncio, "get_event_loop_policy", _fail_get_event_loop_policy)
+        test_ctx.setattr(asyncio, "get_event_loop_policy", _fail_get_event_loop_policy)
 
-    process = await asyncio.create_subprocess_exec("test-script")
-    assert await process.wait() == 0
+        process = await asyncio.create_subprocess_exec("test-script")
+        assert await process.wait() == 0
 
 
 @pytest.mark.asyncio
