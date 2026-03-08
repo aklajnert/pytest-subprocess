@@ -1,7 +1,10 @@
+import sys
+
 import pytest
 
 from pytest_subprocess.utils import Any
 from pytest_subprocess.utils import Command
+from pytest_subprocess.utils import Program
 
 
 def check_match(command_instance, command):
@@ -29,6 +32,50 @@ def test_more_complex_command(command):
     command = Command(command)
     assert check_match(command, ["test", "command"])
     assert check_not_match(command, ["other", "command"])
+
+
+def test_command_with_quoted_string_as_list():
+    command = Command(["something", "with", "an argument that contains spaces"])
+    assert command == 'something with "an argument that contains spaces"'
+
+
+def test_command_with_quoted_string():
+    command = Command('something with "an argument that contains spaces"')
+
+    assert command == ["something", "with", "an argument that contains spaces"]
+    assert command == (
+        "something",
+        "with",
+        "an argument that contains spaces",
+    )
+    assert command == 'something with "an argument that contains spaces"'
+
+
+def test_command_with_windows_path_argument(monkeypatch):
+    command = Command([r"C:\some\path\python.exe", "arg"])
+
+    with monkeypatch.context():
+        monkeypatch.setattr(sys, "platform", "win32")
+        assert command == r"C:\some\path\python.exe arg"
+
+
+def test_command_with_windows_path_as_string(monkeypatch):
+    with monkeypatch.context():
+        monkeypatch.setattr(sys, "platform", "win32")
+        command = Command(r"C:\some\path\python.exe arg")
+
+        assert command == [r"C:\some\path\python.exe", "arg"]
+        assert command == (r"C:\some\path\python.exe", "arg")
+        assert command == r"C:\some\path\python.exe arg"
+
+
+def test_program_with_windows_path(monkeypatch):
+    command = Command([Program("python")])
+
+    with monkeypatch.context():
+        monkeypatch.setattr(sys, "platform", "win32")
+        monkeypatch.setenv("PATHEXT", ".EXE")
+        assert command == r"C:\some\path\python.EXE"
 
 
 def test_simple_wildcards():

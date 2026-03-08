@@ -1,7 +1,9 @@
 import os
+import shlex
 import sys
 import threading
 from pathlib import Path
+from pathlib import PureWindowsPath
 from typing import Any as AnyType
 from typing import Iterator
 from typing import Optional
@@ -13,7 +15,7 @@ from typing import Union
 if TYPE_CHECKING:
     from .types import COMMAND
 
-ARGUMENT = Union[str, "Any", os.PathLike]
+ARGUMENT = Union[str, "Any", os.PathLike, "Program"]
 
 
 class Thread(threading.Thread):
@@ -38,8 +40,10 @@ class Command:
         command: "COMMAND",
     ):
         if isinstance(command, str):
-            command = tuple(command.split(" "))
-        if not isinstance(command, (list, tuple)):
+            command = tuple(self._split(command))
+        if isinstance(command, list):
+            command = tuple(command)
+        elif not isinstance(command, tuple):
             raise TypeError("Command can be only of type string, list or tuple.")
 
         self.command: Tuple[ARGUMENT, ...] = tuple(
@@ -54,7 +58,9 @@ class Command:
 
     def __eq__(self, other: AnyType) -> bool:
         if isinstance(other, str):
-            other = other.split(" ")
+            other = self._split(other)
+        elif isinstance(other, tuple):
+            other = list(other)
 
         norm_command = [
             os.fspath(c) if isinstance(c, os.PathLike) else c for c in self.command
@@ -91,7 +97,7 @@ class Command:
 
         return len(norm_other) == 0
 
-    def __iter__(self) -> Iterator:
+    def __iter__(self) -> Iterator[ARGUMENT]:
         return iter(self.command)
 
     @staticmethod
@@ -115,6 +121,19 @@ class Command:
         return next(
             (i for i, other_elem in enumerate(other) if elem == other_elem), None
         )
+
+    @staticmethod
+    def _split(command: str) -> Sequence[str]:
+        if not sys.platform.startswith("win"):
+            return shlex.split(command)
+        return [
+            (
+                command_elem[1:-1]
+                if len(command_elem) >= 2 and command_elem[0] == command_elem[-1] == '"'
+                else command_elem
+            )
+            for command_elem in shlex.split(command, posix=False)
+        ]
 
     def __hash__(self) -> int:
         return hash(self.command)
@@ -153,14 +172,17 @@ class Program:
 
     def __eq__(self, other: AnyType) -> bool:
         if isinstance(other, str):
-            if Path(other).name == self.program:
+            if not sys.platform.startswith("win") and Path(other).name == self.program:
                 return True
 
             if sys.platform.startswith("win"):
-                for ext in os.environ.get("PATHEXT", "").split(os.pathsep):
+                if PureWindowsPath(other).name == self.program:
+                    return True
+
+                for ext in os.environ.get("PATHEXT", "").split(";"):
                     if (
-                        Path(other).name.lower()
-                        == Path(self.program).with_suffix(ext).name.lower()
+                        PureWindowsPath(other).name.lower()
+                        == PureWindowsPath(self.program).with_suffix(ext).name.lower()
                     ):
                         return True
         return False
