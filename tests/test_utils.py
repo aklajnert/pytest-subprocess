@@ -31,8 +31,20 @@ def test_more_complex_command(command):
     assert check_not_match(command, ["other", "command"])
 
 
-def test_command_with_quoted_string():
+def test_command_with_quoted_string_as_list():
     command = Command(["something", "with", "an argument that contains spaces"])
+    assert command == 'something with "an argument that contains spaces"'
+
+
+def test_command_with_quoted_string():
+    command = Command('something with "an argument that contains spaces"')
+
+    assert command == ["something", "with", "an argument that contains spaces"]
+    assert command == (
+        "something",
+        "with",
+        "an argument that contains spaces",
+    )
     assert command == 'something with "an argument that contains spaces"'
 
 

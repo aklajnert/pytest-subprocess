@@ -14,7 +14,7 @@ from typing import Union
 if TYPE_CHECKING:
     from .types import COMMAND
 
-ARGUMENT = Union[str, "Any", os.PathLike]
+ARGUMENT = Union[str, "Any", os.PathLike[AnyType], "Program"]
 
 
 class Thread(threading.Thread):
@@ -96,7 +96,7 @@ class Command:
 
         return len(norm_other) == 0
 
-    def __iter__(self) -> Iterator:
+    def __iter__(self) -> Iterator[ARGUMENT]:
         return iter(self.command)
 
     @staticmethod
