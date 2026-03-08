@@ -3,6 +3,7 @@ import shlex
 import sys
 import threading
 from pathlib import Path
+from pathlib import PureWindowsPath
 from typing import Any as AnyType
 from typing import Iterator
 from typing import Optional
@@ -171,14 +172,17 @@ class Program:
 
     def __eq__(self, other: AnyType) -> bool:
         if isinstance(other, str):
-            if Path(other).name == self.program:
+            if not sys.platform.startswith("win") and Path(other).name == self.program:
                 return True
 
             if sys.platform.startswith("win"):
-                for ext in os.environ.get("PATHEXT", "").split(os.pathsep):
+                if PureWindowsPath(other).name == self.program:
+                    return True
+
+                for ext in os.environ.get("PATHEXT", "").split(";"):
                     if (
-                        Path(other).name.lower()
-                        == Path(self.program).with_suffix(ext).name.lower()
+                        PureWindowsPath(other).name.lower()
+                        == PureWindowsPath(self.program).with_suffix(ext).name.lower()
                     ):
                         return True
         return False

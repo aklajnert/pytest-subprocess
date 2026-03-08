@@ -4,6 +4,7 @@ import pytest
 
 from pytest_subprocess.utils import Any
 from pytest_subprocess.utils import Command
+from pytest_subprocess.utils import Program
 
 
 def check_match(command_instance, command):
@@ -66,6 +67,15 @@ def test_command_with_windows_path_as_string(monkeypatch):
         assert command == [r"C:\some\path\python.exe", "arg"]
         assert command == (r"C:\some\path\python.exe", "arg")
         assert command == r"C:\some\path\python.exe arg"
+
+
+def test_program_with_windows_path(monkeypatch):
+    command = Command([Program("python")])
+
+    with monkeypatch.context():
+        monkeypatch.setattr(sys, "platform", "win32")
+        monkeypatch.setenv("PATHEXT", ".EXE")
+        assert command == r"C:\some\path\python.EXE"
 
 
 def test_simple_wildcards():
