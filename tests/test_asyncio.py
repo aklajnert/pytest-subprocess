@@ -11,14 +11,50 @@ from pytest_subprocess.fake_popen import AsyncFakePopen
 PYTHON = sys.executable
 
 
+def _default_event_loop_policy():
+    """Return a platform default policy without deprecated asyncio aliases."""
+    if sys.platform.startswith("win"):
+        from asyncio import windows_events
+
+        policy_cls = getattr(windows_events, "_DefaultEventLoopPolicy", None)
+        if policy_cls is None:
+            policy_cls = getattr(windows_events, "DefaultEventLoopPolicy")
+        return policy_cls()
+
+    from asyncio import unix_events
+
+    policy_cls = getattr(unix_events, "_DefaultEventLoopPolicy", None)
+    if policy_cls is None:
+        policy_cls = unix_events.DefaultEventLoopPolicy
+    return policy_cls()
+
+
+def _windows_selector_event_loop_policy():
+    from asyncio import windows_events
+
+    policy_cls = getattr(windows_events, "_WindowsSelectorEventLoopPolicy", None)
+    if policy_cls is None:
+        policy_cls = getattr(windows_events, "WindowsSelectorEventLoopPolicy")
+    return policy_cls()
+
+
+def _windows_proactor_event_loop_policy():
+    from asyncio import windows_events
+
+    policy_cls = getattr(windows_events, "_WindowsProactorEventLoopPolicy", None)
+    if policy_cls is None:
+        policy_cls = getattr(windows_events, "WindowsProactorEventLoopPolicy")
+    return policy_cls()
+
+
 @pytest.fixture()
 def event_loop_policy(request):
     if sys.platform.startswith("win"):
         if request.node.name.startswith("test_invalid_event_loop"):
-            return asyncio.WindowsSelectorEventLoopPolicy()
-        else:
-            return asyncio.WindowsProactorEventLoopPolicy()
-    return asyncio.DefaultEventLoopPolicy()
+            return _windows_selector_event_loop_policy()
+        return _windows_proactor_event_loop_policy()
+
+    return _default_event_loop_policy()
 
 
 if sys.platform.startswith("win") and sys.version_info < (3, 8):
