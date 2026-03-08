@@ -1,3 +1,5 @@
+import sys
+
 import pytest
 
 from pytest_subprocess.utils import Any
@@ -46,6 +48,24 @@ def test_command_with_quoted_string():
         "an argument that contains spaces",
     )
     assert command == 'something with "an argument that contains spaces"'
+
+
+def test_command_with_windows_path_argument(monkeypatch):
+    command = Command([r"C:\some\path\python.exe", "arg"])
+
+    with monkeypatch.context():
+        monkeypatch.setattr(sys, "platform", "win32")
+        assert command == r"C:\some\path\python.exe arg"
+
+
+def test_command_with_windows_path_as_string(monkeypatch):
+    with monkeypatch.context():
+        monkeypatch.setattr(sys, "platform", "win32")
+        command = Command(r"C:\some\path\python.exe arg")
+
+        assert command == [r"C:\some\path\python.exe", "arg"]
+        assert command == (r"C:\some\path\python.exe", "arg")
+        assert command == r"C:\some\path\python.exe arg"
 
 
 def test_simple_wildcards():

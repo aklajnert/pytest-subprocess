@@ -39,7 +39,7 @@ class Command:
         command: "COMMAND",
     ):
         if isinstance(command, str):
-            command = tuple(shlex.split(command))
+            command = tuple(self._split(command))
         if isinstance(command, list):
             command = tuple(command)
         elif not isinstance(command, tuple):
@@ -57,7 +57,7 @@ class Command:
 
     def __eq__(self, other: AnyType) -> bool:
         if isinstance(other, str):
-            other = shlex.split(other)
+            other = self._split(other)
         elif isinstance(other, tuple):
             other = list(other)
 
@@ -120,6 +120,17 @@ class Command:
         return next(
             (i for i, other_elem in enumerate(other) if elem == other_elem), None
         )
+
+    @staticmethod
+    def _split(command: str) -> Sequence[str]:
+        if not sys.platform.startswith("win"):
+            return shlex.split(command)
+        return [
+            command_elem[1:-1]
+            if len(command_elem) >= 2 and command_elem[0] == command_elem[-1] == '"'
+            else command_elem
+            for command_elem in shlex.split(command, posix=False)
+        ]
 
     def __hash__(self) -> int:
         return hash(self.command)
