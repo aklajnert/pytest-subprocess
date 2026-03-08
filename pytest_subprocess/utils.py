@@ -14,7 +14,7 @@ from typing import Union
 if TYPE_CHECKING:
     from .types import COMMAND
 
-ARGUMENT = Union[str, "Any", os.PathLike[AnyType], "Program"]
+ARGUMENT = Union[str, "Any", os.PathLike, "Program"]
 
 
 class Thread(threading.Thread):
