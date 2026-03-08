@@ -126,9 +126,11 @@ class Command:
         if not sys.platform.startswith("win"):
             return shlex.split(command)
         return [
-            command_elem[1:-1]
-            if len(command_elem) >= 2 and command_elem[0] == command_elem[-1] == '"'
-            else command_elem
+            (
+                command_elem[1:-1]
+                if len(command_elem) >= 2 and command_elem[0] == command_elem[-1] == '"'
+                else command_elem
+            )
             for command_elem in shlex.split(command, posix=False)
         ]
 
