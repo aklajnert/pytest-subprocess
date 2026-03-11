@@ -28,20 +28,10 @@ jobs:
         with:
           python-versions: ${{ matrix.python-version }}
       - name: Run tests
-        if: matrix.platform != 'windows-latest' || matrix.python-version != 'pypy3.11'
         run: |
           nox -s tests-${{ matrix.python-version }}
         env:
           PLATFORM: ${{ matrix.platform }}
-          PYTHONUNBUFFERED: "1"
-
-      - name: Run tests (windows pypy diagnostics)
-        if: matrix.platform == 'windows-latest' && matrix.python-version == 'pypy3.11'
-        run: |
-          nox -s tests-${{ matrix.python-version }} -- -vv --maxfail=1 --timeout=180 --timeout-method=thread -o faulthandler_timeout=120 -o console_output_style=progress
-        env:
-          PLATFORM: ${{ matrix.platform }}
-          PYTHONUNBUFFERED: "1"
 
 
   mypy:
