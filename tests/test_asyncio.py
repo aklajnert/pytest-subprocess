@@ -11,14 +11,62 @@ from pytest_subprocess.fake_popen import AsyncFakePopen
 PYTHON = sys.executable
 
 
+def _is_windows_pypy() -> bool:
+    if sys.platform != "win32":
+        return False
+    try:
+        import __pypy__  # type: ignore
+
+        _ = __pypy__
+        return True
+    except ImportError:
+        return False
+
+
+def _default_event_loop_policy():
+    """Return a platform default policy without deprecated asyncio aliases."""
+    if sys.platform.startswith("win"):
+        from asyncio import windows_events
+
+        policy_cls = getattr(windows_events, "_DefaultEventLoopPolicy", None)
+        if policy_cls is None:
+            policy_cls = getattr(windows_events, "DefaultEventLoopPolicy")
+        return policy_cls()
+
+    from asyncio import unix_events
+
+    policy_cls = getattr(unix_events, "_DefaultEventLoopPolicy", None)
+    if policy_cls is None:
+        policy_cls = unix_events.DefaultEventLoopPolicy
+    return policy_cls()
+
+
+def _windows_selector_event_loop_policy():
+    from asyncio import windows_events
+
+    policy_cls = getattr(windows_events, "_WindowsSelectorEventLoopPolicy", None)
+    if policy_cls is None:
+        policy_cls = getattr(windows_events, "WindowsSelectorEventLoopPolicy")
+    return policy_cls()
+
+
+def _windows_proactor_event_loop_policy():
+    from asyncio import windows_events
+
+    policy_cls = getattr(windows_events, "_WindowsProactorEventLoopPolicy", None)
+    if policy_cls is None:
+        policy_cls = getattr(windows_events, "WindowsProactorEventLoopPolicy")
+    return policy_cls()
+
+
 @pytest.fixture()
 def event_loop_policy(request):
     if sys.platform.startswith("win"):
         if request.node.name.startswith("test_invalid_event_loop"):
-            return asyncio.WindowsSelectorEventLoopPolicy()
-        else:
-            return asyncio.WindowsProactorEventLoopPolicy()
-    return asyncio.DefaultEventLoopPolicy()
+            return _windows_selector_event_loop_policy()
+        return _windows_proactor_event_loop_policy()
+
+    return _default_event_loop_policy()
 
 
 if sys.platform.startswith("win") and sys.version_info < (3, 8):
@@ -47,6 +95,10 @@ async def test_basic_usage(fp, mode):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("fake", [True, False])
+@pytest.mark.skipif(
+    _is_windows_pypy(),
+    reason="PyPy on Windows hangs in asyncio subprocess event loop (IOCP)",
+)
 async def test_with_arguments_shell(fp, fake):
     fp.allow_unregistered(not fake)
     if fake:
@@ -70,6 +122,10 @@ async def test_with_arguments_shell(fp, fake):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("fake", [True, False])
+@pytest.mark.skipif(
+    _is_windows_pypy(),
+    reason="PyPy on Windows hangs in asyncio subprocess event loop (IOCP)",
+)
 async def test_with_arguments_exec(fp, fake):
     fp.allow_unregistered(not fake)
     if fake:
@@ -134,8 +190,34 @@ async def test_invalid_event_loop(fp, fake, mode):
 
 
 @pytest.mark.asyncio
+async def test_loop_check_does_not_call_get_event_loop_policy(fp, monkeypatch):
+    """Regression test for Python 3.14 asyncio policy deprecations."""
+    fp.register(["test-script"])
+
+    with monkeypatch.context() as test_ctx:
+        test_ctx.setattr(sys, "platform", "win32")
+
+        class _DummySelectorEventLoop:
+            pass
+
+        test_ctx.setattr(asyncio, "SelectorEventLoop", _DummySelectorEventLoop)
+
+        def _fail_get_event_loop_policy():
+            raise AssertionError("asyncio.get_event_loop_policy() should not be called")
+
+        test_ctx.setattr(asyncio, "get_event_loop_policy", _fail_get_event_loop_policy)
+
+        process = await asyncio.create_subprocess_exec("test-script")
+        assert await process.wait() == 0
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("fake", [False, True])
 @pytest.mark.parametrize("mode", ["shell", "exec"])
+@pytest.mark.skipif(
+    _is_windows_pypy(),
+    reason="PyPy on Windows hangs in asyncio subprocess event loop (IOCP)",
+)
 async def test_wait(fp, fake, mode):
     """
     Check that wait argument still works. Unfortunately asyncio doesn't have
@@ -197,6 +279,10 @@ async def test_anyio(fp):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("fake", [False, True])
+@pytest.mark.skipif(
+    _is_windows_pypy(),
+    reason="PyPy on Windows hangs in asyncio subprocess event loop (IOCP)",
+)
 async def test_stdout_and_stderr(fp, fake):
     if fake:
         fp.register(
@@ -231,6 +317,10 @@ async def test_stdout_and_stderr(fp, fake):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("fake", [False, True])
+@pytest.mark.skipif(
+    _is_windows_pypy(),
+    reason="PyPy on Windows hangs in asyncio subprocess event loop (IOCP)",
+)
 async def test_combined_stdout_and_stderr(fp, fake):
     if fake:
         fp.register(
@@ -284,6 +374,10 @@ async def _read_stream(stream: asyncio.StreamReader, output_list):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("fake", [False, True])
+@pytest.mark.skipif(
+    _is_windows_pypy(),
+    reason="PyPy on Windows hangs in asyncio subprocess event loop (IOCP)",
+)
 async def test_input(fp, fake):
     fp.allow_unregistered(not fake)
     if fake:

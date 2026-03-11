@@ -141,7 +141,7 @@ class ProcessDispatcher:
         method = partial(
             cls.built_in_async_subprocess.create_subprocess_shell,  # type: ignore
             cmd,
-            **kwargs
+            **kwargs,
         )
         if isinstance(cmd, bytes):
             cmd = cmd.decode()
@@ -159,7 +159,7 @@ class ProcessDispatcher:
             cls.built_in_async_subprocess.create_subprocess_exec,  # type: ignore
             program,
             *args,
-            **kwargs
+            **kwargs,
         )
         if isinstance(program, bytes):
             program = program.decode()
@@ -185,12 +185,12 @@ class ProcessDispatcher:
             async_shell: Awaitable[asyncio.subprocess.Process] = async_method()
             return await async_shell
 
-        if sys.platform == "win32" and isinstance(
-            asyncio.get_event_loop_policy().get_event_loop(), asyncio.SelectorEventLoop
-        ):
-            raise NotImplementedError(
-                "The SelectorEventLoop doesn't support subprocess"
-            )
+        if sys.platform == "win32":
+            loop = asyncio.get_running_loop()
+            if isinstance(loop, asyncio.SelectorEventLoop):
+                raise NotImplementedError(
+                    "The SelectorEventLoop doesn't support subprocess"
+                )
 
         result = cls._prepare_instance(AsyncFakePopen, command, kwargs, process)
         if not isinstance(result, AsyncFakePopen):

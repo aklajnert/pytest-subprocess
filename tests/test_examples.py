@@ -16,7 +16,14 @@ def get_code_blocks(file_path):
         content = file_handle.read()
 
     code_blocks = publish_doctree(
-        content, settings_overrides={"report_level": 5}
+        content,
+        settings_overrides={
+            "report_level": 5,
+            # We only need literal code extraction in this test; disable
+            # syntax highlighting to avoid third-party lexer warnings turning
+            # into errors under strict warning settings (e.g. Python 3.15).
+            "syntax_highlight": "none",
+        },
     ).findall(condition=is_code_block)
     return [block.astext() for block in code_blocks]
 

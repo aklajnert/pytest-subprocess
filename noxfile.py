@@ -1,16 +1,55 @@
+import subprocess
+import sys
 from pathlib import Path
 
 import nox
 
 
-@nox.session(python=["3.8", "3.9", "3.10", "3.11", "3.12", "3.13", "pypy3.8"])
-def tests(session):
+def _pypy311_interpreter() -> str:
+    """Resolve PyPy3.11 executable explicitly on Windows.
+
+    Work around a nox/Windows issue where unresolved interpreter aliases can
+    trigger a hanging ``py -`` probe.
+    """
+    if sys.platform == "win32":
+        try:
+            result = subprocess.run(
+                [
+                    "py",
+                    "-V:Astral/PyPy3.11.13",
+                    "-c",
+                    "import sys; print(sys.executable)",
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+            if result.returncode == 0 and result.stdout.strip():
+                return result.stdout.strip()
+        except (OSError, subprocess.TimeoutExpired):
+            pass
+
+    return "pypy3.11"
+
+
+def _run_tests(session: nox.Session) -> None:
     session.install(".[test]")
     session.run(
         "pytest",
         *session.posargs,
-        env={"PYTHONPATH": str(Path(__file__).resolve().parent)}
+        env={"PYTHONPATH": str(Path(__file__).resolve().parent)},
     )
+
+
+@nox.session(python=["3.8", "3.9", "3.10", "3.11", "3.12", "3.13", "3.14", "3.15"])
+def tests(session):
+    _run_tests(session)
+
+
+@nox.session(name="tests-pypy3.11", python=_pypy311_interpreter())
+def tests_pypy311(session):
+    _run_tests(session)
 
 
 @nox.session
