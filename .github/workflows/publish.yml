@@ -1,0 +1,71 @@
+# To release:
+#   git tag v1.5.4
+#   git push origin v1.5.4
+
+name: Publish to PyPI
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  # ── Quality gate ────────────────────────────────────────────────────────────
+  test:
+    name: Tests (Python 3.12, Ubuntu)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Nox
+        uses: wntrblm/nox@2024.10.09
+        with:
+          python-versions: "3.12"
+
+      - name: Run tests
+        run: nox -s tests-3.12
+
+  # ── Build the distribution ─────────────────────────────────────────────────
+  build:
+    name: Build distribution
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build
+        run: pip install build
+
+      - name: Build sdist and wheel
+        run: python -m build
+
+      - name: Upload dist artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  # ── Publish to PyPI via OIDC Trusted Publishing ────────────────────────────
+  publish:
+    name: Publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/pytest-subprocess
+    permissions:
+      id-token: write  # Required for OIDC (Trusted Publishing)
+    steps:
+      - name: Download dist artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
