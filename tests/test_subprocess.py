@@ -349,7 +349,6 @@ def test_run(fp, fake):
     assert process.stderr is None
 
 
-@pytest.mark.filterwarnings("ignore:unclosed file:ResourceWarning")
 @pytest.mark.parametrize("fake", [False, True])
 def test_universal_newlines(fp, fake):
     fp.allow_unregistered(not fake)
@@ -362,11 +361,12 @@ def test_universal_newlines(fp, fake):
         (PYTHON, "example_script.py"), universal_newlines=True, stdout=subprocess.PIPE
     )
     process.wait()
+    output = process.stdout.read()
+    process.stdout.close()
 
-    assert process.stdout.read() == "Stdout line 1\nStdout line 2\n"
+    assert output == "Stdout line 1\nStdout line 2\n"
 
 
-@pytest.mark.filterwarnings("ignore:unclosed file:ResourceWarning")
 @pytest.mark.parametrize("fake", [False, True])
 def test_text(fp, fake):
     fp.allow_unregistered(not fake)
@@ -386,8 +386,10 @@ def test_text(fp, fake):
             (PYTHON, "example_script.py"), stdout=subprocess.PIPE, text=True
         )
         process.wait()
+        output = process.stdout.read()
+        process.stdout.close()
 
-        assert process.stdout.read().splitlines() == ["Stdout line 1", "Stdout line 2"]
+        assert output.splitlines() == ["Stdout line 1", "Stdout line 2"]
 
 
 def test_binary(fp):
