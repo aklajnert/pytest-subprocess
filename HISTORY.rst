@@ -1,6 +1,24 @@
 History
 =======
 
+1.5.4 (2026-03-21)  
+------------------
+
+Features  
+~~~~~~~~
+* `#103 <https://github.com/aklajnert/pytest-subprocess/pull/103>`_: Improve matching commands that contain quoted arguments.
+
+Bug fixes  
+~~~~~~~~~
+* `#192 <https://github.com/aklajnert/pytest-subprocess/pull/192>`_: Fix ResourceWarning for unclosed file handles in test_universal_newlines and test_text by explicitly closing process.stdout after reading, preventing intermittent failures on Python 3.12+.
+* `#196 <https://github.com/aklajnert/pytest-subprocess/pull/196>`_: Handle stderr=STDOUT when stdout is a file handle.
+* `#194 <https://github.com/aklajnert/pytest-subprocess/pull/194>`_: Patch imported `subprocess.Popen` aliases.
+* `#186 <https://github.com/aklajnert/pytest-subprocess/pull/186>`_: Support file handles in stdout and stderr.
+
+Other changes  
+~~~~~~~~~~~~~
+* `#197 <https://github.com/aklajnert/pytest-subprocess/pull/197>`_: Officially support Python 3.14 and 3.15.
+
 1.5.3 (2025-01-04)  
 ------------------
 

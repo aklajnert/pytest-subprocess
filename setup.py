@@ -16,7 +16,7 @@ requirements = ["pytest>=4.0.0"]
 
 setup(
     name="pytest-subprocess",
-    version="1.5.3",
+    version="1.5.4",
     author="Andrzej Klajnert",
     author_email="python@aklajnert.pl",
     maintainer="Andrzej Klajnert",

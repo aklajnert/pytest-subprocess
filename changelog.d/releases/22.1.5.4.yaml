@@ -1,0 +1,34 @@
+entries:
+  bug:
+  - message: Fix ResourceWarning for unclosed file handles in 
+      test_universal_newlines and test_text by explicitly closing process.stdout
+      after reading, preventing intermittent failures on Python 3.12+.
+    pr_ids:
+    - '192'
+    timestamp: 1773418994
+  - message: Handle stderr=STDOUT when stdout is a file handle.
+    pr_ids:
+    - '196'
+    timestamp: 1771774550
+  - message: Patch imported `subprocess.Popen` aliases.
+    pr_ids:
+    - '194'
+    timestamp: 1771750535
+  - message: Support file handles in stdout and stderr.
+    pr_ids:
+    - '186'
+    timestamp: 1756146621
+  feature:
+  - message: Improve matching commands that contain quoted arguments.
+    pr_ids:
+    - 103
+    timestamp: 1666456344
+  other:
+  - message: Officially support Python 3.14 and 3.15.
+    pr_ids:
+    - '197'
+    timestamp: 1773040237
+previous_release: 1.5.3
+release_date: '2026-03-21'
+release_description: ''
+release_version: 1.5.4
