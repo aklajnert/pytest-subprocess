@@ -311,7 +311,8 @@ the same name, regardless of the location. This is accomplished with
 
     def test_any_matching_program(fp):
         # define a command that can come from anywhere
-        fp.register([fp.program("python")])
+        executable_name = os.path.basename(sys.executable)
+        fp.register([fp.program(executable_name)])
         assert subprocess.check_call(sys.executable) == 0
 
 
