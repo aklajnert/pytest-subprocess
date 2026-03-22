@@ -34,6 +34,18 @@ jobs:
           PLATFORM: ${{ matrix.platform }}
 
 
+  test-uv-venv:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+      - name: Run tests inside uv venv
+        run: |
+          uv venv -p 3.12
+          uv pip install -e .[test]
+          uv run pytest
+
   mypy:
     runs-on: ubuntu-latest
 
