@@ -139,6 +139,16 @@ class FakePopen:
         return None
 
     def poll(self) -> Optional[int]:
+        if (
+            self.returncode is None
+            and self.__thread is not None
+            and not self.__thread.is_alive()
+        ):
+            # The callback/wait thread has finished but _finalize_thread() has
+            # not been called yet (e.g. the caller uses poll() instead of
+            # wait()/communicate()).  Finalise now so returncode is updated,
+            # mirroring real subprocess.Popen.poll() behaviour.
+            self._finalize_thread(None)
         return self.returncode
 
     def wait(self, timeout: Optional[float] = None) -> int:

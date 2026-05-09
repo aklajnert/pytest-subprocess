@@ -914,6 +914,49 @@ def test_callback_and_return_code(fp):
     assert process.returncode == 5
 
 
+def test_poll_reflects_returncode_after_callback(fp):
+    """
+    poll() must return the registered returncode once the callback thread has
+    finished, without requiring the caller to invoke wait() or communicate().
+
+    Before the fix, poll() always returned None when a callback was registered.
+    """
+
+    def slow_callback(process):
+        time.sleep(0.1)
+
+    fp.register(["my-tool"], returncode=1, callback=slow_callback)
+    proc = subprocess.Popen(["my-tool"])
+
+    # While the callback is still running, poll() must return None.
+    assert proc.poll() is None
+
+    # Wait for the callback thread to finish, then poll() must return the
+    # registered returncode.
+    proc.wait()
+    assert proc.poll() == 1
+
+
+def test_poll_reflects_returncode_after_callback_polling_loop(fp):
+    """
+    Callers that spin on proc.poll() is None (a common real-subprocess idiom)
+    must eventually observe a non-None returncode once the callback finishes.
+    """
+
+    def callback_with_delay(process):
+        time.sleep(0.05)
+
+    fp.register(["my-tool"], returncode=42, callback=callback_with_delay)
+    proc = subprocess.Popen(["my-tool"])
+
+    deadline = time.monotonic() + 5.0  # generous upper bound
+    while proc.poll() is None:
+        assert time.monotonic() < deadline, "poll() never reflected returncode"
+        time.sleep(0.01)
+
+    assert proc.returncode == 42
+
+
 @pytest.mark.skipif(
     sys.version_info <= (3, 6),
     reason="encoding and errors has been introduced in 3.6",
