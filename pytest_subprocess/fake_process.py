@@ -21,6 +21,7 @@ from .types import OPTIONAL_TEXT_OR_ITERABLE
 from .utils import Any
 from .utils import Command
 from .utils import Program
+from .utils import Regex
 
 
 class FakeProcess:
@@ -28,6 +29,7 @@ class FakeProcess:
 
     any: ClassVar[Type[Any]] = Any
     program: ClassVar[Type[Program]] = Program
+    regex: ClassVar[Type[Regex]] = Regex
 
     def __init__(self) -> None:
         self.definitions: DefaultDict[Command, Deque[Union[Dict, bool]]] = defaultdict(
