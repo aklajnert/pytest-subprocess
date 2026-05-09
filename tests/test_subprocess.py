@@ -1,5 +1,6 @@
 import contextlib
 import getpass
+import io
 import os
 import platform
 import signal
@@ -1349,6 +1350,62 @@ def test_stdin_pipe(fp):
     process.stdin.close()
     with pytest.raises(ValueError):
         process.stdin.write(b"more data")
+
+
+def test_stdin_pipe_text_mode(fp):
+    """
+    Test that stdin is a StringIO (text) buffer when using
+    subprocess.PIPE with text=True.
+
+    From GitHub #204
+    """
+    fp.register(["my-command"], stdout="hello\n")
+
+    process = subprocess.Popen(
+        ["my-command"],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+
+    assert process.stdin is not None
+    assert isinstance(process.stdin, io.StringIO)
+    assert process.stdin.writable()
+
+    # Should accept str, not bytes, in text mode.
+    process.stdin.write("some input")
+    process.stdin.flush()
+
+    process.stdin.seek(0)
+    assert process.stdin.read() == "some input"
+
+    process.stdin.close()
+    with pytest.raises(ValueError):
+        process.stdin.write("more data")
+
+
+def test_stdin_pipe_encoding_mode(fp):
+    """
+    Test that stdin is a StringIO (text) buffer when
+    using subprocess.PIPE with encoding set.
+
+    From GitHub #204
+    """
+    fp.register(["my-command"])
+
+    process = subprocess.Popen(
+        ["my-command"],
+        stdin=subprocess.PIPE,
+        encoding="utf-8",
+    )
+
+    assert process.stdin is not None
+    assert isinstance(process.stdin, io.StringIO)
+    assert process.stdin.writable()
+
+    process.stdin.write("some input")
+    process.stdin.close()
 
 
 def test_stdout_stderr_as_file_bug(fp):

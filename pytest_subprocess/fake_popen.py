@@ -170,10 +170,6 @@ class FakePopen:
         self.__kwargs = self.safe_copy(kwargs)
         self.__universal_newlines = kwargs.get("universal_newlines", None)
 
-        stdin = kwargs.get("stdin")
-        if stdin == subprocess.PIPE:
-            self.stdin = self._get_empty_buffer(False)
-
         text = kwargs.get("text", None)
         encoding = kwargs.get("encoding", None)
         errors = kwargs.get("errors", None)
@@ -182,6 +178,10 @@ class FakePopen:
             raise TypeError("__init__() got an unexpected keyword argument 'text'")
 
         self.text_mode = bool(text or self.__universal_newlines or encoding or errors)
+
+        stdin = kwargs.get("stdin")
+        if stdin == subprocess.PIPE:
+            self.stdin = self._get_empty_buffer(self.text_mode)
 
         # validation taken from the real subprocess
         if (
