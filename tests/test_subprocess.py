@@ -1589,3 +1589,139 @@ def test_regex_combined_with_any(fp):
         capture_output=True,
     )
     assert proc.stdout == b"configured\n"
+
+
+# ---------------------------------------------------------------------------
+# Callback assertion helpers – issue #203
+# ---------------------------------------------------------------------------
+
+
+def test_assert_env_passes(fp):
+    """
+    fp.assert_env() must not raise when all expected key/value pairs are
+    present in the env dict that was passed to Popen.
+    """
+    fp.register(
+        ["my-command"],
+        callback=fp.assert_env(API_URL="https://example.com"),
+    )
+
+    process = subprocess.Popen(
+        ["my-command"],
+        env={"API_URL": "https://example.com", "PATH": "/usr/bin"},
+    )
+    process.wait()
+    assert process.returncode == 0
+
+
+def test_assert_env_subset_check(fp):
+    """
+    fp.assert_env() only checks the keys it was given; extra keys in the
+    real env must be ignored.
+    """
+    fp.register(
+        ["my-command"],
+        callback=fp.assert_env(KEY="value"),
+    )
+
+    process = subprocess.Popen(
+        ["my-command"],
+        env={"KEY": "value", "EXTRA": "ignored"},
+    )
+    process.wait()
+    assert process.returncode == 0
+
+
+def test_assert_env_fails_missing_key(fp):
+    """
+    fp.assert_env() must raise AssertionError when an expected key is absent.
+    """
+    fp.register(
+        ["my-command"],
+        callback=fp.assert_env(MISSING_KEY="value"),
+    )
+
+    with pytest.raises(AssertionError, match="MISSING_KEY"):
+        process = subprocess.Popen(["my-command"], env={"OTHER": "x"})
+        process.wait()
+
+
+def test_assert_env_fails_wrong_value(fp):
+    """
+    fp.assert_env() must raise AssertionError when a key is present but has
+    the wrong value.
+    """
+    fp.register(
+        ["my-command"],
+        callback=fp.assert_env(KEY="expected"),
+    )
+
+    with pytest.raises(AssertionError, match="KEY"):
+        process = subprocess.Popen(["my-command"], env={"KEY": "wrong"})
+        process.wait()
+
+
+def test_assert_env_fails_when_env_not_passed(fp):
+    """
+    fp.assert_env() must raise AssertionError when env= was not supplied to
+    Popen at all (the callback cannot inspect an inherited environment).
+    """
+    fp.register(
+        ["my-command"],
+        callback=fp.assert_env(KEY="value"),
+    )
+
+    with pytest.raises(AssertionError, match="env"):
+        process = subprocess.Popen(["my-command"])
+        process.wait()
+
+
+def test_assert_kwargs_passes(fp):
+    """
+    fp.assert_kwargs() must not raise when all expected Popen keyword
+    arguments match.
+    """
+    fp.register(
+        ["my-command"],
+        callback=fp.assert_kwargs(cwd="/expected/path"),
+    )
+
+    process = subprocess.Popen(["my-command"], cwd="/expected/path")
+    process.wait()
+    assert process.returncode == 0
+
+
+def test_assert_kwargs_fails_wrong_value(fp):
+    """
+    fp.assert_kwargs() must raise AssertionError when a kwarg value differs
+    from the expected value.
+    """
+    fp.register(
+        ["my-command"],
+        callback=fp.assert_kwargs(cwd="/expected/path"),
+    )
+
+    with pytest.raises(AssertionError, match="cwd"):
+        process = subprocess.Popen(["my-command"], cwd="/wrong/path")
+        process.wait()
+
+
+def test_assert_kwargs_multiple_keys(fp):
+    """
+    fp.assert_kwargs() can check several keyword arguments at once.
+    """
+    fp.register(
+        ["my-command"],
+        callback=fp.assert_kwargs(
+            cwd="/expected/path",
+            env={"KEY": "value"},
+        ),
+    )
+
+    process = subprocess.Popen(
+        ["my-command"],
+        cwd="/expected/path",
+        env={"KEY": "value"},
+    )
+    process.wait()
+    assert process.returncode == 0

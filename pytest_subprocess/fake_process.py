@@ -10,10 +10,14 @@ from typing import Deque
 from typing import Dict
 from typing import List
 from typing import Optional
+from typing import TYPE_CHECKING
 from typing import Type
 from typing import Union
 
 from . import exceptions
+
+if TYPE_CHECKING:
+    from .fake_popen import FakePopen
 from .process_dispatcher import ProcessDispatcher
 from .process_recorder import ProcessRecorder
 from .types import COMMAND
@@ -157,6 +161,98 @@ class FakeProcess:
             keep: decide whether last process shall be kept
         """
         self._keep_last_process = keep
+
+    @staticmethod
+    def assert_env(**expected_vars: AnyType) -> Callable:
+        """Return a callback that asserts environment variables passed to Popen.
+
+        The returned callable checks that every ``key=value`` pair supplied in
+        *expected_vars* is present in the ``env`` kwarg that was passed to
+        ``Popen``.  Keys not listed in *expected_vars* are ignored (subset
+        check).
+
+        If ``env`` was **not** supplied to ``Popen`` (meaning the process would
+        inherit the current environment), the callback raises
+        :class:`AssertionError` immediately, because there is nothing concrete
+        to assert against.
+
+        Example::
+
+            def test_my_command_uses_correct_env(fp):
+                fp.register(
+                    ["my-command"],
+                    callback=fp.assert_env(API_URL="https://example.com"),
+                )
+
+                subprocess.run(
+                    ["my-command"],
+                    env={"API_URL": "https://example.com", "PATH": "/usr/bin"},
+                )
+
+        Args:
+            **expected_vars: Key/value pairs that must appear in ``env``.
+
+        Returns:
+            A callable suitable for use as the ``callback`` argument of
+            :meth:`register`.
+        """
+
+        def _callback(process: "FakePopen") -> None:  # type: ignore[name-defined]
+            env = process.kwargs.get("env") if process.kwargs else None
+            if env is None:
+                raise AssertionError(
+                    f"assert_env: 'env' was not passed to Popen "
+                    f"(expected {expected_vars!r})"
+                )
+            for key, value in expected_vars.items():
+                if key not in env:
+                    raise AssertionError(
+                        f"assert_env: key {key!r} not found in env={env!r}"
+                    )
+                if env[key] != value:
+                    raise AssertionError(
+                        f"assert_env: env[{key!r}]={env[key]!r}, expected {value!r}"
+                    )
+
+        return _callback
+
+    @staticmethod
+    def assert_kwargs(**expected: AnyType) -> Callable:
+        """Return a callback that asserts top-level keyword arguments passed to Popen.
+
+        The returned callable checks exact equality for every keyword supplied
+        in *expected* against the kwargs that were passed to ``Popen``.  Keys
+        not mentioned in *expected* are not checked.
+
+        Example::
+
+            def test_my_command_runs_in_correct_dir(fp):
+                fp.register(
+                    ["my-command"],
+                    callback=fp.assert_kwargs(cwd="/expected/path"),
+                )
+
+                subprocess.run(["my-command"], cwd="/expected/path")
+
+        Args:
+            **expected: Keyword argument names and the exact values they must
+                have when ``Popen`` is called.
+
+        Returns:
+            A callable suitable for use as the ``callback`` argument of
+            :meth:`register`.
+        """
+
+        def _callback(process: "FakePopen") -> None:  # type: ignore[name-defined]
+            kwargs = process.kwargs or {}
+            for key, value in expected.items():
+                actual = kwargs.get(key)
+                if actual != value:
+                    raise AssertionError(
+                        f"assert_kwargs: {key!r}={actual!r}, expected {value!r}"
+                    )
+
+        return _callback
 
     @classmethod
     def context(cls) -> "FakeProcess":

@@ -233,6 +233,56 @@ the ``callback_kwargs`` argument:
 
         assert process.returncode == return_code
 
+Asserting Popen arguments via callbacks
+----------------------------------------
+
+When you want to verify that your code passes the right keyword arguments to
+``Popen`` (e.g. a specific working directory, environment variables, or
+encoding), you can use the built-in callback factories ``fp.assert_env()`` and
+``fp.assert_kwargs()``.  Both return a callable that is passed directly as the
+``callback`` argument and raises ``AssertionError`` if the expectations are not
+met.
+
+**Checking environment variables** — ``fp.assert_env(**expected_vars)``
+
+Performs a *subset* check: every key/value pair supplied to ``assert_env``
+must appear in the ``env`` dict that was passed to ``Popen``.  Additional keys
+in the real ``env`` are ignored.  If ``env`` was not passed to ``Popen`` at
+all, the assertion fails immediately.
+
+.. code-block:: python
+
+    def test_command_receives_correct_env(fp):
+        fp.register(
+            ["my-command"],
+            callback=fp.assert_env(API_URL="https://example.com"),
+        )
+
+        # Passes – API_URL matches; PATH is an extra key and is ignored.
+        subprocess.run(
+            ["my-command"],
+            env={"API_URL": "https://example.com", "PATH": "/usr/bin"},
+        )
+
+**Checking arbitrary Popen kwargs** — ``fp.assert_kwargs(**expected)``
+
+Checks exact equality for every keyword supplied to ``assert_kwargs`` against
+the kwargs that were passed to ``Popen``.  Keys not mentioned are ignored.
+
+.. code-block:: python
+
+    def test_command_runs_in_correct_dir(fp):
+        fp.register(
+            ["my-command"],
+            callback=fp.assert_kwargs(cwd="/expected/path"),
+        )
+
+        subprocess.run(["my-command"], cwd="/expected/path")
+
+Both helpers can be combined with ``callback_kwargs`` if you need to perform
+additional work in the same callback, but for simple assertion-only use cases
+they can be used as the sole callback.
+
 As a context manager
 --------------------
 
