@@ -333,7 +333,9 @@ expression using ``fp.regex()``:
         )
 
         # Both calls are matched, even though the paths differ.
-        subprocess.run(["cmake", "-S/tmp/generated_data", "-B/tmp/build_1234"])
+        subprocess.run(
+            ["cmake", "-S/tmp/generated_data", "-B/tmp/build_1234"]
+        )
         subprocess.run(["cmake", "-S/other/source", "-B/other/build_5678"])
 
         # This would raise ProcessNotRegisteredError — different subcommand:
@@ -345,9 +347,10 @@ expression using ``fp.regex()``:
 
     import re
 
+
     def test_case_insensitive(fp):
         fp.register(["git", fp.regex(r"commit", re.IGNORECASE)])
-        subprocess.run(["git", "COMMIT"])   # matches
+        subprocess.run(["git", "COMMIT"])  # matches
 
 .. note::
    ``fp.regex()`` uses :func:`re.fullmatch`, so the pattern must cover the
