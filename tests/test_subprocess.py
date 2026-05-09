@@ -1458,3 +1458,91 @@ def test_imported_popen_is_patched(fp):
 
     assert process.returncode == 0
     assert out == b"\x00"
+
+
+# ---------------------------------------------------------------------------
+# Regex command matching – issue #154
+# ---------------------------------------------------------------------------
+
+
+def test_regex_matches_varying_argument(fp):
+    """
+    fp.regex() must match a single command argument against a regex pattern,
+    allowing commands with variable argument values to be registered once.
+    """
+    fp.register(["cmake", fp.regex(r"-S.+"), fp.regex(r"-B.+")], occurrences=2)
+
+    # Both calls use the same registration; argument values differ.
+    proc1 = subprocess.run(["cmake", "-S/tmp/source1", "-B/tmp/build1"])
+    proc2 = subprocess.run(["cmake", "-S/other/source", "-B/other/build"])
+
+    assert proc1.returncode == 0
+    assert proc2.returncode == 0
+
+
+def test_regex_does_not_match_wrong_argument(fp):
+    """
+    Commands whose arguments do NOT match the registered regex pattern must
+    raise ProcessNotRegisteredError, not silently succeed.
+    """
+    fp.register(["cmake", fp.regex(r"-S.+"), fp.regex(r"-B.+")])
+
+    # Wrong subcommand — does not match the -S/-B pattern.
+    with pytest.raises(fp.exceptions.ProcessNotRegisteredError):
+        subprocess.run(["cmake", "--build", "/tmp/build"])
+
+
+def test_regex_case_insensitive_flag(fp):
+    """
+    fp.regex() must accept re module flags such as re.IGNORECASE.
+    """
+    import re
+
+    fp.register(["git", fp.regex(r"commit", re.IGNORECASE)], stdout="sha: abc123\n")
+
+    # Exact case
+    proc1 = subprocess.run(["git", "commit"], capture_output=True)
+    assert proc1.stdout == b"sha: abc123\n"
+
+    # Different case
+    fp.register(["git", fp.regex(r"commit", re.IGNORECASE)], stdout="sha: abc123\n")
+    proc2 = subprocess.run(["git", "COMMIT"], capture_output=True)
+    assert proc2.stdout == b"sha: abc123\n"
+
+
+def test_regex_fullmatch_semantics(fp):
+    """
+    fp.regex() uses fullmatch: the pattern must cover the *entire* argument
+    string.  A pattern that only matches a substring must NOT match.
+    """
+    # "-S" alone does not fullmatch "-S/some/path" (pattern too short)
+    fp.register(["cmake", fp.regex(r"-S"), fp.regex(r"-B")])
+    with pytest.raises(fp.exceptions.ProcessNotRegisteredError):
+        # "-S/tmp/source" does not fullmatch the pattern "-S" (no extra chars)
+        subprocess.run(["cmake", "-S/tmp/source", "-B/tmp/build"])
+
+
+def test_regex_repr(fp):
+    """
+    fp.regex() instances have a helpful repr for debugging.
+    """
+    r = fp.regex(r"-S.+")
+    assert "-S.+" in repr(r)
+
+
+def test_regex_combined_with_any(fp):
+    """
+    fp.regex() can be combined freely with fp.any() and exact strings in
+    the same command registration.
+    """
+    # Exact "cmake", then any number of arguments matching the -D prefix
+    fp.register(
+        ["cmake", fp.regex(r"-D.+=.+"), fp.any()],
+        stdout="configured\n",
+    )
+
+    proc = subprocess.run(
+        ["cmake", "-DCMAKE_BUILD_TYPE=Release", "-S/tmp/src", "-B/tmp/build"],
+        capture_output=True,
+    )
+    assert proc.stdout == b"configured\n"

@@ -1,4 +1,5 @@
 import os
+import re
 import shlex
 import sys
 import threading
@@ -15,7 +16,7 @@ from typing import Union
 if TYPE_CHECKING:
     from .types import COMMAND
 
-ARGUMENT = Union[str, "Any", os.PathLike, "Program"]
+ARGUMENT = Union[str, "Any", "Regex", os.PathLike, "Program"]
 
 
 class Thread(threading.Thread):
@@ -189,3 +190,54 @@ class Program:
 
     def __hash__(self) -> int:
         return hash(self.program)
+
+
+class Regex:
+    """Match a single command argument against a regular expression.
+
+    Uses :func:`re.fullmatch`, so the pattern must cover the *entire* argument
+    string.  Use ``.*`` at the start or end if partial matching is desired.
+
+    Example::
+
+        def test_cmake_varying_paths(fp):
+            fp.register(["cmake", fp.regex(r"-S.+"), fp.regex(r"-B.+")])
+
+            # All of these would match:
+            subprocess.run(["cmake", "-S/tmp/src", "-B/tmp/build"])
+            subprocess.run(["cmake", "-S/other/src", "-B/other/build"])
+
+            # This would NOT match (wrong argument order or missing args):
+            # subprocess.run(["cmake", "-B/tmp/build", "-S/tmp/src"])
+
+    Args:
+        pattern: Regular expression pattern to match against.
+        flags: Optional :mod:`re` flags (e.g. ``re.IGNORECASE``).
+    """
+
+    def __init__(self, pattern: str, flags: int = 0) -> None:
+        self._compiled = re.compile(pattern, flags)
+
+    @property
+    def pattern(self) -> str:
+        """The original pattern string."""
+        return self._compiled.pattern
+
+    @property
+    def flags(self) -> int:
+        """The compiled regex flags."""
+        return self._compiled.flags
+
+    def __eq__(self, other: AnyType) -> bool:
+        if isinstance(other, str):
+            return bool(self._compiled.fullmatch(other))
+        return NotImplemented
+
+    def __hash__(self) -> int:
+        return hash((self._compiled.pattern, self._compiled.flags))
+
+    def __repr__(self) -> str:
+        return f"Regex({self._compiled.pattern!r})"
+
+    def __str__(self) -> str:
+        return repr(self)

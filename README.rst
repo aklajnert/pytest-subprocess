@@ -316,6 +316,45 @@ the same name, regardless of the location. This is accomplished with
         assert subprocess.check_call(sys.executable) == 0
 
 
+Regex argument matching
+-----------------------
+
+When a command argument has a predictable *structure* but an unpredictable
+*value* (e.g. a path determined at runtime), you can match it with a regular
+expression using ``fp.regex()``:
+
+.. code-block:: python
+
+    def test_cmake_varying_paths(fp):
+        # Register once; the pattern matches any -S<path> and -B<path> argument.
+        fp.register(
+            ["cmake", fp.regex(r"-S.+"), fp.regex(r"-B.+")],
+            occurrences=2,
+        )
+
+        # Both calls are matched, even though the paths differ.
+        subprocess.run(["cmake", "-S/tmp/generated_data", "-B/tmp/build_1234"])
+        subprocess.run(["cmake", "-S/other/source", "-B/other/build_5678"])
+
+        # This would raise ProcessNotRegisteredError — different subcommand:
+        # subprocess.run(["cmake", "--build", "/tmp/build_1234"])
+
+``fp.regex()`` accepts an optional second argument for :mod:`re` flags:
+
+.. code-block:: python
+
+    import re
+
+    def test_case_insensitive(fp):
+        fp.register(["git", fp.regex(r"commit", re.IGNORECASE)])
+        subprocess.run(["git", "COMMIT"])   # matches
+
+.. note::
+   ``fp.regex()`` uses :func:`re.fullmatch`, so the pattern must cover the
+   **entire** argument string.  Use ``.*`` at the start or end if you need
+   partial matching.
+
+
 Check if process was called
 ---------------------------
 
