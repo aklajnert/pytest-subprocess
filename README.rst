@@ -341,7 +341,7 @@ expression using ``fp.regex()``:
         # This would raise ProcessNotRegisteredError — different subcommand:
         # subprocess.run(["cmake", "--build", "/tmp/build_1234"])
 
-``fp.regex()`` accepts an optional second argument for :mod:`re` flags:
+``fp.regex()`` accepts an optional second argument for ``re`` module flags:
 
 .. code-block:: python
 
@@ -353,7 +353,7 @@ expression using ``fp.regex()``:
         subprocess.run(["git", "COMMIT"])  # matches
 
 .. note::
-   ``fp.regex()`` uses :func:`re.fullmatch`, so the pattern must cover the
+   ``fp.regex()`` uses ``re.fullmatch()``, so the pattern must cover the
    **entire** argument string.  Use ``.*`` at the start or end if you need
    partial matching.
 
