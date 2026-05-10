@@ -1,5 +1,0 @@
-message: Fix poll() not reflecting returncode when a callback is registered.
-pr_ids:
-- '207'
-timestamp: 1778331025
-type: bug

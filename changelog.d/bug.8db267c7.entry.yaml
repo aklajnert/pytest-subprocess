@@ -1,5 +1,0 @@
-message: Fix stdin not respecting text mode when text=True or encoding is set.
-pr_ids:
-- '205'
-timestamp: 1778312802
-type: bug

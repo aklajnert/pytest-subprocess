@@ -1,6 +1,18 @@
 History
 =======
 
+1.6.0 (2026-05-10)  
+------------------
+
+Features  
+~~~~~~~~
+* `#206 <https://github.com/aklajnert/pytest-subprocess/pull/206>`_: Add fp.regex() for regex-based command argument matching.
+
+Bug fixes  
+~~~~~~~~~
+* `#207 <https://github.com/aklajnert/pytest-subprocess/pull/207>`_: Fix poll() not reflecting returncode when a callback is registered.
+* `#205 <https://github.com/aklajnert/pytest-subprocess/pull/205>`_: Fix stdin not respecting text mode when text=True or encoding is set.
+
 1.5.4 (2026-03-21)  
 ------------------
 

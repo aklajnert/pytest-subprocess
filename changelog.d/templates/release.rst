@@ -1,6 +1,6 @@
 
 {{ release_version }} ({{ release_date }})  
-{{ "-" * release_version|length }}---{{ "-" * release_date|length }}
+{{ "-" * (release_version or "")|length }}---{{ "-" * (release_date or "")|length }}
 {% if release_description %}
 {{ release_description }}  
 {% endif %}{% for group in entry_groups %}
