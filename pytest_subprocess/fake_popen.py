@@ -124,7 +124,7 @@ class FakePopen:
         data = dictionary.get(key)
         if data:
             return self._prepare_buffer(input=data, io_base=stream)
-        return None
+        return stream
 
     def poll(self) -> Optional[int]:
         if (
