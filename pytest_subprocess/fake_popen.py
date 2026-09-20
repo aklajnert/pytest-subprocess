@@ -28,10 +28,7 @@ from .types import OPTIONAL_TEXT
 from .types import OPTIONAL_TEXT_OR_ITERABLE
 from .utils import Thread
 
-if sys.platform.startswith("win") and sys.version_info < (3, 8):
-    COMMAND_SEQ = Sequence[Union[str, bytes]]
-else:
-    COMMAND_SEQ = Sequence[Union[str, bytes, "os.PathLike[str]", "os.PathLike[bytes]"]]
+COMMAND_SEQ = Sequence[Union[str, bytes, "os.PathLike[str]", "os.PathLike[bytes]"]]
 
 
 class FakePopen:
@@ -60,15 +57,6 @@ class FakePopen:
         stdin_callable: Optional[Callable] = None,
         **_: Dict[str, AnyType],
     ) -> None:
-        if (
-            not isinstance(command, (str, bytes))
-            and sys.platform.startswith("win")
-            and sys.version_info < (3, 8)
-        ):
-            for arg in command:
-                if isinstance(arg, os.PathLike):
-                    msg = f"argument of type {arg.__class__.__name__!r} is not iterable"
-                    raise TypeError(msg)
         self.args = command
         self.__kwargs: Optional[Dict[str, AnyType]] = None
         self.__stdout: OPTIONAL_TEXT_OR_ITERABLE = stdout
@@ -183,9 +171,6 @@ class FakePopen:
         text = kwargs.get("text", None)
         encoding = kwargs.get("encoding", None)
         errors = kwargs.get("errors", None)
-
-        if text and sys.version_info < (3, 7):
-            raise TypeError("__init__() got an unexpected keyword argument 'text'")
 
         self.text_mode = bool(text or self.__universal_newlines or encoding or errors)
 

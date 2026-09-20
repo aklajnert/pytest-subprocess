@@ -69,15 +69,6 @@ def event_loop_policy(request):
     return _default_event_loop_policy()
 
 
-if sys.platform.startswith("win") and sys.version_info < (3, 8):
-
-    @pytest.fixture(autouse=True)
-    def event_loop(request, event_loop_policy):
-        loop = event_loop_policy.new_event_loop()
-        yield loop
-        loop.close()
-
-
 @pytest.mark.asyncio
 @pytest.mark.parametrize("mode", ["shell", "exec"])
 async def test_basic_usage(fp, mode):
@@ -489,16 +480,3 @@ async def test_process_recorder_args(fp):
     assert recorder.call_count() == 1
     assert recorder.calls[0].args == ["test_script", "arg1"]
     assert recorder.calls[0].kwargs == {"env": {"foo": "bar"}}
-
-
-@pytest.fixture(autouse=True)
-def skip_on_pypy():
-    """Async test for some reason crash on pypy 3.6 on Windows"""
-    if sys.platform == "win32" and sys.version.startswith("3.6"):
-        try:
-            import __pypy__
-
-            _ = __pypy__
-            pytest.skip()
-        except ImportError:
-            pass

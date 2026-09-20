@@ -1,4 +1,3 @@
-import contextlib
 import getpass
 import io
 import os
@@ -62,22 +61,10 @@ def test_completedprocess_args(fp, cmd):
 def test_completedprocess_args_path(fp, rtype, ptype):
     fp.register([rtype("cmd")])
 
-    if sys.platform.startswith("win") and sys.version_info < (3, 8) and ptype is Path:
-        condition = pytest.raises(TypeError)
+    proc = subprocess.run([ptype("cmd")], check=True)
 
-    else:
-
-        @contextlib.contextmanager
-        def null_context():
-            yield
-
-        condition = null_context()
-
-    with condition:
-        proc = subprocess.run([ptype("cmd")], check=True)
-
-        assert proc.args == [ptype("cmd")]
-        assert isinstance(proc.args[0], ptype)
+    assert proc.args == [ptype("cmd")]
+    assert isinstance(proc.args[0], ptype)
 
 
 @pytest.mark.parametrize("cmd", [("cmd"), ["cmd"]])
@@ -196,33 +183,21 @@ def test_basic_process(fp, fake, rtype, ptype):
             stderr=None,
         )
 
-    if sys.platform.startswith("win") and sys.version_info < (3, 8) and ptype is Path:
-        condition = pytest.raises(TypeError)
+    process = subprocess.Popen(
+        [ptype(PYTHON), "example_script.py"],
+        cwd=os.path.dirname(__file__),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    out, err = process.communicate()
 
-    else:
+    assert process.poll() == 0
+    assert process.returncode == 0
+    assert process.pid > 0
 
-        @contextlib.contextmanager
-        def null_context():
-            yield
-
-        condition = null_context()
-
-    with condition:
-        process = subprocess.Popen(
-            [ptype(PYTHON), "example_script.py"],
-            cwd=os.path.dirname(__file__),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        out, err = process.communicate()
-
-        assert process.poll() == 0
-        assert process.returncode == 0
-        assert process.pid > 0
-
-        # splitlines is required to ignore differences between LF and CRLF
-        assert out.splitlines() == [b"Stdout line 1", b"Stdout line 2"]
-        assert err == b""
+    # splitlines is required to ignore differences between LF and CRLF
+    assert out.splitlines() == [b"Stdout line 1", b"Stdout line 2"]
+    assert err == b""
 
 
 @pytest.mark.parametrize("fake", [False, True])
@@ -310,12 +285,11 @@ def test_check_call(fp, fake):
     with pytest.raises(subprocess.CalledProcessError) as exc:
         assert subprocess.check_call((PYTHON, "example_script.py", "non-zero")) == 1
 
-    if sys.version_info >= (3, 6):
-        assert (
-            str(exc.value).replace("\\\\", "\\")
-            == f"Command '('{PYTHON}', 'example_script.py', 'non-zero')' "
-            "returned non-zero exit status 1."
-        )
+    assert (
+        str(exc.value).replace("\\\\", "\\")
+        == f"Command '('{PYTHON}', 'example_script.py', 'non-zero')' "
+        "returned non-zero exit status 1."
+    )
 
 
 @pytest.mark.parametrize("fake", [False, True])
@@ -330,10 +304,6 @@ def test_call(fp, fake):
 
 
 @pytest.mark.parametrize("fake", [False, True])
-@pytest.mark.skipif(
-    sys.version_info <= (3, 5),
-    reason="subprocess.run() was introduced in python3.4",
-)
 def test_run(fp, fake):
     fp.allow_unregistered(not fake)
     if fake:
@@ -376,21 +346,14 @@ def test_text(fp, fake):
             [PYTHON, "example_script.py"],
             stdout=[b"Stdout line 1", b"Stdout line 2"],
         )
-    if sys.version_info < (3, 7):
-        with pytest.raises(TypeError) as exc:
-            subprocess.Popen(
-                (PYTHON, "example_script.py"), stdout=subprocess.PIPE, text=True
-            )
-        assert str(exc.value) == "__init__() got an unexpected keyword argument 'text'"
-    else:
-        process = subprocess.Popen(
-            (PYTHON, "example_script.py"), stdout=subprocess.PIPE, text=True
-        )
-        process.wait()
-        output = process.stdout.read()
-        process.stdout.close()
+    process = subprocess.Popen(
+        (PYTHON, "example_script.py"), stdout=subprocess.PIPE, text=True
+    )
+    process.wait()
+    output = process.stdout.read()
+    process.stdout.close()
 
-        assert output.splitlines() == ["Stdout line 1", "Stdout line 2"]
+    assert output.splitlines() == ["Stdout line 1", "Stdout line 2"]
 
 
 def test_binary(fp):
@@ -456,10 +419,6 @@ def test_input(fp, fake):
     assert err is None
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 7),
-    reason="No need to test since 'text' is available since 3.7",
-)
 @pytest.mark.parametrize("fake", [False, True])
 def test_ambiguous_input(fp, fake):
     fp.allow_unregistered(not fake)
@@ -957,10 +916,6 @@ def test_poll_reflects_returncode_after_callback_polling_loop(fp):
     assert proc.returncode == 42
 
 
-@pytest.mark.skipif(
-    sys.version_info <= (3, 6),
-    reason="encoding and errors has been introduced in 3.6",
-)
 @pytest.mark.parametrize("argument", ["encoding", "errors"])
 @pytest.mark.parametrize("fake", [False, True])
 def test_encoding(fp, fake, argument):
