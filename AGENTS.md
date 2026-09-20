@@ -42,8 +42,10 @@ Every pull request MUST include a changelog entry managed with
 
 - Valid `--type` values (see `changelog.d/config.yaml`):
   `feature`, `bug`, `doc`, `deprecation`, `other`.
-- If the PR number is not known yet, omit `--pr-ids` (it can be added later);
-  `--message` is always required.
+- If the PR number is not known yet (entry created before opening the PR),
+  pass an arbitrary placeholder number first (e.g. `--pr-ids 0`), then update
+  the generated entry file in `changelog.d/` with the real PR number once
+  the PR is opened; `--message` is always required.
 - Keep the entry consistent in style and scope with previous entries
   (see `changelog.d/releases/` and `HISTORY.rst`): one short, single-sentence,
   user-facing message per PR, imperative mood, ending with a period —
