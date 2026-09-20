@@ -29,7 +29,8 @@ jobs:
           python-versions: ${{ matrix.python-version }}
       - name: Run tests
         run: |
-          nox -s tests-${{ matrix.python-version }}
+          # virtualenv no longer seeds Python 3.8; use its built-in venv instead.
+          nox --force-venv-backend ${{ matrix.python-version == '3.8' && 'venv' || 'virtualenv' }} -s tests-${{ matrix.python-version }}
         env:
           PLATFORM: ${{ matrix.platform }}
 
