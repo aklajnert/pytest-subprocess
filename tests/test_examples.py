@@ -1,4 +1,3 @@
-import sys
 from pathlib import Path
 
 import pytest
@@ -49,26 +48,8 @@ def test_documentation(testdir, rst_file):
         "    os.chdir(os.path.dirname(__file__))\n\n"
     )
 
-    if sys.version_info < (3, 8):
-        event_loop_fixture = (
-            "\n\n"
-            "@pytest.fixture(autouse=True)\n"
-            "def event_loop(request):\n"
-            "    policy = asyncio.get_event_loop_policy()\n"
-            '    if sys.platform == "win32":\n'
-            "        loop = asyncio.ProactorEventLoop()\n"
-            "    else:\n"
-            "        loop = policy.get_event_loop()\n"
-            "    yield loop\n"
-            "    loop.close()\n"
-        )
-    else:
-        event_loop_fixture = ""
-
     code_blocks = "\n".join(get_code_blocks(ROOT_DIR / rst_file))
-    testdir.makepyfile(
-        imports + setup_fixture + event_loop_fixture + "\n" + code_blocks
-    )
+    testdir.makepyfile(imports + setup_fixture + "\n" + code_blocks)
 
     result = testdir.inline_run()
     assert result.ret == 0
