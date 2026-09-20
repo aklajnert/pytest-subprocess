@@ -1,0 +1,6 @@
+message: Preserve existing output when stdin callbacks return no data for a 
+  stream.
+pr_ids:
+- 209
+timestamp: 1789917309
+type: bug
