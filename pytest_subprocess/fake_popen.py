@@ -456,8 +456,9 @@ class AsyncFakePopen(FakePopen):
                 return
             self._execution_task = asyncio.create_task(self._run_callback_in_executor())
             self._execution_task.add_done_callback(self._observe_execution)
-        execution = asyncio.shield(self._execution_task)
-        if timeout is not None:
-            await asyncio.wait_for(execution, timeout=timeout)
-        else:
-            await execution
+        # wait() leaves execution running when this waiter is cancelled or times
+        # out, without shield() reporting a later exception as unhandled.
+        done, _ = await asyncio.wait((self._execution_task,), timeout=timeout)
+        if not done:
+            raise asyncio.TimeoutError
+        self._execution_task.result()
