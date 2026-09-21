@@ -2,7 +2,6 @@
 
 import asyncio
 import collections.abc
-import concurrent.futures
 import copy
 import io
 import os
@@ -370,6 +369,8 @@ class FakePopen:
 class AsyncFakePopen(FakePopen):
     """Class to handle async processes"""
 
+    _execution_task: Optional["asyncio.Task[None]"] = None
+
     async def communicate(  # type: ignore
         self, input: OPTIONAL_TEXT = None, timeout: Optional[float] = None
     ) -> Tuple[AnyType, AnyType]:
@@ -390,10 +391,13 @@ class AsyncFakePopen(FakePopen):
         )
 
     async def wait(self, timeout: Optional[float] = None) -> int:  # type: ignore
-        if timeout and self._wait_timeout and timeout < self._wait_timeout:
-            self._wait_timeout -= timeout
-            raise subprocess.TimeoutExpired(self.args, timeout)
-        await self._finalize(timeout)
+        try:
+            await self._finalize(timeout)
+        except asyncio.TimeoutError:
+            # Preserve the timeout exception for registered waits.
+            if timeout and self._wait_timeout is not None:
+                raise subprocess.TimeoutExpired(self.args, timeout) from None
+            raise
         if self.returncode is None:
             raise exceptions.PluginInternalError
         return self.returncode
@@ -424,24 +428,36 @@ class AsyncFakePopen(FakePopen):
             self._finish_process()
 
     async def _run_callback_in_executor(self) -> None:
-        """Run in executor the user-defined callback or wait."""
+        """Run once and finish the process independently of its waiters."""
         loop = asyncio.get_running_loop()
-        with concurrent.futures.ThreadPoolExecutor() as pool:
-            if self._callback:
-                kwargs = self._callback_kwargs or {}
-                cbk = partial(self._callback, **kwargs)
-                await loop.run_in_executor(pool, cbk, self)
-            elif self._wait_timeout is not None:
-                await loop.run_in_executor(pool, self._wait, self._wait_timeout)
-
-    async def _finalize(self, timeout: Optional[float] = None) -> None:
-        """Run the user-defined callback or wait. Finish process"""
-        if self.returncode is not None:
-            return
-        if timeout is not None:
-            await asyncio.wait_for(self._run_callback_in_executor(), timeout=timeout)
-        else:
-            await self._run_callback_in_executor()
+        if self._callback:
+            kwargs = self._callback_kwargs or {}
+            cbk = partial(self._callback, **kwargs)
+            # The loop owns this executor; cancelling a waiter must not perform
+            # a blocking executor shutdown on the event-loop thread.
+            await loop.run_in_executor(None, cbk, self)
+        elif self._wait_timeout is not None:
+            await loop.run_in_executor(None, time.sleep, self._wait_timeout)
         if self.returncode is None:
             self.returncode = self._returncode
         self._finalize_streams()
+
+    @staticmethod
+    def _observe_execution(task: "asyncio.Task[None]") -> None:
+        # Retain exceptions for subsequent waiters without emitting an
+        # unhandled-task warning if every waiter has been cancelled.
+        if not task.cancelled():
+            task.exception()
+
+    async def _finalize(self, timeout: Optional[float] = None) -> None:
+        """Run the user-defined callback or wait. Finish process"""
+        if self._execution_task is None:
+            if self.returncode is not None:
+                return
+            self._execution_task = asyncio.create_task(self._run_callback_in_executor())
+            self._execution_task.add_done_callback(self._observe_execution)
+        execution = asyncio.shield(self._execution_task)
+        if timeout is not None:
+            await asyncio.wait_for(execution, timeout=timeout)
+        else:
+            await execution
