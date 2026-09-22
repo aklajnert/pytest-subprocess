@@ -70,6 +70,8 @@ class FakePopen:
         self._wait_timeout: Optional[float] = wait
         self._callback: Optional[Optional[Callable]] = callback
         self._callback_kwargs: Optional[Dict[str, AnyType]] = callback_kwargs
+        self._encoding = "utf-8"
+        self._errors = "strict"
 
     @property
     def kwargs(self) -> Optional[Dict[str, AnyType]]:
@@ -188,6 +190,15 @@ class FakePopen:
                 "different. Pass one or the other."
             )
 
+        if self.text_mode:
+            with io.TextIOWrapper(
+                io.BytesIO(),
+                encoding="utf-8" if encoding is None else cast(str, encoding),
+                errors=cast(Optional[str], errors),
+            ) as buffer:
+                self._encoding = buffer.encoding
+                self._errors = cast(str, buffer.errors)
+
         stdout = kwargs.get("stdout")
         stdout_writer = self._get_io_writer(stdout)
         if stdout == subprocess.PIPE:
@@ -247,7 +258,7 @@ class FakePopen:
             input = input.encode()
 
         if isinstance(input, bytes) and self.text_mode:
-            input = input.decode()
+            input = input.decode(self._encoding, self._errors)
 
         if input and self.__universal_newlines and isinstance(input, str):
             input = input.replace("\r\n", "\n")
@@ -322,7 +333,7 @@ class FakePopen:
 
     def _convert(self, input: Union[str, bytes]) -> Union[str, bytes]:
         if isinstance(input, bytes) and self.text_mode:
-            return input.decode()
+            return input.decode(self._encoding, self._errors)
         if isinstance(input, str) and not self.text_mode:
             return input.encode()
         return input
