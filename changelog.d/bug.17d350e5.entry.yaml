@@ -1,5 +1,5 @@
 message: Honor encoding and errors when decoding registered byte output.
 pr_ids:
-- '0'
+- '214'
 timestamp: 1790040401
 type: bug
