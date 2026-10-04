@@ -1,4 +1,6 @@
+import _pyio
 import io
+import locale
 import os
 import subprocess
 import sys
@@ -105,3 +107,23 @@ def test_output_without_decoding(fp, output, options, expected):
     fp.register(["command"], stdout=output)
 
     assert subprocess.check_output(["command"], **options) == expected
+
+
+@pytest.mark.parametrize("fake", [False, True], ids=["real", "fake"])
+@pytest.mark.parametrize("errors", [None, "replace"])
+@pytest.mark.skipif(sys.flags.utf8_mode, reason="UTF-8 mode overrides the locale")
+def test_default_encoding_uses_locale(fp, fake, errors, monkeypatch):
+    # Use the Python wrapper so the locale can be controlled on every platform.
+    monkeypatch.setattr(io, "TextIOWrapper", _pyio.TextIOWrapper)
+    monkeypatch.setattr(locale, "getencoding", lambda: "latin-1", raising=False)
+    monkeypatch.setattr(locale, "getpreferredencoding", lambda *args: "latin-1")
+    command = [sys.executable, "-c", "import os; os.write(1, b'caf\\xe9')"]
+    if fake:
+        fp.register(command, stdout=b"caf\xe9")
+    else:
+        fp.pass_command(command)
+
+    assert (
+        subprocess.check_output(command, text=True, encoding=None, errors=errors)
+        == "caf\u00e9"
+    )

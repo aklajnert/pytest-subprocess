@@ -193,7 +193,7 @@ class FakePopen:
         if self.text_mode:
             with io.TextIOWrapper(
                 io.BytesIO(),
-                encoding="utf-8" if encoding is None else cast(str, encoding),
+                encoding=cast(Optional[str], encoding),
                 errors=cast(Optional[str], errors),
             ) as buffer:
                 self._encoding = buffer.encoding
