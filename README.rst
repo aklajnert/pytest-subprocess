@@ -239,13 +239,18 @@ Callbacks can also check environment variables passed to ``Popen`` through the
 .. code-block:: python
 
     def callback_checks_environment(process):
-        assert process.kwargs.get("env", {}).get("EXPECTED_ENV_VAR") == "expected"
+        assert (
+            process.kwargs.get("env", {}).get("EXPECTED_ENV_VAR")
+            == "expected"
+        )
 
 
     def test_callback_checks_environment(fp):
         fp.register("test", callback=callback_checks_environment)
 
-        process = subprocess.Popen("test", env={"EXPECTED_ENV_VAR": "expected"})
+        process = subprocess.Popen(
+            "test", env={"EXPECTED_ENV_VAR": "expected"}
+        )
         process.wait()
 
 As a context manager
