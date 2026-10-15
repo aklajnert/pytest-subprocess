@@ -34,9 +34,7 @@ def test_communicate_rejects_input_after_communication_started(
     received = []
     fp.register(
         ["command"],
-        stdin_callable=lambda data: (
-            received.append(data) or {"stdout": b"reply"}
-        ),
+        stdin_callable=lambda data: (received.append(data) or {"stdout": b"reply"}),
     )
 
     process = subprocess.Popen(
@@ -54,9 +52,7 @@ def test_communicate_rejects_input_after_communication_started(
 
 @pytest.mark.parametrize("first_input", [None, b"", b"data"])
 @pytest.mark.parametrize("second_input", [None, b"", b"data"])
-def test_communicate_input_truthiness_matches_subprocess(
-    fp, first_input, second_input
-):
+def test_communicate_input_truthiness_matches_subprocess(fp, first_input, second_input):
     real_result = _real_communicate_twice(first_input, second_input)
 
     fp.register(
