@@ -1,5 +1,5 @@
 message: Reject repeated non-empty input to synchronous communicate().
 pr_ids:
-- '0'
+- '218'
 timestamp: 1792096076
 type: bug
