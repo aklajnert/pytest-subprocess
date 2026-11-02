@@ -285,11 +285,11 @@ def test_check_call(fp, fake):
     with pytest.raises(subprocess.CalledProcessError) as exc:
         assert subprocess.check_call((PYTHON, "example_script.py", "non-zero")) == 1
 
-    assert (
-        str(exc.value).replace("\\\\", "\\")
-        == f"Command '('{PYTHON}', 'example_script.py', 'non-zero')' "
-        "returned non-zero exit status 1."
-    )
+    command = (PYTHON, "example_script.py", "non-zero")
+    assert type(exc.value) is subprocess.CalledProcessError
+    assert exc.value.returncode == 1
+    assert exc.value.cmd == command
+    assert str(exc.value) == str(subprocess.CalledProcessError(1, command))
 
 
 @pytest.mark.parametrize("fake", [False, True])
