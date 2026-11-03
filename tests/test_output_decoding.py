@@ -36,15 +36,29 @@ def test_output_decoding(fp, fake, data, options, expected):
     assert result.stderr == expected
 
 
+@pytest.mark.parametrize("fake", [False, True], ids=["real", "fake"])
+@pytest.mark.parametrize("linesep", ["\n", "\r\n"], ids=["lf", "crlf"])
 @pytest.mark.parametrize("stream", ["stdout", "stderr"])
-def test_output_lines_decoding(fp, stream):
-    fp.register(["command"], **{stream: [b"caf\xe9", b"a\xffb"]})
+def test_output_lines_decoding(fp, fake, linesep, stream, monkeypatch):
+    monkeypatch.setattr(os, "linesep", linesep)
+    lines = [b"caf\xe9", b"a\xffb"]
+    separator = linesep.encode("ascii")
+    data = separator.join(lines) + separator
+    command = [
+        sys.executable,
+        "-c",
+        f"import sys; sys.{stream}.buffer.write({data!r})",
+    ]
+    if fake:
+        fp.register(command, **{stream: lines})
+    else:
+        fp.pass_command(command)
 
     result = subprocess.run(
-        ["command"], capture_output=True, encoding="ascii", errors="replace"
+        command, capture_output=True, encoding="ascii", errors="replace"
     )
 
-    assert getattr(result, stream) == f"caf\ufffd{os.linesep}a\ufffdb{os.linesep}"
+    assert getattr(result, stream) == "caf\ufffd\na\ufffdb\n"
 
 
 def test_stdin_callback_output_decoding(fp):
