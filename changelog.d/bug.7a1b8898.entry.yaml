@@ -1,0 +1,5 @@
+message: Normalize captured newlines for every synchronous text mode.
+pr_ids:
+- '219'
+timestamp: 1793212867
+type: bug

@@ -259,8 +259,8 @@ class FakePopen:
         if isinstance(input, bytes) and self.text_mode:
             input = input.decode(self._encoding, self._errors)
 
-        if input and self.__universal_newlines and isinstance(input, str):
-            input = input.replace("\r\n", "\n")
+        if input and self.text_mode and isinstance(input, str):
+            input = input.replace("\r\n", "\n").replace("\r", "\n")
 
         if (
             io_base
