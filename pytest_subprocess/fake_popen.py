@@ -304,26 +304,15 @@ class FakePopen:
     def _write_to_buffer(self, data: OPTIONAL_TEXT_OR_ITERABLE, buffer: IO) -> None:
         if data is None:
             return
-        binary_mode = "b" in buffer.mode
-        if isinstance(data, (list, tuple)):
-            self._write_lines(buffer, data, binary_mode)
-        else:
-            self._write_value(buffer, data, binary_mode)
-
-    def _write_lines(self, buffer: IO, lines: Sequence[AnyType], binary: bool) -> None:
-        if binary:
-            buffer.writelines([self._to_bytes_value(line) + b"\n" for line in lines])
-        else:
-            buffer.writelines([self._to_text_value(line) + "\n" for line in lines])
-
-    def _write_value(self, buffer: IO, value: AnyType, binary: bool) -> None:
-        if binary:
-            buffer.write(self._to_bytes_value(value))
-        else:
-            buffer.write(self._to_text_value(value))
-
-    def _to_text_value(self, value: AnyType) -> str:
-        return value if isinstance(value, str) else str(value)
+        # A child writes bytes without the parent's text conversion. Duplicate
+        # the descriptor so closing our writer leaves the caller's file open.
+        with os.fdopen(os.dup(buffer.fileno()), "wb") as binary_buffer:
+            if isinstance(data, (list, tuple)):
+                binary_buffer.writelines(
+                    [self._to_bytes_value(line) + b"\n" for line in data]
+                )
+            else:
+                binary_buffer.write(self._to_bytes_value(data))
 
     def _to_bytes_value(self, value: AnyType) -> bytes:
         if isinstance(value, bytes):
