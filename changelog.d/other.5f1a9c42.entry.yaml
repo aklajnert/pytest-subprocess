@@ -1,0 +1,5 @@
+message: Require Python 3.11 or newer.
+pr_ids:
+- '221'
+timestamp: 1794787200
+type: other

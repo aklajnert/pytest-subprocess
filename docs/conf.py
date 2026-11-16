@@ -48,7 +48,7 @@ version = release
 # ones.
 
 extensions = [
-    "sphinxcontrib.napoleon",
+    "sphinx.ext.napoleon",
     "sphinx.ext.autodoc",
     "sphinx_autodoc_typehints",
 ]
