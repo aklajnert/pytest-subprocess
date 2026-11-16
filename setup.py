@@ -45,7 +45,6 @@ setup(
         "docs": [
             "sphinx",
             "furo",
-            "sphinxcontrib-napoleon",
             "sphinx-autodoc-typehints",
             "changelogd",
         ],

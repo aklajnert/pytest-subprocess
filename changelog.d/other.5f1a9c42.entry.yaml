@@ -1,0 +1,5 @@
+message: Drop end-of-life Python versions from the CI pipeline.
+pr_ids:
+- '0'
+timestamp: 1794787200
+type: other
