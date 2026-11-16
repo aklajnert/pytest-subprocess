@@ -29,7 +29,7 @@ setup(
     },
     description="A plugin to fake subprocess for pytest",
     long_description=read("README.rst") + "\n" + read("HISTORY.rst"),
-    python_requires=">=3.9",
+    python_requires=">=3.11",
     install_requires=requirements,
     extras_require={
         "test": [
@@ -58,8 +58,6 @@ setup(
         "Topic :: Software Development :: Testing",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.9",
-        "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
         "Programming Language :: Python :: 3.13",

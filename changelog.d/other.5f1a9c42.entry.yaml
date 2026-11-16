@@ -1,5 +1,5 @@
-message: Drop end-of-life Python versions from the CI pipeline.
+message: Require Python 3.11 or newer.
 pr_ids:
-- '0'
+- '221'
 timestamp: 1794787200
 type: other
