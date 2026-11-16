@@ -1,0 +1,5 @@
+message: Preserve output bytes when redirecting to text-mode files.
+pr_ids:
+- '220'
+timestamp: 1794794243
+type: bug
