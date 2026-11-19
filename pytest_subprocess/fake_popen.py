@@ -69,6 +69,7 @@ class FakePopen:
         self._wait_timeout: Optional[float] = wait
         self._callback: Optional[Optional[Callable]] = callback
         self._callback_kwargs: Optional[Dict[str, AnyType]] = callback_kwargs
+        self.__communication_started = False
         self._encoding = "utf-8"
         self._errors = "strict"
 
@@ -86,6 +87,7 @@ class FakePopen:
     def communicate(
         self, input: OPTIONAL_TEXT = None, timeout: Optional[float] = None
     ) -> Tuple[AnyType, AnyType]:
+        self._mark_communication_started(input)
         self._handle_stdin(input)
         self._finalize_thread(timeout)
 
@@ -98,6 +100,11 @@ class FakePopen:
             self.stdout.getvalue() if self.stdout else None,
             self.stderr.getvalue() if self.stderr else None,
         )
+
+    def _mark_communication_started(self, input: OPTIONAL_TEXT) -> None:
+        if self.__communication_started and input:
+            raise ValueError("Cannot send input after starting communication")
+        self.__communication_started = True
 
     def _handle_stdin(self, input: OPTIONAL_TEXT) -> None:
         if input and self.__stdin_callable:
