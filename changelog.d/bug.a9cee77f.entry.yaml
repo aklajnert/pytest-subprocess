@@ -1,6 +1,6 @@
 message: Route stdin callback output to the configured stdout and stderr
   destinations.
 pr_ids:
-- '0'
+- '222'
 timestamp: 1795448555
 type: bug
