@@ -106,9 +106,14 @@ class FakePopen:
                 self.stdout = self._extend_stream_from_dict(
                     callable_output, "stdout", self.stdout
                 )
-                self.stderr = self._extend_stream_from_dict(
-                    callable_output, "stderr", self.stderr
-                )
+                if self.__kwargs and self.__kwargs.get("stderr") == subprocess.STDOUT:
+                    self.stdout = self._extend_stream_from_dict(
+                        callable_output, "stderr", self.stdout, destination="stdout"
+                    )
+                else:
+                    self.stderr = self._extend_stream_from_dict(
+                        callable_output, "stderr", self.stderr
+                    )
 
     def _finalize_thread(self, timeout: Optional[float]) -> None:
         if self.__thread is None:
@@ -122,11 +127,20 @@ class FakePopen:
             raise self.__thread.exception
 
     def _extend_stream_from_dict(
-        self, dictionary: Dict[str, AnyType], key: str, stream: Optional[BUFFER]
+        self,
+        dictionary: Dict[str, AnyType],
+        key: str,
+        stream: Optional[BUFFER],
+        destination: Optional[str] = None,
     ) -> Optional[BUFFER]:
         data = dictionary.get(key)
         if data:
-            return self._prepare_buffer(input=data, io_base=stream)
+            target = (self.__kwargs or {}).get(destination or key)
+            if target == subprocess.PIPE:
+                return self._prepare_buffer(input=data, io_base=stream)
+            writer = self._get_io_writer(target)
+            if writer is not None:
+                self._write_to_buffer(data, writer)
         return stream
 
     def poll(self) -> Optional[int]:
